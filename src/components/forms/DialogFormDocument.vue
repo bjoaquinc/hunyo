@@ -1,0 +1,419 @@
+<template>
+  <q-dialog
+    ref="dialogRef"
+    @hide="onDialogHide"
+    maximized
+    :persistent="isLoading"
+    transition-show="slide-up"
+    transition-hide="slide-down"
+  >
+    <q-card class="card-container text-grey-8">
+      <q-form @submit.prevent="onSubmit" greedy>
+        <q-card-section>
+          <div class="flex justify-between q-mt-sm no-wrap">
+            <div class="text-h5 gt-sm">
+              {{ isResubmit ? 'Resubmit' : 'Upload' }} {{ doc.name }}
+            </div>
+            <div class="text-h6 lt-md">
+              {{ isResubmit ? 'Resubmit' : 'Upload' }} {{ doc.name }}
+            </div>
+            <q-btn v-close-popup icon="fas fa-times" flat dense />
+          </div>
+          <q-item
+            class="text-body1 q-mt-md"
+            v-if="doc.instructions || doc.sample"
+          >
+            <q-item-section avatar class="gt-sm">
+              <q-icon name="fas fa-exclamation" color="negative" size="xs" />
+            </q-item-section>
+            <q-item-section>
+              <div class="flex column">
+                <div
+                  v-if="doc.instructions && !isResubmit"
+                  style="white-space: pre-line"
+                >
+                  {{ doc.instructions }}
+                </div>
+                <q-btn
+                  v-if="doc.sample"
+                  :href="sampleURL as string"
+                  target="_blank"
+                  :class="doc.instructions ? 'q-mt-md' : ''"
+                  label="See Sample"
+                  no-caps
+                  outline
+                />
+              </div>
+            </q-item-section>
+          </q-item>
+
+          <q-separator class="q-my-md" />
+          <div class="row q-mt-xs" v-if="!isResubmit">
+            <div class="col">
+              <q-file
+                v-model="uploadedFile"
+                :reactive-rules="true"
+                :rules="[
+                  (val) =>
+                    newUploadedFilesCount > 0 ||
+                    'Upload at least one file to submit.',
+                ]"
+                standout
+                label="ADD IMAGE OR FILE"
+                filled
+                outlined
+                class="rounded-borders"
+              >
+                <template v-slot:prepend>
+                  <q-icon name="fas fa-file-arrow-up" />
+                </template>
+                <template v-slot:append>
+                  <q-icon name="fas fa-plus" />
+                </template>
+              </q-file>
+            </div>
+          </div>
+          <div v-else class="q-mt-xs">
+            <div class="text-h6 text-negative">Rejected</div>
+            <div
+              class="q-mt-md flex justify-between no-wrap"
+              v-for="(fileObject, index) in rejectedFiles"
+              :key="index"
+            >
+              <q-btn
+                target="_blank"
+                no-caps
+                flat
+                dense
+                class="gt-sm q-pr-sm"
+                :color="uploadedFileItemStyles[fileObject.status].textColor"
+                size="md"
+                :label="fileObject.name"
+              />
+              <q-btn
+                target="_blank"
+                no-caps
+                flat
+                dense
+                class="lt-md q-pr-sm"
+                :color="uploadedFileItemStyles[fileObject.status].textColor"
+                :label="fileObject.name"
+              />
+              <q-btn
+                @click="removeFile(index)"
+                :outline="uploadedFileItemStyles[fileObject.status].outline"
+                :color="uploadedFileItemStyles[fileObject.status].color"
+                :label="uploadedFileItemStyles[fileObject.status].label"
+                :flat="uploadedFileItemStyles[fileObject.status].flat"
+              />
+            </div>
+            <q-separator class="q-mt-md" />
+            <div class="text-h6 text-grey-8 q-mt-md">In Progress</div>
+            <div
+              class="q-mt-md flex justify-between no-wrap"
+              v-for="(fileObject, index) in submittedFiles"
+              :key="index"
+            >
+              <q-btn
+                target="_blank"
+                no-caps
+                flat
+                dense
+                class="gt-sm q-pr-sm"
+                :color="uploadedFileItemStyles[fileObject.status].textColor"
+                size="md"
+                :label="fileObject.name"
+              />
+              <q-btn
+                target="_blank"
+                no-caps
+                flat
+                dense
+                class="lt-md q-pr-sm"
+                :color="uploadedFileItemStyles[fileObject.status].textColor"
+                :label="fileObject.name"
+              />
+              <q-btn
+                @click="removeFile(index)"
+                :outline="uploadedFileItemStyles[fileObject.status].outline"
+                :color="uploadedFileItemStyles[fileObject.status].color"
+                :label="uploadedFileItemStyles[fileObject.status].label"
+                :flat="uploadedFileItemStyles[fileObject.status].flat"
+              />
+            </div>
+          </div>
+          <div
+            class="q-mt-md flex justify-between no-wrap"
+            v-for="(fileObject, index) in uploadedFiles"
+            :key="index"
+          >
+            <q-btn
+              target="_blank"
+              no-caps
+              :href="fileObject.downloadURL"
+              flat
+              dense
+              class="gt-sm q-pr-sm"
+              :color="uploadedFileItemStyles[fileObject.status].textColor"
+              size="md"
+              :label="fileObject.file.name"
+            />
+            <q-btn
+              target="_blank"
+              no-caps
+              :href="fileObject.downloadURL"
+              flat
+              dense
+              class="lt-md q-pr-sm"
+              :color="uploadedFileItemStyles[fileObject.status].textColor"
+              :label="fileObject.file.name"
+            />
+            <q-btn
+              @click="removeFile(index)"
+              :outline="uploadedFileItemStyles[fileObject.status].outline"
+              :color="uploadedFileItemStyles[fileObject.status].color"
+              :label="uploadedFileItemStyles[fileObject.status].label"
+              :flat="uploadedFileItemStyles[fileObject.status].flat"
+            />
+          </div>
+        </q-card-section>
+        <q-card-actions>
+          <q-btn
+            label="Submit"
+            type="submit"
+            class="full-width"
+            color="primary"
+          />
+        </q-card-actions>
+        <q-inner-loading :showing="isLoading">
+          <q-spinner-pie size="80px" color="primary" />
+        </q-inner-loading>
+      </q-form>
+    </q-card>
+  </q-dialog>
+</template>
+
+<script setup lang="ts">
+import { getDownloadURL, uploadBytes } from '@firebase/storage';
+import { QDialog, QFile, useDialogPluginComponent } from 'quasar';
+import { storageRefs } from 'src/utils/storage';
+import { ref, watch, computed, onMounted } from 'vue';
+import { FormDoc, Form, PageStatus, FormPage } from 'src/utils/types';
+import { dbDocRefs } from 'src/utils/db';
+import { updateDoc } from '@firebase/firestore';
+import { useQuasar } from 'quasar';
+
+const { dialogRef, onDialogHide } = useDialogPluginComponent();
+const $q = useQuasar();
+const props = defineProps<{
+  doc: FormDoc & { docId: string };
+  index: number;
+  form: Form & { id: string };
+}>();
+const uploadedFileItemStyles = {
+  New: {
+    label: 'Delete',
+    flat: false,
+    outline: true,
+    color: 'grey-8',
+    textColor: 'primary',
+  },
+  Submitted: {
+    label: 'Submitted',
+    flat: true,
+    outline: false,
+    color: 'grey-8',
+    textColor: 'grey-8',
+  },
+  Rejected: {
+    label: 'Resubmit',
+    flat: false,
+    outline: true,
+    color: 'negative',
+    textColor: 'negative',
+  },
+  Accepted: {
+    label: 'Accepted',
+    flat: true,
+    outline: false,
+    color: 'positive',
+    textColor: 'positive',
+  },
+};
+
+onMounted(async () => {
+  if (props.doc.sample) {
+    const sampleRef = storageRefs.getNewSampleRef(
+      props.form.company.id,
+      props.form.dashboard.id,
+      props.doc.sample.file
+    );
+    sampleURL.value = await getDownloadURL(sampleRef);
+  }
+});
+
+const sampleURL = ref<string | null>(null);
+const uploadedFiles = ref<
+  {
+    name: string;
+    file: File;
+    status: PageStatus | 'New';
+    downloadURL: string;
+  }[]
+>([]);
+const newUploadedFilesCount = computed(() => {
+  return uploadedFiles.value.filter((file) => file.status === 'New').length;
+});
+const sortedPages = computed(() => {
+  if (props.doc.pages) {
+    return Object.keys(props.doc.pages)
+      .map((key) => ({
+        id: key,
+        ...(props.doc.pages as { [key: string]: FormPage })[key],
+      }))
+      .sort((pageA, pageB) => pageA.pageNumber - pageB.pageNumber);
+  } else {
+    return [];
+  }
+});
+const rejectedFiles = computed(() => {
+  return sortedPages.value.filter((page) => page.status === 'Rejected');
+});
+const submittedFiles = computed(() => {
+  return sortedPages.value.filter((page) => page.status === 'Submitted');
+});
+const uploadedFile = ref<File | null>(null);
+const isLoading = ref(false);
+const isResubmit = computed(() =>
+  props.doc.status === 'Rejected' ? true : false
+);
+
+watch(uploadedFile, (newValue) => {
+  if (newValue) {
+    isLoading.value = true;
+    const file = newValue;
+    const fileBlob = new Blob([file], { type: file.type });
+    const downloadURL = URL.createObjectURL(fileBlob);
+    uploadedFiles.value.push({
+      name: file.name,
+      file,
+      downloadURL,
+      status: 'New',
+    });
+    uploadedFile.value = null;
+    isLoading.value = false;
+  }
+});
+
+const removeFile = (index: number) => {
+  uploadedFiles.value.splice(index, 1);
+};
+
+const onSubmit = async () => {
+  console.log('Submit');
+  try {
+    isLoading.value = true;
+    const pages = await uploadFilesToStorage();
+    await submitPages(pages);
+    dialogRef.value?.hide();
+    isLoading.value = false;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const uploadFilesToStorage = async () => {
+  const promises: Promise<FormPage>[] = [];
+
+  uploadedFiles.value.forEach((file, index) => {
+    const PAGE_NUMBER = index + 1;
+    const promise = uploadFileToStorage(file, PAGE_NUMBER);
+    promises.push(promise);
+  });
+  return await Promise.all(promises);
+};
+
+const uploadFileToStorage = async (
+  file: {
+    file: File;
+    name: string;
+    downloadURL: string;
+    status: PageStatus | 'New';
+  },
+  pageNumber: number
+) => {
+  const applicantName = `${props.form.applicant.name?.first} ${props.form.applicant.name?.last}`;
+  let fileName = applicantName + '-' + props.doc.name + '-' + pageNumber;
+  if (uploadedFiles.value.length <= 1) {
+    fileName = applicantName + '-' + props.doc.name;
+  }
+  const format = props.doc.format;
+  const formId = props.form.id;
+  const docId = props.doc.docId;
+  const pageId = `${docId}-${pageNumber.toString()}`;
+  const companyId = props.form.company.id;
+  const dashboardId = props.form.dashboard.id;
+  const applicantId = props.form.applicant.id;
+  const storageRef = storageRefs.getTemporaryDocsRef(fileName);
+  const contentType = file.file.type;
+  const contentSize = file.file.size;
+  const CONVERT_TO_KILOBYTES = 0.001;
+  const FIRST_TIME_SUBMITTED = 1;
+
+  await uploadBytes(storageRef, file.file, {
+    contentType,
+    customMetadata: {
+      companyId,
+      dashboardId,
+      applicantId,
+      formId,
+      docId,
+      pageId,
+      format,
+      submissionCount: FIRST_TIME_SUBMITTED.toString(),
+    },
+  });
+  const formPage: FormPage = {
+    name: fileName,
+    status: 'Submitted',
+    submittedFormat: contentType,
+    submittedSize: contentSize * CONVERT_TO_KILOBYTES,
+    submissionCount: FIRST_TIME_SUBMITTED,
+    pageNumber,
+  };
+  return formPage;
+};
+
+const submitPages = async (pagesList: FormPage[]) => {
+  const pages: { [key: string]: FormPage } = {};
+  pagesList.forEach((page) => {
+    pages[`${props.doc.docId}-${page.pageNumber.toString()}`] = page;
+  });
+  const formRef = dbDocRefs.getFormRef(props.form.id);
+  const formDoc = `docs.${props.doc.docId}`;
+  const form: Partial<Form> = {
+    [`${formDoc}.pages`]: pages,
+    [`${formDoc}.status`]: 'Submitted',
+    [`${formDoc}.deviceSubmitted`]: $q.platform.is.mobile
+      ? 'mobile'
+      : 'desktop',
+    [`${formDoc}.systemTask`]: 'createDoc'
+  };
+  await updateDoc(formRef, {
+    ...form,
+  });
+};
+
+defineEmits([
+  // REQUIRED; need to specify some events that your
+  // component will emit through useDialogPluginComponent()
+  ...useDialogPluginComponent.emits,
+]);
+</script>
+
+<style lang="sass" scoped>
+.card-container
+  @media only screen and (width > $breakpoint-sm)
+    max-width: 600px !important
+    height: auto !important
+</style>
