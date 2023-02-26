@@ -20,7 +20,7 @@
     }
   ],
   "hosting": {
-    "public": "dist/ssr",
+    "public": "dist/spa",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
   },
   "storage": {
