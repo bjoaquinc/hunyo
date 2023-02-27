@@ -43,3 +43,6 @@ functions/
 # Firestore and Storage Rules
 firestore.rules
 storage.rules
+
+# Firebase cached files
+.firebase/
