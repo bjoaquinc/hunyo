@@ -272,7 +272,8 @@ const selected = ref([]);
 const openActionDialog = (actionId: string, applicantId: string) => {
   q.dialog({
     component: defineAsyncComponent(
-      () => import('src/components/actions/DialogActionVerify.vue')
+      () =>
+        import('src/components/dashboards/dialogs/DialogActionDocuments.vue')
     ),
     componentProps: {
       companyId,
