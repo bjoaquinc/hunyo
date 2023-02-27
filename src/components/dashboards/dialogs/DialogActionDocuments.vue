@@ -18,6 +18,7 @@
             <q-list separator>
               <q-separator />
               <q-item
+                @click="openDialogActionVerifyDocument(index)"
                 class="flex column"
                 v-for="(doc, index) in docsWithFiles"
                 :key="index"
@@ -52,12 +53,13 @@
 </template>
 
 <script setup lang="ts">
-import { QDialog, useDialogPluginComponent } from 'quasar';
+import { QDialog, useDialogPluginComponent, useQuasar } from 'quasar';
 import { ref } from 'vue';
+import DialogActionVerifyDocument from './DialogActionVerifyDocument.vue';
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const hasCheckedAllDocs = ref(false);
-const isIncomplete = ref(false);
+const $q = useQuasar();
 
 const docsWithFiles = [
   {
@@ -86,6 +88,16 @@ const action = {
       last: 'Coromina',
     },
   },
+};
+
+const openDialogActionVerifyDocument = (index: number) => {
+  console.log('running');
+  $q.dialog({
+    component: DialogActionVerifyDocument,
+    componentProps: {
+      doc: docsWithFiles[index],
+    },
+  });
 };
 
 defineEmits([
