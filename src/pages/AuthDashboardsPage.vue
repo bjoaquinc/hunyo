@@ -68,33 +68,32 @@
 </template>
 
 <script setup lang="ts">
-import { onSnapshot, Unsubscribe } from '@firebase/firestore';
+import { onSnapshot, query, Unsubscribe, where } from '@firebase/firestore';
 import { useUserStore } from 'src/stores/user-store';
 import { dbColRefs } from 'src/utils/db';
-import { Dashboard } from 'src/utils/types';
+import { PublishedDashboard } from 'src/utils/types';
 import { onMounted, onUnmounted, ref, computed } from 'vue';
 
 const { user } = useUserStore();
-const dashboards = ref<(Dashboard & { id: string })[]>([]);
+const dashboards = ref<(PublishedDashboard & { id: string })[]>([]);
 const unsubDashboards = ref<Unsubscribe | null>(null);
 const yourDashboards = computed(() => {
   if (!user) return [];
   return dashboards.value.filter(
-    (dashboard) =>
-      dashboard.users.filter((dashUser) => dashUser.id === user.id).length > 0
+    (dashboard) => dashboard.createdBy === user.id
   );
 });
 const companyDashboards = computed(() => {
   if (!user) return [];
   return dashboards.value.filter(
-    (dashboard) =>
-      dashboard.users.filter((dashUser) => dashUser.id !== user.id).length > 0
+    (dashboard) => dashboard.createdBy !== user.id
   );
 });
 
 onMounted(async () => {
   if (!user) return;
-  const dashboardsRef = dbColRefs.getDashboardsRef(user.company.id);
+  const dashboardsRef = dbColRefs.getPublishedDashboardsRef(user.company.id);
+  const q = query(dashboardsRef, where('isPublished', '==', true));
   await new Promise((resolve) => {
     let resolveOnce = () => {
       resolveOnce = () => {
@@ -102,8 +101,8 @@ onMounted(async () => {
       };
       resolve;
     };
-    unsubDashboards.value = onSnapshot(dashboardsRef, (dashboardSnap) => {
-      const dasboardDocs: (Dashboard & { id: string })[] = [];
+    unsubDashboards.value = onSnapshot(q, (dashboardSnap) => {
+      const dasboardDocs: (PublishedDashboard & { id: string })[] = [];
       dashboardSnap.forEach((dashboardDoc) => {
         dasboardDocs.push({ id: dashboardDoc.id, ...dashboardDoc.data() });
       });
