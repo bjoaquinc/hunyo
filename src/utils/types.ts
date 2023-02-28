@@ -71,7 +71,7 @@ export interface DraftDashboard {
   messages?: {
     opening: string;
   };
-  isPublished?: false;
+  isPublished: false;
 }
 
 export interface PublishedDashboard {

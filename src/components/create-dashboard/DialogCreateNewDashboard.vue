@@ -149,7 +149,8 @@ const onSubmit = async () => {
       job: job.value,
       title: title.value,
       deadline: Timestamp.fromMillis(deadlineTimestamp.toMillis()),
-      docs: [],
+      docs: {},
+      isPublished: false,
     });
     onDialogOK();
     router.push({

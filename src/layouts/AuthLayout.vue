@@ -84,7 +84,7 @@
           </div>
           <q-separator class="q-mt-md" />
           <q-list separator>
-            <q-item class="q-py-md text-h6 text-weight-regular">
+            <!-- <q-item class="q-py-md text-h6 text-weight-regular">
               <q-item-section>
                 Poland - Butcher - Visa Application
               </q-item-section>
@@ -98,6 +98,26 @@
               </q-item-section>
               <q-item-section avatar>
                 <q-btn label="Copy" outline color="primary" />
+              </q-item-section>
+            </q-item> -->
+          </q-list>
+          <div class="q-mt-xl text-h5 text-weight-medium">
+            Draft Document Requests
+          </div>
+          <q-separator class="q-mt-md" />
+          <q-list separator>
+            <q-item
+              class="q-py-md text-h6 text-weight-regular"
+              clickable
+              v-ripple
+              v-for="dashboard in draftDashboards"
+              :key="dashboard.id"
+            >
+              <q-item-section>
+                {{ dashboard.title }}
+              </q-item-section>
+              <q-item-section avatar side>
+                <q-icon name="fas fa-angle-double-right" />
               </q-item-section>
             </q-item>
           </q-list>
@@ -112,12 +132,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import EssentialLink from 'components/EssentialLink.vue';
 import { useUserStore } from 'src/stores/user-store';
 import { storeToRefs } from 'pinia';
 import DialogCreateNewDashboard from 'src/components/create-dashboard/DialogCreateNewDashboard.vue';
 import { useQuasar } from 'quasar';
+import { DraftDashboard } from 'src/utils/types';
+import { dbColRefs } from 'src/utils/db';
+import {
+  onSnapshot,
+  query,
+  Unsubscribe,
+  where,
+  orderBy,
+} from '@firebase/firestore';
 
 const store = useUserStore();
 const { user } = storeToRefs(store);
@@ -146,8 +175,34 @@ const essentialLinks = [
   },
 ];
 
+const draftDashboards = ref<(DraftDashboard & { id: string })[] | null>([]);
+const unsubDraftDashboards = ref<Unsubscribe | null>(null);
 const leftDrawerOpen = ref(false);
 const createDocumentRequestTemplate = ref(false);
+
+onMounted(() => {
+  getDraftDashboards();
+});
+
+const getDraftDashboards = async () => {
+  if (!user.value) return;
+  const draftDashboardsRef = dbColRefs.getDraftDashboardsRef(
+    user.value.company.id
+  );
+  const q = query(
+    draftDashboardsRef,
+    where('isPublished', '==', false),
+    orderBy('createdAt', 'desc')
+  );
+  unsubDraftDashboards.value = onSnapshot(q, (snapshot) => {
+    draftDashboards.value = snapshot.docs.map((doc) => {
+      return {
+        id: doc.id,
+        ...doc.data(),
+      } as DraftDashboard & { id: string };
+    });
+  });
+};
 
 const openDialogCreateNewDashboard = () => {
   q.dialog({
@@ -160,4 +215,8 @@ const openDialogCreateNewDashboard = () => {
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 }
+
+onUnmounted(() => {
+  unsubDraftDashboards.value?.();
+});
 </script>
