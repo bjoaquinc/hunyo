@@ -8,17 +8,17 @@ import { Loading, QSpinnerPie } from 'quasar';
 export default boot(async (/* { app, router, ... } */) => {
   const { getValidatedUser, updateAuth } = useAuthStore();
   const { addUserDetails, getUserCompany } = useUserStore();
-
-  const user = await getValidatedUser();
-  // console.log(user);
   Loading.show({
     spinner: QSpinnerPie,
     backgroundColor: 'primary',
   });
+  const user = await getValidatedUser();
   if (user) {
     updateAuth(user);
     const companyId = await getUserCompany(user.uid);
     if (!companyId) {
+      Loading.hide();
+      return;
       console.log('No company Id');
     }
     // console.log(companyId);

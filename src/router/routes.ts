@@ -60,10 +60,12 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/applicant',
+    name: 'ApplicantLayout',
     component: () => import('src/layouts/ApplicantLayout.vue'),
     children: [
       {
         path: 'forms/:formId',
+        name: 'ApplicantFormPage',
         component: () => import('src/pages/ApplicantFormPage.vue'),
         props: true,
       },
