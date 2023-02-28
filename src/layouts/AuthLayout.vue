@@ -107,6 +107,10 @@
           <q-separator class="q-mt-md" />
           <q-list separator>
             <q-item
+              :to="{
+                name: 'DocumentRequestTemplate',
+                params: { dashboardId: dashboard.id },
+              }"
               class="q-py-md text-h6 text-weight-regular"
               clickable
               v-ripple
