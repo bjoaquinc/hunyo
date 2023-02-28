@@ -186,6 +186,7 @@ export interface Form {
       first: string;
       last: string;
     };
+    email: string;
   };
   company: {
     id: string;
@@ -201,6 +202,9 @@ export interface Form {
     deadline: Timestamp;
     job: string;
     country: string;
+    messages: {
+      opening: string;
+    };
   };
   docs: { [key: string]: FormDoc };
 }
@@ -318,35 +322,28 @@ export interface Action {
   };
 }
 
-// export interface Message {
-//   createdAt: Timestamp | FieldValue;
-//   subject: string;
-//   recipients: string[];
-//   body: string;
-//   status: string;
-//   analytics: {
-//     opens: number;
-//     clicks: number;
-//     isSpam: boolean;
-//   };
-//   applicant?: {
-//     id: string;
-//     dashboardId: string;
-//   };
-//   dashboardId?: string;
-// }
-
-// export interface DashboardMessage extends Message {
-//   options: {
-//     companyId: string;
-//     dashboardId: string;
-//     applicant: {
-//       id: string;
-//       email: string;
-//       name: {
-//         first: string;
-//         last: string;
-//       };
-//     };
-//   };
-// }
+export interface Message {
+  createdAt: Timestamp;
+  subject: string;
+  recipients: {
+    email: string;
+    type?: 'to' | 'cc' | 'bcc';
+  }[];
+  body: string;
+  fromName?: string;
+  metadata?: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  };
+  updatedAt?: Timestamp;
+  messageResponseData?: {
+    id: string;
+    status: string;
+    rejectReason: string;
+    analytics?: {
+      opens?: number;
+      clicks?: number;
+      isSpam?: boolean;
+    };
+  };
+}
