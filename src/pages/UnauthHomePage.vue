@@ -47,10 +47,12 @@
 import { signInWithEmailAndPassword, getAuth } from '@firebase/auth';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
 
 const email = ref('');
 const password = ref('');
 const router = useRouter();
+const $q = useQuasar();
 const isPassword = ref(true);
 const isLoading = ref(false);
 
@@ -60,8 +62,24 @@ const login = async () => {
     const auth = getAuth();
     await signInWithEmailAndPassword(auth, email.value, password.value);
     router.push({ name: 'DashboardsPage' });
-  } catch (error) {
-    console.log(error);
+  } catch (error: { code: string; message: string }) {
+    if (error.code === 'auth/user-not-found') {
+      $q.dialog({
+        message: 'User not found',
+      });
+    } else if (error.code === 'auth/wrong-password') {
+      $q.dialog({
+        message: 'Wrong password',
+      });
+    } else if (error.code === 'auth/invalid-email') {
+      $q.dialog({
+        message: 'Invalid email',
+      });
+    } else {
+      $q.dialog({
+        message: error.message,
+      });
+    }
   }
   isLoading.value = false;
 };
