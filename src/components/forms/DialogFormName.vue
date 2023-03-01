@@ -17,12 +17,14 @@
           <q-separator class="q-my-md" />
 
           <q-input
+            class="q-mt-sm"
             :rules="[(val) => !!val || 'This field is required']"
             label="First Name"
             filled
             v-model="name.first"
           />
           <q-input
+            class="q-mt-sm"
             :rules="[(val) => !!val || 'This field is required']"
             label="Last Name"
             filled

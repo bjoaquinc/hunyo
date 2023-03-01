@@ -14,7 +14,7 @@
         <q-toolbar-title>
           {{ user ? user.company.name : 'Create an Account' }}
         </q-toolbar-title>
-        <q-input
+        <!-- <q-input
           v-model="searchText"
           outlined
           type="search"
@@ -25,7 +25,7 @@
           <template v-slot:append>
             <q-icon name="fas fa-search" />
           </template>
-        </q-input>
+        </q-input> -->
       </q-toolbar>
     </q-header>
 
