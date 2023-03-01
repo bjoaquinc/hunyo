@@ -13,6 +13,7 @@ import { getDownloadURL } from '@firebase/storage';
 import { useQuasar } from 'quasar';
 import ApplicantFormMain from 'src/components/forms/ApplicantFormMain.vue';
 import DialogFormName from 'src/components/forms/DialogFormName.vue';
+import DialogFormReminder from 'src/components/forms/DialogFormReminder.vue';
 import { dbDocRefs } from 'src/utils/db';
 import { storageRefs } from 'src/utils/storage';
 import { Form } from 'src/utils/types';
@@ -23,7 +24,7 @@ import { useAuthStore } from 'src/stores/auth-store';
 const props = defineProps<{
   formId: string;
 }>();
-const q = useQuasar();
+const $q = useQuasar();
 const unsubForm = ref<Unsubscribe | null>(null);
 const authStore = useAuthStore();
 const form = ref<(Form & { id: string }) | null>(null);
@@ -49,6 +50,7 @@ const setForm = async () => {
         return;
       };
       isReady.value = true;
+      showReminder();
       resolve;
     };
     unsubForm.value = onSnapshot(
@@ -61,7 +63,7 @@ const setForm = async () => {
             logoURL.value = await getLogoURL(docData.company.logo);
           }
           if (!docData.applicant.name) {
-            q.dialog({
+            $q.dialog({
               component: DialogFormName,
               componentProps: {
                 formId: props.formId,
@@ -88,6 +90,12 @@ const setApplicantAuth = async () => {
   } catch (error) {
     console.error(error);
   }
+};
+
+const showReminder = () => {
+  $q.dialog({
+    component: DialogFormReminder,
+  });
 };
 
 const getLogoURL = async (logoName: string) => {

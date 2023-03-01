@@ -19,10 +19,7 @@
             </div>
             <q-btn v-close-popup icon="fas fa-times" flat dense />
           </div>
-          <q-item
-            class="text-body1 q-mt-md"
-            v-if="doc.instructions || doc.sample"
-          >
+          <q-item class="text-body1 q-mt-md">
             <q-item-section avatar class="gt-sm">
               <q-icon name="fas fa-exclamation" color="negative" size="xs" />
             </q-item-section>
@@ -40,6 +37,13 @@
                   target="_blank"
                   :class="doc.instructions ? 'q-mt-md' : ''"
                   label="See Sample"
+                  no-caps
+                  outline
+                />
+                <q-btn
+                  @click="openDialogFormTips"
+                  :class="doc.instructions || doc.sample ? 'q-mt-md' : ''"
+                  label="View tips for taking better document photos"
                   no-caps
                   outline
                 />
@@ -202,6 +206,7 @@ import { FormDoc, Form, PageStatus, FormPage } from 'src/utils/types';
 import { dbDocRefs } from 'src/utils/db';
 import { updateDoc } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
+import DialogFormTips from './DialogFormTips.vue';
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const $q = useQuasar();
@@ -287,6 +292,12 @@ const isLoading = ref(false);
 const isResubmit = computed(() =>
   props.doc.status === 'Rejected' ? true : false
 );
+
+const openDialogFormTips = () => {
+  $q.dialog({
+    component: DialogFormTips,
+  });
+};
 
 watch(uploadedFile, (newValue) => {
   if (newValue) {
@@ -397,7 +408,7 @@ const submitPages = async (pagesList: FormPage[]) => {
     [`${formDoc}.deviceSubmitted`]: $q.platform.is.mobile
       ? 'mobile'
       : 'desktop',
-    [`${formDoc}.systemTask`]: 'createDoc'
+    [`${formDoc}.systemTask`]: 'createDoc',
   };
   await updateDoc(formRef, {
     ...form,
