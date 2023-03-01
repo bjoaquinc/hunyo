@@ -161,6 +161,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
 import { addDoc, serverTimestamp, setDoc } from '@firebase/firestore';
 import { createUserWithEmailAndPassword } from '@firebase/auth';
 import { auth } from 'src/boot/firebase';
@@ -170,8 +171,11 @@ import { dbDocRefs, dbColRefs } from 'src/utils/db';
 import { QInput, QStepper, uid } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
 import { uploadBytes } from '@firebase/storage';
+import { useAuthStore } from 'src/stores/auth-store';
 
 const store = useUserStore();
+const authStore = useAuthStore();
+const { userAuth } = storeToRefs(authStore);
 const router = useRouter();
 const step = ref(1);
 const stepperRef = ref<QStepper | null>(null);
@@ -233,6 +237,7 @@ const createUserAuth = async (): Promise<string> => {
     email.value,
     password.value
   );
+  userAuth.value = UserCredentials.user;
   console.log('Successfully created user!');
   const userId = UserCredentials.user.uid;
   return userId;

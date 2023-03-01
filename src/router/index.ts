@@ -1,4 +1,5 @@
 import { route } from 'quasar/wrappers';
+import { useAuthStore } from 'src/stores/auth-store';
 import {
   createMemoryHistory,
   createRouter,
@@ -33,6 +34,17 @@ export default route(function (/* { store, ssrContext } */) {
     history: createHistory(
       process.env.MODE === 'ssr' ? void 0 : process.env.VUE_ROUTER_BASE
     ),
+  });
+
+  Router.beforeEach((to, from, next) => {
+    const { userAuth } = useAuthStore();
+    if (to.meta.requiresAuth && !userAuth) {
+      next({ name: 'LandingPage' });
+    } else if (userAuth && to.name === 'LandingPage') {
+      next({ name: 'DashboardsPage' });
+    } else {
+      next();
+    }
   });
 
   return Router;

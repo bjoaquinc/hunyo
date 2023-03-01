@@ -59,7 +59,7 @@ const login = async () => {
     isLoading.value = true;
     const auth = getAuth();
     await signInWithEmailAndPassword(auth, email.value, password.value);
-    router.push({ name: 'DashbaordsPage' });
+    router.push({ name: 'DashboardsPage' });
   } catch (error) {
     console.log(error);
   }
