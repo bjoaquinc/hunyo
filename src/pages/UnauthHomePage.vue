@@ -48,6 +48,8 @@ import { signInWithEmailAndPassword, getAuth } from '@firebase/auth';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { useAuthStore } from 'src/stores/auth-store';
+import { storeToRefs } from 'pinia';
 
 const email = ref('');
 const password = ref('');
@@ -55,14 +57,22 @@ const router = useRouter();
 const $q = useQuasar();
 const isPassword = ref(true);
 const isLoading = ref(false);
+const authStore = useAuthStore();
+const { userAuth } = storeToRefs(authStore);
 
 const login = async () => {
   try {
     isLoading.value = true;
     const auth = getAuth();
-    await signInWithEmailAndPassword(auth, email.value, password.value);
+    const userCred = await signInWithEmailAndPassword(
+      auth,
+      email.value,
+      password.value
+    );
+    userAuth.value = userCred.user;
     router.push({ name: 'DashboardsPage' });
   } catch (error: { code: string; message: string }) {
+    console.log(error);
     if (error.code === 'auth/user-not-found') {
       $q.dialog({
         message: 'User not found',
