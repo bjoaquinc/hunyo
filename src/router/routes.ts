@@ -5,7 +5,7 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () => import('src/layouts/UnAuthLayout.vue'),
     children: [
-      // { path: '', component: () => import('pages/LandingHomePage.vue') },
+      { path: '', component: () => import('pages/UnAuthHomePage.vue') },
       {
         path: 'signup',
         component: () => import('src/pages/UnAuthSignUpCompanyPage.vue'),
@@ -31,6 +31,7 @@ const routes: RouteRecordRaw[] = [
         children: [
           {
             path: '',
+            name: 'DashboardsPage',
             component: () => import('src/pages/AuthDashboardsPage.vue'),
           },
           {
