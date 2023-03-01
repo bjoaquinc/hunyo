@@ -17,17 +17,21 @@ import { dbDocRefs } from 'src/utils/db';
 import { storageRefs } from 'src/utils/storage';
 import { Form } from 'src/utils/types';
 import { onMounted, onUnmounted, ref } from 'vue';
+import { signInAnonymously, getAuth } from 'firebase/auth';
+import { useAuthStore } from 'src/stores/auth-store';
 
 const props = defineProps<{
   formId: string;
 }>();
 const q = useQuasar();
 const unsubForm = ref<Unsubscribe | null>(null);
+const authStore = useAuthStore();
 const form = ref<(Form & { id: string }) | null>(null);
 const isReady = ref(false);
 const logoURL = ref('');
 
 onMounted(async () => {
+  await setApplicantAuth();
   await setForm();
 });
 
@@ -71,6 +75,19 @@ const setForm = async () => {
       reject
     );
   });
+};
+
+const setApplicantAuth = async () => {
+  try {
+    const auth = getAuth();
+    if (!auth.currentUser) {
+      console.log('signing in anonymously');
+      await signInAnonymously(auth);
+      await authStore.getValidatedUser();
+    }
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 const getLogoURL = async (logoName: string) => {

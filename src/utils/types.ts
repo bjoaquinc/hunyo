@@ -333,7 +333,10 @@ export interface Message {
   fromName?: string;
   metadata?: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any;
+    formLink: string;
+    applicantId: string;
+    dashboardId: string;
+    companyId: string;
   };
   updatedAt?: Timestamp;
   messageResponseData?: {
