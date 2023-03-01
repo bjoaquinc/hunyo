@@ -331,13 +331,8 @@ export interface Message {
   }[];
   body: string;
   fromName?: string;
-  metadata?: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formLink: string;
-    applicantId: string;
-    dashboardId: string;
-    companyId: string;
-  };
+  metadata?: MessageMetadata;
+  template?: SendApplicantDocumentRequestTemplate;
   updatedAt?: Timestamp;
   messageResponseData?: {
     id: string;
@@ -349,4 +344,18 @@ export interface Message {
       isSpam?: boolean;
     };
   };
+}
+
+export interface SendApplicantDocumentRequestTemplate {
+  name: 'Applicant Documents Request';
+  data: {
+    formLink: string;
+    companyName: string;
+  };
+}
+
+export interface MessageMetadata {
+  applicantId: string;
+  dashboardId: string;
+  companyId: string;
 }
