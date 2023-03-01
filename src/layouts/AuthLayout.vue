@@ -169,13 +169,7 @@ const essentialLinks = [
     title: 'Links',
     caption: 'All download links created',
     icon: 'fas fa-link',
-    link: 'https://github.com/quasarframework',
-  },
-  {
-    title: 'Applicants',
-    caption: 'All applicants added',
-    icon: 'fas fa-users',
-    link: 'https://twitter.quasar.dev',
+    link: '/auth/links',
   },
 ];
 

@@ -47,6 +47,10 @@ const routes: RouteRecordRaw[] = [
         ],
       },
       {
+        path: 'links',
+        component: () => import('src/pages/AuthLinksPage.vue'),
+      },
+      {
         path: 'welcome',
         component: () => import('src/pages/AuthWelcomePage.vue'),
       },
