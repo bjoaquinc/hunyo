@@ -11,7 +11,7 @@
       <q-form @submit.prevent="onSubmit" greedy>
         <q-card-section>
           <div class="flex justify-between q-mt-sm no-wrap">
-            <div class="text-h5 gt-sm">
+            <div class="text-h5 gt-xs">
               <span class="q-mr-md"
                 >Upload {{ capsFirstLetters(doc.name) }}</span
               >
@@ -30,7 +30,7 @@
                 label="Remove"
               />
             </div>
-            <div class="text-h6 lt-md">
+            <div class="text-h6 lt-sm">
               Upload {{ capsFirstLetters(doc.name) }}
             </div>
             <q-btn v-close-popup icon="fas fa-times" flat dense />
@@ -39,7 +39,7 @@
             class="text-body1 q-mt-md"
             v-if="doc.instructions || sampleURL"
           >
-            <q-item-section avatar class="gt-sm">
+            <q-item-section avatar class="gt-xs" top side>
               <q-icon name="fas fa-exclamation" size="xs" />
             </q-item-section>
             <q-item-section>
@@ -197,7 +197,7 @@ const removeSampleFromStorage = async (sampleName: string) => {
 
 <style lang="sass" scoped>
 .card-container
-  @media only screen and (width > $breakpoint-sm)
+  @media only screen and (width > $breakpoint-xs)
     max-width: 600px !important
     height: auto !important
 </style>

@@ -174,7 +174,7 @@ async function removeInvite(inviteId: string) {
 <style lang="sass" scoped>
 .container
   max-width: 600px
-  @media only screen and (width > $breakpoint-lg)
+  @media only screen and (width > $breakpoint-md)
     margin-left: 100px
     max-width: 800px
 </style>

@@ -2,7 +2,12 @@
   <div class="absolute-center">
     <q-card class="my-card text-grey-8">
       <q-card-section>
-        <q-img :src="logoURL" v-if="logoURL" style="max-width: 200px" />
+        <q-img
+          :src="logoURL"
+          :class="$q.platform.is.mobile ? 'q-mt-lg' : ''"
+          v-if="logoURL"
+          style="max-width: 200px"
+        />
 
         <div class="flex justify-between items-end q-mt-sm">
           <div class="text-h5">
@@ -21,7 +26,7 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none">
-        <q-list class="gt-sm" separator>
+        <q-list class="gt-xs" separator>
           <q-item
             @click="openDialogDocument(index)"
             class="text-h6 q-py-md rounded-borders"
@@ -62,7 +67,7 @@
           </q-item>
           <q-separator />
         </q-list>
-        <q-list class="lt-md" separator>
+        <q-list class="lt-sm" separator>
           <q-item
             @click="openDialogDocument(index)"
             class="text-subtitle1 q-py-md"
@@ -178,14 +183,16 @@ const openDialogDocument = (index: number) => {
 
 <style lang="sass" scoped>
 .my-card
-  min-width: 900px
-  max-height: 80vh
-  overflow: auto
-  padding: 18px
-  @media only screen and (width < $breakpoint-sm)
-    min-width: 10px
-    width: 100vw
-    max-height: 2000px
-    height: 100vh
-    padding: 8px
+  min-width: 10px
+  width: 100vw
+  max-height: 2000px
+  height: 100vh
+  padding: 8px
+  @media only screen and (width > $breakpoint-xs)
+    width: auto
+    height: auto
+    min-width: 900px
+    max-height: 80vh
+    overflow: auto
+    padding: 18px
 </style>

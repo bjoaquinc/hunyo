@@ -122,7 +122,7 @@ onUnmounted(() => {
 <style lang="sass" scoped>
 .container
   max-width: 800px
-  @media only screen and (width > $breakpoint-lg)
+  @media only screen and (width > $breakpoint-md)
     margin-left: 100px
     max-width: 1000px
 </style>

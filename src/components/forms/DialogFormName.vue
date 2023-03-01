@@ -11,8 +11,8 @@
       <q-form @submit.prevent="onSubmit" greedy>
         <q-card-section>
           <q-img :src="logo" class="q-mb-md" width="200px" loading="eager" />
-          <div class="text-h5 gt-sm">Please confirm your name:</div>
-          <div class="text-h6 lt-md">Please confirm your name:</div>
+          <div class="text-h5 gt-xs">Please confirm your name:</div>
+          <div class="text-h6 lt-sm">Please confirm your name:</div>
 
           <q-separator class="q-my-md" />
 
@@ -86,7 +86,7 @@ defineEmits([
 
 <style lang="sass" scoped>
 .card-container
-  @media only screen and (width > $breakpoint-sm)
+  @media only screen and (width > $breakpoint-xs)
     max-width: 600px !important
     height: auto !important
 </style>

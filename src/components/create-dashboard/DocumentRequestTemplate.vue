@@ -69,7 +69,7 @@
             </q-card-section>
 
             <q-card-section class="q-pt-none">
-              <q-list v-if="dashboard && sortedDocs" class="gt-sm" separator>
+              <q-list v-if="dashboard && sortedDocs" class="gt-xs" separator>
                 <q-item
                   @click="openDialogDocument(doc.name)"
                   class="text-h6 q-py-md rounded-borders"
@@ -456,7 +456,7 @@ const publishDashboard = async () => {
   max-height: 80vh
   overflow: auto
   padding: 18px
-  @media only screen and (width < $breakpoint-sm)
+  @media only screen and (width < $breakpoint-xs)
     min-width: 10px
     width: 100vw
     max-height: 2000px

@@ -11,16 +11,16 @@
       <q-form @submit.prevent="onSubmit" greedy>
         <q-card-section>
           <div class="flex justify-between q-mt-sm no-wrap">
-            <div class="text-h5 gt-sm">
+            <div class="text-h5 gt-xs">
               {{ isResubmit ? 'Resubmit' : 'Upload' }} {{ doc.name }}
             </div>
-            <div class="text-h6 lt-md">
+            <div class="text-h6 lt-sm">
               {{ isResubmit ? 'Resubmit' : 'Upload' }} {{ doc.name }}
             </div>
             <q-btn v-close-popup icon="fas fa-times" flat dense />
           </div>
           <q-item class="text-body1 q-mt-md">
-            <q-item-section avatar class="gt-sm">
+            <q-item-section avatar class="gt-xs" top side>
               <q-icon name="fas fa-exclamation" color="negative" size="xs" />
             </q-item-section>
             <q-item-section>
@@ -89,7 +89,7 @@
                 no-caps
                 flat
                 dense
-                class="gt-sm q-pr-sm"
+                class="gt-xs q-pr-sm"
                 :color="uploadedFileItemStyles[fileObject.status].textColor"
                 size="md"
                 :label="fileObject.name"
@@ -99,7 +99,7 @@
                 no-caps
                 flat
                 dense
-                class="lt-md q-pr-sm"
+                class="lt-sm q-pr-sm"
                 :color="uploadedFileItemStyles[fileObject.status].textColor"
                 :label="fileObject.name"
               />
@@ -123,7 +123,7 @@
                 no-caps
                 flat
                 dense
-                class="gt-sm q-pr-sm"
+                class="gt-xs q-pr-sm"
                 :color="uploadedFileItemStyles[fileObject.status].textColor"
                 size="md"
                 :label="fileObject.name"
@@ -133,7 +133,7 @@
                 no-caps
                 flat
                 dense
-                class="lt-md q-pr-sm"
+                class="lt-sm q-pr-sm"
                 :color="uploadedFileItemStyles[fileObject.status].textColor"
                 :label="fileObject.name"
               />
@@ -157,7 +157,7 @@
               :href="fileObject.downloadURL"
               flat
               dense
-              class="gt-sm q-pr-sm"
+              class="gt-xs q-pr-sm"
               :color="uploadedFileItemStyles[fileObject.status].textColor"
               size="md"
               :label="fileObject.file.name"
@@ -168,7 +168,7 @@
               :href="fileObject.downloadURL"
               flat
               dense
-              class="lt-md q-pr-sm"
+              class="lt-sm q-pr-sm"
               :color="uploadedFileItemStyles[fileObject.status].textColor"
               :label="fileObject.file.name"
             />
@@ -424,7 +424,7 @@ defineEmits([
 
 <style lang="sass" scoped>
 .card-container
-  @media only screen and (width > $breakpoint-sm)
+  @media only screen and (width > $breakpoint-xs)
     max-width: 600px !important
     height: auto !important
 </style>

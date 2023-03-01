@@ -7,8 +7,8 @@
     transition-hide="slide-down"
   >
     <q-card class="card-container text-grey-8 q-pa-md">
-      <div class="text-h5 gt-sm">Important Reminders</div>
-      <div class="text-h6 lt-md">Important Reminders</div>
+      <div class="text-h5 gt-xs">Important Reminders</div>
+      <div class="text-h6 lt-sm">Important Reminders</div>
 
       <q-separator class="q-my-md" />
 
@@ -84,7 +84,7 @@ defineEmits([
 
 <style lang="sass" scoped>
 .card-container
-  @media only screen and (width > $breakpoint-sm)
+  @media only screen and (width > $breakpoint-xs)
     max-width: 600px !important
     height: auto !important
 </style>

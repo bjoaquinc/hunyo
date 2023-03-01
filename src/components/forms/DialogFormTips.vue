@@ -7,8 +7,8 @@
     transition-hide="slide-down"
   >
     <q-card class="card-container text-grey-8 q-pa-md">
-      <div class="text-h5 gt-sm">Tips for taking better document photos</div>
-      <div class="text-h6 lt-md">Tips for taking better document photos</div>
+      <div class="text-h5 gt-xs">Tips for taking better document photos</div>
+      <div class="text-h6 lt-sm">Tips for taking better document photos</div>
 
       <q-separator class="q-my-md" />
       <q-list>
@@ -90,7 +90,7 @@ defineEmits([
 
 <style lang="sass" scoped>
 .card-container
-  @media only screen and (width > $breakpoint-sm)
+  @media only screen and (width > $breakpoint-xs)
     max-width: 600px !important
     height: auto !important
 </style>
