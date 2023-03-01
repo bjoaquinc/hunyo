@@ -131,7 +131,7 @@
             />
           </q-step>
 
-          <q-step
+          <!-- <q-step
             :name="3"
             title="Confirm Message"
             icon="fas fa-comment"
@@ -149,7 +149,7 @@
             <div class="text-caption text-negative q-mt-sm">
               *This information will be sent to each applicant. You can edit it.
             </div>
-          </q-step>
+          </q-step> -->
           <template v-slot:navigation v-if="hasDocs">
             <div class="flex">
               <q-btn
@@ -162,7 +162,7 @@
                 :loading="isLoading"
                 @click="onNext()"
                 class="q-ml-auto"
-                :label="step === 3 ? 'Send Emails' : 'Next'"
+                :label="step === 2 ? 'Send Emails' : 'Next'"
                 color="primary"
               />
             </div>
@@ -332,9 +332,9 @@ const setDashboard = async (dashboardId: string) => {
           if (docData.applicants) {
             savedEmails.value = docData.applicants;
           }
-          if (docData.messages) {
-            message.value = docData.messages.opening;
-          }
+          // if (docData.messages) {
+          //   message.value = docData.messages.opening;
+          // }
         }
         unsubDashboard.value = unsub;
         runOnlyOnce();
@@ -416,10 +416,11 @@ const onNext = () => {
   if (step.value === 1) {
     stepperRef.value?.next();
   } else if (step.value === 2) {
-    stepperRef.value?.next();
-  } else if (step.value === 3) {
     onSubmit();
   }
+  // else if (step.value === 3) {
+  //   onSubmit();
+  // }
 };
 
 const onSubmit = async () => {
