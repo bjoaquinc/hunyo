@@ -156,7 +156,7 @@ const store = useUserStore();
 const { user } = storeToRefs(store);
 const q = useQuasar();
 
-const searchText = ref('');
+// const searchText = ref('');
 
 const essentialLinks = [
   {

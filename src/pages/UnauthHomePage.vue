@@ -33,9 +33,9 @@
             color="primary"
           />
         </div>
-        <div class="col">
+        <div class="col" v-if="!$q.platform.is.mobile">
           <q-img
-            src="https://firebasestorage.googleapis.com/v0/b/hunyo-sending.appspot.com/o/homepage%2Fhomepage-image.png?alt=media&token=6a5b3a13-0b5a-4b4b-b144-50ad63b139aa"
+            src="https://firebasestorage.googleapis.com/v0/b/hunyo-sending.appspot.com/o/homepage%2Fhomepage-image.png?alt=media&token=c1169797-957a-4e09-aa51-02f7432b9d11"
           />
         </div>
       </q-card-section>
