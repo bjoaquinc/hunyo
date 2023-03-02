@@ -18,13 +18,26 @@
 
           <q-input
             class="q-mt-sm"
+            name="firstName"
+            autocomplete="given-name"
             :rules="[(val) => !!val || 'This field is required']"
-            label="First Name"
+            label="First Name(s)"
             filled
             v-model="name.first"
           />
           <q-input
             class="q-mt-sm"
+            name="middleName"
+            autocomplete="additional-name"
+            :rules="[(val) => !!val || 'This field is required']"
+            label="Full Middle Name (not initials)"
+            filled
+            v-model="name.middle"
+          />
+          <q-input
+            class="q-mt-sm"
+            name="lastName"
+            autocomplete="family-name"
             :rules="[(val) => !!val || 'This field is required']"
             label="Last Name"
             filled
@@ -62,6 +75,7 @@ const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const isLoading = ref(false);
 const name = ref({
   first: '',
+  middle: '',
   last: '',
 });
 

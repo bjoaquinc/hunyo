@@ -137,6 +137,7 @@ export interface Applicant {
   email: string;
   name?: {
     first: string;
+    middle: string;
     last: string;
   };
   latestMessage?: {

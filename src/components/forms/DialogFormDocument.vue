@@ -33,8 +33,7 @@
                 </div>
                 <q-btn
                   v-if="doc.sample"
-                  :href="sampleURL as string"
-                  target="_blank"
+                  @click="openDialogViewImage(sampleURL as string)"
                   :class="doc.instructions ? 'q-mt-md' : ''"
                   label="See Sample"
                   no-caps
@@ -56,7 +55,9 @@
             <div class="col">
               <q-file
                 ref="uploadFileRef"
-                v-model="uploadedFile"
+                v-model="files"
+                accept=".jpg, images/*, .pdf"
+                multiple
                 :reactive-rules="true"
                 :rules="[
                   (val) =>
@@ -64,7 +65,7 @@
                     'Upload at least one file to submit.',
                 ]"
                 standout
-                label="ADD IMAGE OR FILE"
+                label="ADD IMAGE OR PDF FILE"
                 filled
                 outlined
                 class="rounded-borders"
@@ -161,40 +162,58 @@
           >
             Your uploads (drag and drop to reorder the pages)
           </div>
-          <div
-            class="q-mt-md flex justify-between no-wrap"
-            v-for="(fileObject, index) in uploadedFiles"
-            :key="index"
+          <draggable
+            v-model="uploadedFiles"
+            group="people"
+            @start="drag = true"
+            @end="drag = false"
+            item-key="index"
           >
-            <q-btn
-              target="_blank"
-              no-caps
-              :href="fileObject.downloadURL"
-              flat
-              dense
-              class="gt-xs q-pr-sm"
-              :color="uploadedFileItemStyles[fileObject.status].textColor"
-              size="md"
-              :label="fileObject.file.name"
-            />
-            <q-btn
-              target="_blank"
-              no-caps
-              :href="fileObject.downloadURL"
-              flat
-              dense
-              class="lt-sm q-pr-sm"
-              :color="uploadedFileItemStyles[fileObject.status].textColor"
-              :label="fileObject.file.name"
-            />
-            <q-btn
-              @click="removeFile(index)"
-              :outline="uploadedFileItemStyles[fileObject.status].outline"
-              :color="uploadedFileItemStyles[fileObject.status].color"
-              :label="uploadedFileItemStyles[fileObject.status].label"
-              :flat="uploadedFileItemStyles[fileObject.status].flat"
-            />
-          </div>
+            <template #item="{ element }">
+              <q-item class="q-mt-sm" clickable>
+                <q-item-section>
+                  <q-item-label>
+                    <q-btn
+                      target="_blank"
+                      no-caps
+                      @click="openDialogViewImage(element.downloadURL)"
+                      flat
+                      dense
+                      class="gt-xs text-body1"
+                      :color="uploadedFileItemStyles[(element as UploadedFile).status].textColor"
+                      size="md"
+                    >
+                      <div class="text-left">
+                        {{ element.file.name }}
+                      </div>
+                    </q-btn>
+                    <q-btn
+                      target="_blank"
+                      no-caps
+                      @click="openDialogViewImage(element.downloadURL)"
+                      flat
+                      dense
+                      class="lt-sm text-body1"
+                      :color="uploadedFileItemStyles[(element as UploadedFile).status].textColor"
+                    >
+                      <div class="text-left">
+                        {{ element.file.name }}
+                      </div>
+                    </q-btn>
+                  </q-item-label>
+                </q-item-section>
+                <q-item-section avatar side>
+                  <q-btn
+                    @click="removeFile(index)"
+                    :outline="uploadedFileItemStyles[(element as UploadedFile).status].outline"
+                    :color="uploadedFileItemStyles[(element as UploadedFile).status].color"
+                    :label="uploadedFileItemStyles[(element as UploadedFile).status].label"
+                    :flat="uploadedFileItemStyles[(element as UploadedFile).status].flat"
+                  />
+                </q-item-section>
+              </q-item>
+            </template>
+          </draggable>
         </q-card-section>
         <q-card-actions>
           <q-btn
@@ -221,7 +240,11 @@ import { FormDoc, Form, PageStatus, FormPage } from 'src/utils/types';
 import { dbDocRefs } from 'src/utils/db';
 import { updateDoc } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
+import draggable from 'vuedraggable';
 import DialogFormTips from './DialogFormTips.vue';
+import DialogViewImage from './DialogViewImage.vue';
+
+const drag = ref(false);
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const $q = useQuasar();
@@ -274,14 +297,13 @@ onMounted(async () => {
 });
 
 const sampleURL = ref<string | null>(null);
-const uploadedFiles = ref<
-  {
-    name: string;
-    file: File;
-    status: PageStatus | 'New';
-    downloadURL: string;
-  }[]
->([]);
+interface UploadedFile {
+  name: string;
+  file: File;
+  status: PageStatus | 'New';
+  downloadURL: string;
+}
+const uploadedFiles = ref<UploadedFile[]>([]);
 const newUploadedFilesCount = computed(() => {
   return uploadedFiles.value.filter((file) => file.status === 'New').length;
 });
@@ -303,7 +325,7 @@ const rejectedFiles = computed(() => {
 const submittedFiles = computed(() => {
   return sortedPages.value.filter((page) => page.status === 'Submitted');
 });
-const uploadedFile = ref<File | null>(null);
+const files = ref<FileList | null>(null);
 const isLoading = ref(false);
 const isResubmit = computed(() =>
   props.doc.status === 'Rejected' ? true : false
@@ -315,19 +337,20 @@ const openDialogFormTips = () => {
   });
 };
 
-watch(uploadedFile, (newValue) => {
-  if (newValue) {
+watch(files, (newFiles) => {
+  if (newFiles) {
     isLoading.value = true;
-    const file = newValue;
-    const fileBlob = new Blob([file], { type: file.type });
-    const downloadURL = URL.createObjectURL(fileBlob);
-    uploadedFiles.value.push({
-      name: file.name,
-      file,
-      downloadURL,
-      status: 'New',
-    });
-    uploadedFile.value = null;
+    for (const file of newFiles) {
+      const fileBlob = new Blob([file], { type: file.type });
+      const downloadURL = URL.createObjectURL(fileBlob);
+      uploadedFiles.value.push({
+        name: file.name,
+        file,
+        downloadURL,
+        status: 'New',
+      });
+    }
+    files.value = null;
     isLoading.value = false;
   }
 });
@@ -428,6 +451,15 @@ const submitPages = async (pagesList: FormPage[]) => {
   };
   await updateDoc(formRef, {
     ...form,
+  });
+};
+
+const openDialogViewImage = (imgURL: string) => {
+  $q.dialog({
+    component: DialogViewImage,
+    componentProps: {
+      imgURL,
+    },
   });
 };
 
