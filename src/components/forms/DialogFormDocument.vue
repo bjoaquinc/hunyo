@@ -55,6 +55,7 @@
           <div class="row q-mt-xs" v-if="!isResubmit">
             <div class="col">
               <q-file
+                ref="uploadFileRef"
                 v-model="uploadedFile"
                 :reactive-rules="true"
                 :rules="[
@@ -69,10 +70,18 @@
                 class="rounded-borders"
               >
                 <template v-slot:prepend>
-                  <q-icon name="fas fa-file-arrow-up" />
+                  <q-icon
+                    style="cursor: pointer"
+                    @click="uploadFileRef?.pickFiles()"
+                    name="fas fa-file-arrow-up"
+                  />
                 </template>
                 <template v-slot:append>
-                  <q-icon name="fas fa-plus" />
+                  <q-icon
+                    style="cursor: pointer"
+                    @click="uploadFileRef?.pickFiles()"
+                    name="fas fa-plus"
+                  />
                 </template>
               </q-file>
             </div>
@@ -147,6 +156,12 @@
             </div>
           </div>
           <div
+            v-if="uploadedFiles.length > 0"
+            class="text-h6 text-grey-8 q-mt-sm"
+          >
+            Your uploads (drag and drop to reorder the pages)
+          </div>
+          <div
             class="q-mt-md flex justify-between no-wrap"
             v-for="(fileObject, index) in uploadedFiles"
             :key="index"
@@ -215,6 +230,7 @@ const props = defineProps<{
   index: number;
   form: Form & { id: string };
 }>();
+const uploadFileRef = ref<QFile | null>(null);
 const uploadedFileItemStyles = {
   New: {
     label: 'Delete',

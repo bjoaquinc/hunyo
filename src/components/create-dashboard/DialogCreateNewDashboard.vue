@@ -17,7 +17,7 @@
                 v-model="country"
                 use-input
                 input-debounce="0"
-                label="What country is this for?"
+                label="What is the destination country?"
                 :options="options"
                 @filter="filterFn"
                 :rules="[(val) => !!val || 'Country is Required']"
@@ -29,7 +29,7 @@
                 v-model="job"
                 :rules="[(val) => !!val || 'This field is required']"
                 filled
-                label="What job is this for?"
+                label="What job are you collecting documents for? (e.g. Nurse)"
                 type="textarea"
                 autogrow
                 outlined
@@ -40,7 +40,7 @@
                 v-model="title"
                 :rules="[(val) => !!val || 'This field is required']"
                 filled
-                label="Add a title"
+                label="Add a title (This is for your reference. Applicants will not see this)"
                 type="textarea"
                 autogrow
                 outlined

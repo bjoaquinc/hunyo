@@ -113,7 +113,15 @@
                 style="font-size: 10px"
                 class="text-weight-bold text-grey-7"
               >
-                Apr 15, 2022 11:45 am
+                {{
+                  DateTime.fromMillis(
+                    props.row.latestMessage.sentAt.toMillis()
+                  ).toLocaleString({
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
+                }}
               </div>
             </div>
           </q-td>
@@ -183,6 +191,7 @@ import { QTableProps, useQuasar } from 'quasar';
 import Header from './headers/DashboardCollectorHeader.vue';
 import { Applicant, PublishedDashboard, User } from 'src/utils/types';
 import { useUserStore } from 'src/stores/user-store';
+import { DateTime } from 'luxon';
 
 const headerRef = ref<InstanceType<typeof Header> | null>(null);
 

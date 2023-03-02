@@ -5,15 +5,15 @@
       :dashboard="dashboard"
       :applicants="applicants"
     />
-    <!-- <q-inner-loading :showing="trackNewApplicantsBeingAdded" color="white">
+    <q-inner-loading :showing="isReady" color="white">
       <q-spinner-pie size="80px" color="primary" />
       <div class="text-subtitle1 q-mt-sm text-grey8">Adding applicants...</div>
-    </q-inner-loading> -->
+    </q-inner-loading>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch } from 'vue';
+import { onMounted, onUnmounted, watch, ref } from 'vue';
 import { useDashboardStore } from 'src/stores/dashboard-store';
 import { dbDocRefs } from 'src/utils/db';
 import { useUserStore } from 'src/stores/user-store';
@@ -26,9 +26,11 @@ const { dashboard, applicants, unsubDashboard, unsubApplicants } =
   storeToRefs(store);
 const { user } = useUserStore();
 const props = defineProps(['dashboardId']);
+const isReady = ref(false);
 
 onMounted(async () => {
   if (!user) return;
+  isReady.value = true;
   const dashboardRef = dbDocRefs.getPublishedDashboardRef(
     user.company.id,
     props.dashboardId
@@ -37,6 +39,7 @@ onMounted(async () => {
   if (dashboard.value) {
     await setApplicants(user.company.id, props.dashboardId);
   }
+  isReady.value = false;
 });
 
 onUnmounted(() => {
