@@ -1,5 +1,6 @@
 import { route } from 'quasar/wrappers';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useUserStore } from 'src/stores/user-store';
 import {
   createMemoryHistory,
   createRouter,
@@ -38,9 +39,10 @@ export default route(function (/* { store, ssrContext } */) {
 
   Router.beforeEach((to, from, next) => {
     const { userAuth } = useAuthStore();
+    const { user } = useUserStore();
     if (to.meta.requiresAuth && !userAuth) {
       next({ name: 'LandingPage' });
-    } else if (userAuth && to.name === 'LandingPage') {
+    } else if (userAuth && user && to.name === 'LandingPage') {
       next({ name: 'DashboardsPage' });
     } else {
       next();
