@@ -1,50 +1,61 @@
 <template>
   <q-page>
     <div
-      class="row q-gutter-md q-py-md"
+      class="row q-col-gutter-md q-py-md"
       v-if="selectedPage && selectedDoc && isReady"
     >
-      <q-img class="col" style="width: 100%; height: auto" :src="originalPage">
-        <div class="full-width flex transparent">
-          <q-btn
-            :href="originalPage"
-            target="_blank"
-            class="q-ml-auto bg-black"
-            style="opacity: 0.7"
-            round
-            icon="fas fa-arrow-down"
-            size="lg"
-            flat
-          />
-        </div>
-      </q-img>
-      <embed
-        v-if="selectedDoc.format === 'pdf'"
-        :src="fixedPage"
-        type="application/pdf"
-        style="width: 100%; height: auto"
-        class="col"
-        inline
-      />
-      <q-img
-        v-else
-        class="col"
-        style="width: 100%; height: auto"
-        :src="fixedPage"
-      >
-        <div class="full-width flex transparent">
-          <q-btn
-            :href="fixedPage"
-            target="_blank"
-            class="q-ml-auto bg-black"
-            style="opacity: 0.7"
-            round
-            icon="fas fa-arrow-down"
-            size="lg"
-            flat
-          />
-        </div>
-      </q-img>
+      <!-- Original Page Render -->
+      <div class="col">
+        <q-img
+          v-if="selectedPage.submittedFormat === 'image/jpeg'"
+          style="width: 100%; height: auto"
+          :src="originalPage"
+        >
+          <div class="full-width flex transparent">
+            <q-btn
+              :href="originalPage"
+              target="_blank"
+              class="q-ml-auto bg-black"
+              style="opacity: 0.7"
+              round
+              icon="fas fa-arrow-down"
+              size="lg"
+              flat
+            />
+          </div>
+        </q-img>
+        <embed
+          v-else
+          :src="originalPage"
+          type="application/pdf"
+          style="width: 100%; height: 85vh"
+          inline
+        />
+      </div>
+      <!-- Fixed Page Render (if original is an image) -->
+      <div class="col" v-if="selectedPage.submittedFormat === 'image/jpeg'">
+        <embed
+          v-if="selectedDoc.format === 'pdf'"
+          :src="fixedPage"
+          type="application/pdf"
+          style="width: 100%; height: 100%"
+          inline
+        />
+        <q-img v-else style="width: 100%; height: auto" :src="fixedPage">
+          <div class="full-width flex transparent">
+            <q-btn
+              :href="fixedPage"
+              target="_blank"
+              class="q-ml-auto bg-black"
+              style="opacity: 0.7"
+              round
+              icon="fas fa-arrow-down"
+              size="lg"
+              flat
+            />
+          </div>
+        </q-img>
+      </div>
       <div
         class="col-12 flex justify-around q-py-md"
         v-if="!selectedPage.adminCheckStatus"
@@ -99,20 +110,26 @@ watch(
     ) {
       console.log(props.selectedAdminCheck);
       isReady.value = false;
+      const ORIGINAL_FORMAT =
+        newValue.selectedPage.submittedFormat === 'application/pdf'
+          ? 'pdf'
+          : 'jpeg';
       const originalPageRef = storageRefs.getOriginalDocRef(
         newValue.selectedAdminCheck.companyId,
         newValue.selectedAdminCheck.dashboard.id,
         newValue.selectedAdminCheck.applicant.id,
-        `${newValue.selectedPage.name}.jpeg`
+        `${newValue.selectedPage.name}.${ORIGINAL_FORMAT}`
       );
       originalPage.value = await getDownloadURL(originalPageRef);
-      const fixedPageRef = storageRefs.getFixedDocRef(
-        newValue.selectedAdminCheck.companyId,
-        newValue.selectedAdminCheck.dashboard.id,
-        newValue.selectedAdminCheck.applicant.id,
-        `${newValue.selectedPage.name}.${newValue.selectedDoc.format}`
-      );
-      fixedPage.value = await getDownloadURL(fixedPageRef);
+      if (ORIGINAL_FORMAT === 'jpeg') {
+        const fixedPageRef = storageRefs.getFixedDocRef(
+          newValue.selectedAdminCheck.companyId,
+          newValue.selectedAdminCheck.dashboard.id,
+          newValue.selectedAdminCheck.applicant.id,
+          `${newValue.selectedPage.name}.${newValue.selectedDoc.format}`
+        );
+        fixedPage.value = await getDownloadURL(fixedPageRef);
+      }
       isReady.value = true;
     }
   },

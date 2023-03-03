@@ -339,29 +339,38 @@ watch(selectedAdminCheck, (newValue, oldValue) => {
   }
 });
 
+// Update original and fixed metadata
 watch(selectedPage, async (newValue) => {
   if (newValue && selectedAdminCheck.value) {
     const companyId = selectedAdminCheck.value.companyId;
     const dashboardId = selectedAdminCheck.value.dashboard.id;
     const applicantId = selectedAdminCheck.value.applicant.id;
+    const submittedFormat = newValue.submittedFormat;
     const getFileName = (format: string) => `${newValue.name}.${format}`;
-    const ORIGINAL_FORMAT = 'jpeg';
+    const ORIGINAL_FORMAT =
+      submittedFormat === 'application/pdf' ? 'pdf' : 'jpeg';
+    console.log(getFileName(ORIGINAL_FORMAT));
     const originalPageRef = storageRefs.getOriginalDocRef(
       companyId,
       dashboardId,
       applicantId,
       getFileName(ORIGINAL_FORMAT)
     );
-    const fixedPageRef = storageRefs.getFixedDocRef(
-      companyId,
-      dashboardId,
-      applicantId,
-      getFileName((selectedDoc.value as AdminCheckDoc).format)
-    );
+    console.log(originalPageRef.fullPath);
     originalMetadata.value = await getMetadata(originalPageRef);
-    fixedMetadata.value = await getMetadata(fixedPageRef);
+    if (originalMetadata.value.contentType === 'image/jpeg') {
+      // If the original file is an image, it has a fixed image
+      const fixedPageRef = storageRefs.getFixedDocRef(
+        companyId,
+        dashboardId,
+        applicantId,
+        getFileName((selectedDoc.value as AdminCheckDoc).format)
+      );
+      fixedMetadata.value = await getMetadata(fixedPageRef);
+    }
   } else {
     originalMetadata.value = null;
+    fixedMetadata.value = null;
   }
 });
 
