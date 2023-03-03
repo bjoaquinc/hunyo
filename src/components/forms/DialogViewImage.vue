@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { QDialog, useDialogPluginComponent, useQuasar } from 'quasar';
+import { QDialog, useDialogPluginComponent } from 'quasar';
 
 const props = defineProps<{
   imgURL: string;

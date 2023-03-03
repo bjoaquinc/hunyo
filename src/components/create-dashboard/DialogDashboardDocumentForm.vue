@@ -143,6 +143,7 @@ const onSubmit = async () => {
       newDoc.instructions = instructions.value;
     }
     if (props.editDocDetails) {
+      newDoc.docNumber = props.editDocDetails.docNumber; // Retain the original doc number;
       await editDoc(newDoc);
     } else {
       await addDoc(newDoc);

@@ -7,7 +7,7 @@
     />
     <q-inner-loading :showing="isReady" color="white">
       <q-spinner-pie size="80px" color="primary" />
-      <div class="text-subtitle1 q-mt-sm text-grey8">Adding applicants...</div>
+      <!-- <div class="text-subtitle1 q-mt-sm text-grey8">Adding applicants...</div> -->
     </q-inner-loading>
   </q-page>
 </template>
