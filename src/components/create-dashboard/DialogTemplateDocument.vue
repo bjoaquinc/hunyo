@@ -143,7 +143,7 @@ onMounted(async () => {
 
 const getSampleURL = async (sampleName: string) => {
   if (!user) return;
-  const sampleRef = storageRefs.getNewSampleRef(
+  const sampleRef = storageRefs.getSampleRef(
     user.company.id,
     props.dashboardId,
     sampleName
@@ -186,7 +186,7 @@ const removeDoc = async () => {
 };
 
 const removeSampleFromStorage = async (sampleName: string) => {
-  const sampleRef = storageRefs.getNewSampleRef(
+  const sampleRef = storageRefs.getSampleRef(
     companyId,
     props.dashboardId,
     sampleName

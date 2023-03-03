@@ -11,13 +11,28 @@ const getRef = (...ids: string[]) => {
 
 export const storageRefs = {
   getLogoRef: (logoName: string) => getRef('logos', logoName),
-  getSampleRef: (companyId: string, sampleName: string) =>
-    getRef('companies', companyId, 'samples', sampleName),
   getNewSampleRef: (
     companyId: string,
     dashboardId: string,
     sampleName: string
-  ) => getRef('companies', companyId, 'dashboards', dashboardId, sampleName),
+  ) =>
+    getRef(
+      'companies',
+      companyId,
+      'dashboards',
+      dashboardId,
+      'new-samples',
+      sampleName
+    ),
+  getSampleRef: (companyId: string, dashboardId: string, sampleName: string) =>
+    getRef(
+      'companies',
+      companyId,
+      'dashboards',
+      dashboardId,
+      'samples',
+      sampleName
+    ),
   getTemporaryDocsRef: (docName: string) => getRef('temporary-docs', docName),
   getFixedDocRef: (
     companyId: string,

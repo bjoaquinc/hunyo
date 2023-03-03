@@ -287,7 +287,7 @@ const uploadedFileItemStyles = {
 
 onMounted(async () => {
   if (props.doc.sample) {
-    const sampleRef = storageRefs.getNewSampleRef(
+    const sampleRef = storageRefs.getSampleRef(
       props.form.company.id,
       props.form.dashboard.id,
       props.doc.sample.file

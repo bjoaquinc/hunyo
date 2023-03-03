@@ -41,8 +41,9 @@
                 filled
                 :label="`${
                   editDocDetails && editDocDetails.sample ? 'Replace' : 'Upload'
-                } Sample (Optional)`"
+                } Sample PDF or Image (Optional)`"
                 class="q-mt-xs"
+                accept="image/*,application/pdf"
                 outlined
               >
                 <template v-slot:prepend>
@@ -82,10 +83,9 @@
 <script setup lang="ts">
 import { deleteField, updateDoc } from '@firebase/firestore';
 import { deleteObject, uploadBytes } from '@firebase/storage';
-import { QDialog, uid, useDialogPluginComponent } from 'quasar';
+import { QDialog, useDialogPluginComponent } from 'quasar';
 import { useUserStore } from 'src/stores/user-store';
 import { dbDocRefs } from 'src/utils/db';
-import { getFileNameWithContentTypeSuffix } from 'src/utils/file';
 import { storageRefs } from 'src/utils/storage';
 import { DashboardDoc } from 'src/utils/types';
 import { ref, onMounted } from 'vue';
@@ -191,7 +191,7 @@ const editDoc = async (newDoc: DashboardDoc) => {
 const uploadSampleToStorage = async () => {
   if (!sample.value) return null;
   const contentType = sample.value.type;
-  const sampleName = getFileNameWithContentTypeSuffix(contentType, uid());
+  const sampleName = `sample_${name.value}`;
   const storageRef = storageRefs.getNewSampleRef(
     companyId,
     props.dashboardId,
@@ -207,7 +207,7 @@ const uploadSampleToStorage = async () => {
 };
 
 const removeSampleFromStorage = async (sampleName: string) => {
-  const storageRef = storageRefs.getNewSampleRef(
+  const storageRef = storageRefs.getSampleRef(
     companyId,
     props.dashboardId,
     sampleName
