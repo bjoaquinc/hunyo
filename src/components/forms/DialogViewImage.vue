@@ -2,7 +2,7 @@
   <q-dialog
     ref="dialogRef"
     @hide="onDialogHide"
-    :maximized="true"
+    maximized
     persistent
     transition-show="slide-up"
     transition-hide="slide-down"
@@ -14,10 +14,9 @@
       <q-card-section>
         <div class="flex full-width">
           <q-btn
-            class="q-ml-auto lt-sm"
+            class="q-ml-auto lt-sm text-black"
             icon="close"
             round
-            outline
             dense
             color="white"
             @click="dialogRef?.hide()"
