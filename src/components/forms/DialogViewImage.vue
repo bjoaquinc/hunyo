@@ -11,7 +11,7 @@
       style="max-width: 100% !important; max-height: 100vh"
       class="bg-black transparent"
     >
-      <q-card-section>
+      <q-card-section style="height: 100vh" @click="dialogRef?.hide()">
         <div class="flex full-width">
           <q-btn
             class="q-ml-auto lt-sm text-black"
@@ -33,9 +33,17 @@
         </div>
       </q-card-section>
       <q-img
+        v-if="contentType === 'image/jpeg'"
         class="image-width absolute-center"
         fit="contain"
         :src="props.imgURL"
+      />
+      <embed
+        v-else
+        class="image-width absolute-center"
+        :src="props.imgURL"
+        type="application/pdf"
+        header="none"
       />
     </q-card>
   </q-dialog>
@@ -46,6 +54,7 @@ import { QDialog, useDialogPluginComponent } from 'quasar';
 
 const props = defineProps<{
   imgURL: string;
+  contentType: string;
 }>();
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
@@ -66,6 +75,6 @@ defineEmits([
   width: 100vw
   @media only screen and (width > $breakpoint-xs)
     width: auto
-    height: 80vh
+    height: 90vh
     aspect-ratio: 1/1
 </style>

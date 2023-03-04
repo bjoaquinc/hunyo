@@ -32,8 +32,8 @@
                   {{ doc.instructions }}
                 </div>
                 <q-btn
-                  v-if="doc.sample"
-                  @click="openDialogViewImage(sampleURL as string)"
+                  v-if="sample"
+                  @click="openDialogViewImage(sample.url, sample.contentType)"
                   :class="doc.instructions ? 'q-mt-md' : ''"
                   label="See Sample"
                   no-caps
@@ -41,7 +41,7 @@
                 />
                 <q-btn
                   @click="openDialogFormTips"
-                  :class="doc.instructions || doc.sample ? 'q-mt-md' : ''"
+                  :class="doc.instructions || sample ? 'q-mt-md' : ''"
                   label="View tips for taking better document photos"
                   no-caps
                   outline
@@ -176,7 +176,7 @@
                     <q-btn
                       target="_blank"
                       no-caps
-                      @click="openDialogViewImage(element.downloadURL)"
+                      @click="openDialogViewImage(element.downloadURL, element.file.type)"
                       flat
                       dense
                       class="gt-xs text-body1"
@@ -190,7 +190,7 @@
                     <q-btn
                       target="_blank"
                       no-caps
-                      @click="openDialogViewImage(element.downloadURL)"
+                      @click="openDialogViewImage(element.downloadURL, element.file.type)"
                       flat
                       dense
                       class="lt-sm text-body1"
@@ -232,7 +232,7 @@
 </template>
 
 <script setup lang="ts">
-import { getDownloadURL, uploadBytes } from '@firebase/storage';
+import { getDownloadURL, getMetadata, uploadBytes } from '@firebase/storage';
 import { QDialog, QFile, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
 import { ref, watch, computed, onMounted } from 'vue';
@@ -286,17 +286,32 @@ const uploadedFileItemStyles = {
 };
 
 onMounted(async () => {
+  await setSample();
+});
+
+const setSample = async () => {
   if (props.doc.sample) {
     const sampleRef = storageRefs.getSampleRef(
       props.form.company.id,
       props.form.dashboard.id,
       props.doc.sample.file
     );
-    sampleURL.value = await getDownloadURL(sampleRef);
+    const metadata = await getMetadata(sampleRef)
+    const contentType = metadata.contentType;
+    const url = await getDownloadURL(sampleRef);
+    if (url && contentType) {
+      sample.value = {
+        url,
+        contentType,
+      };
+    }
   }
-});
+}
 
-const sampleURL = ref<string | null>(null);
+const sample = ref<{
+  url: string;
+  contentType: string;
+} | null>(null);
 interface UploadedFile {
   name: string;
   file: File;
@@ -454,11 +469,12 @@ const submitPages = async (pagesList: FormPage[]) => {
   });
 };
 
-const openDialogViewImage = (imgURL: string) => {
+const openDialogViewImage = (imgURL: string, contentType: string) => {
   $q.dialog({
     component: DialogViewImage,
     componentProps: {
       imgURL,
+      contentType,
     },
   });
 };
