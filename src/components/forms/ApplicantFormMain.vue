@@ -28,7 +28,7 @@
       <q-card-section class="q-pt-none">
         <q-list class="gt-xs" separator>
           <q-item
-            @click="openDialogDocument(index)"
+            @click="onDocumentClick(index)"
             class="text-h6 q-py-md rounded-borders"
             :class="
               documentItemStyles[doc.status].bgColor
@@ -69,7 +69,7 @@
         </q-list>
         <q-list class="lt-sm" separator>
           <q-item
-            @click="openDialogDocument(index)"
+            @click="onDocumentClick(index)"
             class="text-subtitle1 q-py-md"
             :class="
               documentItemStyles[doc.status].bgColor
@@ -103,11 +103,13 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
 import { onMounted, ref, computed } from 'vue';
-import DialogFormDocument from 'src/components/forms/DialogFormDocument.vue';
+import DialogFormSubmitDoc from 'src/components/forms/DialogFormSubmitDoc.vue';
 import { Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
 import { DateTime } from 'luxon';
+import DialogFormDocumentAvailability from './DialogFormDocumentAvailability.vue';
+import DialogFormScheduleSubmission from './DialogFormScheduleSubmission.vue';
 
 const props = defineProps<{
   form: Form & { id: string };
@@ -123,7 +125,7 @@ const deadline = computed(() => {
   });
 });
 
-const q = useQuasar();
+const $q = useQuasar();
 const documentItemStyles = {
   'Not Submitted': {
     textColor: 'primary',
@@ -169,14 +171,42 @@ onMounted(async () => {
   }
 });
 
-const openDialogDocument = (index: number) => {
-  q.dialog({
-    component: DialogFormDocument,
+const onDocumentClick = (index: number) => {
+  $q.dialog({
+    component: DialogFormDocumentAvailability,
     componentProps: {
-      doc: sortedDocs.value[index],
-      form: props.form,
-      index,
+      docName: sortedDocs.value[index].name,
     },
+  }).onOk((documentAvailability) => {
+    if (documentAvailability === 'available') {
+      $q.dialog({
+        component: DialogFormSubmitDoc,
+        componentProps: {
+          doc: sortedDocs.value[index],
+          form: props.form,
+          index,
+        },
+      });
+    }
+
+    if (documentAvailability === 'not-available') {
+      $q.dialog({
+        component: DialogFormScheduleSubmission,
+        componentProps: {
+          docName: sortedDocs.value[index].name,
+        },
+      }).onOk(() => {
+        $q.notify({
+          message:
+            'Noted on this, we will follow up with you on this date. Thank you.',
+          type: 'positive',
+        });
+      });
+    }
+
+    if (documentAvailability === 'not-applicable') {
+      // Not applicable
+    }
   });
 };
 </script>
