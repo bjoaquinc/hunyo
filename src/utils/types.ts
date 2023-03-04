@@ -1,12 +1,34 @@
 import { FieldValue, Timestamp } from 'firebase/firestore';
 
-type Formats = 'jpeg' | 'pdf';
+// Hardcoded types
 
-// Tasks for the system
+export type Formats = 'jpeg' | 'pdf';
 
 export type FormTask = 'createDoc' | 'resubmitDoc' | 'resubmitPages';
 
-type ActionsType = 'verifyDocuments' | 'messageNotSent';
+export type ActionsType = 'verifyDocuments' | 'messageNotSent';
+
+export type RejectionCode = 'replacePages' | 'replaceDoc' | 'additionalDocs';
+
+export type ApplicantStatus = 'Not Submitted' | 'Incomplete' | 'Complete';
+
+export type ApplicantDashboardMessageStatus =
+  | 'Pending'
+  | 'Delivered'
+  | 'Not Delivered';
+
+export type DocumentStatus =
+  | 'Submitted'
+  | 'Accepted'
+  | 'Rejected'
+  | 'Not Submitted'
+  | 'Not Applicable';
+
+export type PageStatus = 'Submitted' | 'Accepted' | 'Rejected';
+
+export type AdminCheckStatus = 'Accepted' | 'Rejected' | 'Not Checked';
+
+// Firebase models
 
 export interface Invite {
   createdAt: Timestamp | FieldValue;
@@ -162,23 +184,6 @@ export interface ApplicantDoc {
   format: Formats;
 }
 
-export type ApplicantStatus = 'Not Submitted' | 'Incomplete' | 'Complete';
-
-export type ApplicantDashboardMessageStatus =
-  | 'Pending'
-  | 'Delivered'
-  | 'Not Delivered';
-
-export type DocumentStatus =
-  | 'Submitted'
-  | 'Accepted'
-  | 'Rejected'
-  | 'Not Submitted';
-
-export type PageStatus = 'Submitted' | 'Accepted' | 'Rejected';
-
-export type AdminCheckStatus = 'Accepted' | 'Rejected' | 'Not Checked';
-
 export interface Form {
   applicant: {
     id: string;
@@ -221,6 +226,48 @@ export interface UpdatedForm extends Omit<Form, 'applicant'> {
   };
 }
 
+export interface AdminCheck {
+  createdAt: Timestamp;
+  applicant: {
+    name: {
+      first: string;
+      last: string;
+    };
+    id: string;
+  };
+  companyId: string;
+  dashboard: {
+    id: string;
+    job: string;
+    country: string;
+    deadline: Timestamp;
+  };
+  formId: string;
+  docs: { [key: string]: AdminCheckDoc };
+  adminCheckStatus: AdminCheckStatus;
+}
+
+export interface Action {
+  createdAt: Timestamp;
+  applicant: {
+    id: string;
+    name: {
+      first: string;
+      last: string;
+    };
+  };
+  workerDocId: string;
+  doc: WorkerDoc;
+  isComplete: boolean;
+  competedBy?: {
+    name: {
+      first: string;
+      last: string;
+    };
+    id: string;
+  };
+}
+
 // Docs
 
 export interface DashboardDoc {
@@ -236,8 +283,14 @@ export interface DashboardDoc {
 export interface FormDoc extends DashboardDoc {
   name: string;
   status: DocumentStatus;
+  rejectionCode?: RejectionCode;
+  rejectionReason?: string;
   systemTask: FormTask | null;
   pages?: { [key: string]: FormPage };
+  delayed?: {
+    isDelayed: boolean;
+    date: Timestamp;
+  };
   deviceSubmitted?: 'mobile' | 'desktop';
 }
 
@@ -247,6 +300,18 @@ export interface AdminCheckDoc
   pages: { [key: string]: AdminCheckPage };
   adminCheckStatus: AdminCheckStatus;
 }
+
+export interface WorkerDoc extends Omit<AdminCheckDoc, 'pages'> {
+  createdAt: Timestamp;
+  companyId: string;
+  dashboardId: string;
+  applicantId: string;
+  adminCheckId: string;
+  formId: string;
+  pages: { [key: string]: AdminCheckPage };
+}
+
+// Pages
 
 export interface FormPage {
   name: string;
@@ -269,59 +334,7 @@ export interface AdminCheckPage
   adminCheckStatus?: AdminCheckStatus;
 }
 
-export interface AdminCheck {
-  createdAt: Timestamp;
-  applicant: {
-    name: {
-      first: string;
-      last: string;
-    };
-    id: string;
-  };
-  companyId: string;
-  dashboard: {
-    id: string;
-    job: string;
-    country: string;
-    deadline: Timestamp;
-  };
-  formId: string;
-  docs: { [key: string]: AdminCheckDoc };
-  adminCheckStatus: AdminCheckStatus;
-}
-
-export interface WorkerDoc extends Omit<AdminCheckDoc, 'pages'> {
-  createdAt: Timestamp;
-  companyId: string;
-  dashboardId: string;
-  applicantId: string;
-  adminCheckId: string;
-  formId: string;
-  pages: { [key: string]: AdminCheckPage };
-}
-
-// Lets make it doc
-
-export interface Action {
-  createdAt: Timestamp;
-  applicant: {
-    id: string;
-    name: {
-      first: string;
-      last: string;
-    };
-  };
-  workerDocId: string;
-  doc: WorkerDoc;
-  isComplete: boolean;
-  competedBy?: {
-    name: {
-      first: string;
-      last: string;
-    };
-    id: string;
-  };
-}
+// Message types
 
 export interface Message {
   createdAt: Timestamp;

@@ -44,6 +44,7 @@
             :label="`I'm waiting to receive my ${props.docName}`"
           />
           <q-btn
+            @click="onDialogOK('not-applicable')"
             size="lg"
             class="q-mt-lg full-width"
             outline

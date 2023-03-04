@@ -48,8 +48,9 @@
             </q-item-section>
             <q-item-section
               :class="`text-${documentItemStyles[doc.status].textColor}`"
-              >{{ doc.name }}</q-item-section
-            >
+              >{{ doc.name }}
+              {{ doc.delayed && doc.delayed.isDelayed ? ' (Delayed)' : '' }}
+            </q-item-section>
             <q-item-section class="text-subtitle1 text-grey-8">
               <div
                 class="q-ml-auto flex items-center"
@@ -83,7 +84,10 @@
           >
             <q-item-section
               :class="`text-${documentItemStyles[doc.status].textColor}`"
-              >Upload {{ doc.name }}</q-item-section
+            >
+              {{
+                `${documentItemStyles[doc.status].mobileLabel} ${doc.name}`
+              }}</q-item-section
             >
             <q-item-section avatar>
               <q-icon
@@ -110,6 +114,8 @@ import { getDownloadURL } from '@firebase/storage';
 import { DateTime } from 'luxon';
 import DialogFormDocumentAvailability from './DialogFormDocumentAvailability.vue';
 import DialogFormScheduleSubmission from './DialogFormScheduleSubmission.vue';
+import { dbDocRefs } from 'src/utils/db';
+import { updateDoc } from '@firebase/firestore';
 
 const props = defineProps<{
   form: Form & { id: string };
@@ -131,6 +137,7 @@ const documentItemStyles = {
     textColor: 'primary',
     actionIcon: 'fas fa-chevron-right',
     actionLabel: 'Submit now',
+    mobileLabel: 'Upload',
     clickable: true,
     bgColor: null,
   },
@@ -138,6 +145,7 @@ const documentItemStyles = {
     textColor: 'grey-8',
     actionIcon: 'fas fa-check',
     actionLabel: 'Submitted',
+    mobileLabel: 'Uploaded',
     clickable: false,
     bgColor: null,
   },
@@ -145,6 +153,7 @@ const documentItemStyles = {
     textColor: 'positive',
     actionIcon: 'fas fa-check',
     actionLabel: 'Accepted',
+    mobileLabel: 'Accepted',
     clickable: false,
     bgColor: null,
   },
@@ -153,6 +162,15 @@ const documentItemStyles = {
     textColor: 'white',
     actionIcon: 'fas fa-chevron-right',
     actionLabel: 'Rejected. Resubmit now',
+    mobileLabel: 'Rejected',
+    clickable: true,
+  },
+  'Not Applicable': {
+    bgColor: null,
+    textColor: 'grey-6',
+    actionIcon: 'fas fa-minus',
+    actionLabel: 'Not Applicable. Change?',
+    mobileLabel: 'Not Applicable',
     clickable: true,
   },
 };
@@ -172,6 +190,25 @@ onMounted(async () => {
 });
 
 const onDocumentClick = (index: number) => {
+  const docStatus = sortedDocs.value[index].status;
+  const rejectionCode = sortedDocs.value[index].rejectionCode;
+  if (docStatus === 'Not Submitted') {
+    onNotSubmitted(index);
+  }
+  if (docStatus === 'Rejected' && rejectionCode) {
+    // TODO: Add a function to handle rejection codes;
+  }
+  if (docStatus === 'Not Applicable') {
+    // TODO: Add a dialog to change to applicable
+  }
+  if (docStatus === 'Accepted') {
+    // TODO: Add a dialog to view the document
+  }
+  if (docStatus === 'Submitted') {
+    // TODO: Add a dialog to view the document
+  }
+};
+const onNotSubmitted = (index: number) => {
   $q.dialog({
     component: DialogFormDocumentAvailability,
     componentProps: {
@@ -193,7 +230,8 @@ const onDocumentClick = (index: number) => {
       $q.dialog({
         component: DialogFormScheduleSubmission,
         componentProps: {
-          docName: sortedDocs.value[index].name,
+          doc: sortedDocs.value[index],
+          formId: props.form.id,
         },
       }).onOk(() => {
         $q.notify({
@@ -205,7 +243,19 @@ const onDocumentClick = (index: number) => {
     }
 
     if (documentAvailability === 'not-applicable') {
-      // Not applicable
+      const formRef = dbDocRefs.getFormRef(props.form.id);
+      const DOC_STATUS_COMPUTED_KEY = `docs.${sortedDocs.value[index].docId}.status`;
+      const updatedData = {
+        [DOC_STATUS_COMPUTED_KEY]: 'Not Applicable',
+      };
+      updateDoc(formRef, {
+        ...updatedData,
+      }).then(() => {
+        $q.notify({
+          message: 'Document changed to Not Applicable.',
+          type: 'grey-8',
+        });
+      });
     }
   });
 };

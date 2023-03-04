@@ -11,10 +11,10 @@
         <q-card-section>
           <div class="flex">
             <div class="text-h5 gt-xs">
-              When can you submit your {{ docName }}?
+              When can you submit your {{ doc.name }}?
             </div>
             <div class="text-h6 lt-sm">
-              When can you submit your {{ docName }}?
+              When can you submit your {{ doc.name }}?
             </div>
             <q-btn
               v-close-popup
@@ -86,6 +86,9 @@
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { ref } from 'vue';
 import { DateTime } from 'luxon';
+import { dbDocRefs } from 'src/utils/db';
+import { FormDoc } from 'src/utils/types';
+import { updateDoc, Timestamp } from 'firebase/firestore';
 
 const date = ref('');
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
@@ -95,12 +98,29 @@ const dateIsGreaterThanToday = (date: string) => {
   return date > today;
 };
 
-defineProps<{
-  docName: string;
+const props = defineProps<{
+  doc: FormDoc & { docId: string };
+  formId: string;
 }>();
 
-const onSubmit = () => {
+const onSubmit = async () => {
   isLoading.value = true;
+  const formRef = dbDocRefs.getFormRef(props.formId);
+  console.log('doc', props.doc);
+  const DOC_COMPUTED_KEY = `docs.${props.doc.docId}`;
+  console.log(DOC_COMPUTED_KEY);
+  const DATE_TO_TIMESTAMP = Timestamp.fromMillis(
+    DateTime.fromFormat(date.value, 'yyyy/MM/dd').toMillis()
+  );
+  const updatedData = {
+    [`${DOC_COMPUTED_KEY}.delayed`]: {
+      date: DATE_TO_TIMESTAMP,
+      isDelayed: true,
+    },
+  };
+  await updateDoc(formRef, {
+    ...updatedData,
+  });
   onDialogOK();
   isLoading.value = false;
 };
