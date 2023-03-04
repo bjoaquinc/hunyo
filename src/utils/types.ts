@@ -283,8 +283,10 @@ export interface DashboardDoc {
 export interface FormDoc extends DashboardDoc {
   name: string;
   status: DocumentStatus;
-  rejectionCode?: RejectionCode;
-  rejectionReason?: string;
+  rejection?: {
+    code: RejectionCode;
+    message: string;
+  };
   systemTask: FormTask | null;
   pages?: { [key: string]: FormPage };
   delayed?: {

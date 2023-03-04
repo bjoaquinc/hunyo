@@ -32,7 +32,7 @@
             outline
             no-caps
             color="primary"
-            :label="`I have my ${props.docName}`"
+            :label="`I have my ${doc.name}`"
           />
           <q-btn
             @click="onDialogOK('not-available')"
@@ -41,16 +41,16 @@
             outline
             no-caps
             color="primary"
-            :label="`I'm waiting to receive my ${props.docName}`"
+            :label="`I'm waiting to receive my ${doc.name}`"
           />
           <q-btn
-            @click="onDialogOK('not-applicable')"
+            @click="changeStatusToNotApplicable"
             size="lg"
             class="q-mt-lg full-width"
             outline
             no-caps
             color="primary"
-            :label="`${props.docName} does not apply to me`"
+            :label="`${doc.name} does not apply to me`"
           />
         </q-card-section>
         <q-inner-loading :showing="isLoading">
@@ -62,11 +62,15 @@
 </template>
 
 <script setup lang="ts">
+import { updateDoc } from '@firebase/firestore';
 import { QDialog, useDialogPluginComponent } from 'quasar';
+import { dbDocRefs } from 'src/utils/db';
+import { FormDoc } from 'src/utils/types';
 import { ref } from 'vue';
 
 const props = defineProps<{
-  docName: string;
+  doc: FormDoc & { docId: string };
+  formId: string;
 }>();
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
@@ -77,6 +81,20 @@ defineEmits([
   // component will emit through useDialogPluginComponent()
   ...useDialogPluginComponent.emits,
 ]);
+
+const changeStatusToNotApplicable = async () => {
+  isLoading.value = true;
+  const formRef = dbDocRefs.getFormRef(props.formId);
+  const DOC_STATUS_COMPUTED_KEY = `docs.${props.doc.docId}.status`;
+  const updatedData = {
+    [DOC_STATUS_COMPUTED_KEY]: 'Not Applicable',
+  };
+  await updateDoc(formRef, {
+    ...updatedData,
+  });
+  onDialogOK('not-applicable');
+  isLoading.value = false;
+};
 </script>
 
 <style lang="sass" scoped>

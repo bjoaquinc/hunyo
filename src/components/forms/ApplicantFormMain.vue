@@ -107,15 +107,13 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
 import { onMounted, ref, computed } from 'vue';
-import DialogFormSubmitDoc from 'src/components/forms/DialogFormSubmitDoc.vue';
+import DialogFormSubmitDoc from 'src/components/forms/dialogs/DialogFormSubmitDoc.vue';
 import { Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
 import { DateTime } from 'luxon';
-import DialogFormDocumentAvailability from './DialogFormDocumentAvailability.vue';
-import DialogFormScheduleSubmission from './DialogFormScheduleSubmission.vue';
-import { dbDocRefs } from 'src/utils/db';
-import { updateDoc } from '@firebase/firestore';
+import DialogFormDocumentAvailability from './dialogs/DialogFormDocumentAvailability.vue';
+import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
 
 const props = defineProps<{
   form: Form & { id: string };
@@ -191,23 +189,21 @@ onMounted(async () => {
 
 const onDocumentClick = (index: number) => {
   const docStatus = sortedDocs.value[index].status;
-  const rejectionCode = sortedDocs.value[index].rejectionCode;
+  const rejection = sortedDocs.value[index].rejection;
   if (docStatus === 'Not Submitted') {
     onNotSubmitted(index);
   }
-  if (docStatus === 'Rejected' && rejectionCode) {
+  if (docStatus === 'Rejected' && rejection) {
     // TODO: Add a function to handle rejection codes;
   }
   if (docStatus === 'Not Applicable') {
     // TODO: Add a dialog to change to applicable
   }
-  if (docStatus === 'Accepted') {
-    // TODO: Add a dialog to view the document
-  }
-  if (docStatus === 'Submitted') {
+  if (docStatus === 'Accepted' || docStatus === 'Submitted') {
     // TODO: Add a dialog to view the document
   }
 };
+
 const onNotSubmitted = (index: number) => {
   $q.dialog({
     component: DialogFormDocumentAvailability,
@@ -243,18 +239,9 @@ const onNotSubmitted = (index: number) => {
     }
 
     if (documentAvailability === 'not-applicable') {
-      const formRef = dbDocRefs.getFormRef(props.form.id);
-      const DOC_STATUS_COMPUTED_KEY = `docs.${sortedDocs.value[index].docId}.status`;
-      const updatedData = {
-        [DOC_STATUS_COMPUTED_KEY]: 'Not Applicable',
-      };
-      updateDoc(formRef, {
-        ...updatedData,
-      }).then(() => {
-        $q.notify({
-          message: 'Document changed to Not Applicable.',
-          type: 'grey-8',
-        });
+      $q.notify({
+        message: 'Document changed to Not Applicable.',
+        type: 'grey-8',
       });
     }
   });

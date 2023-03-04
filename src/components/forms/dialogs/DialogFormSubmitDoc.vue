@@ -33,7 +33,11 @@
                 </div>
                 <q-btn
                   v-if="sample"
-                  @click="openDialogViewImage(sample.url, sample.contentType)"
+                  @click="
+                    sample
+                      ? openBaseDialogViewImage(sample.url, sample.contentType)
+                      : null
+                  "
                   :class="doc.instructions ? 'q-mt-md' : ''"
                   label="See Sample"
                   no-caps
@@ -176,7 +180,12 @@
                     <q-btn
                       target="_blank"
                       no-caps
-                      @click="openDialogViewImage(element.downloadURL, element.file.type)"
+                      @click="
+                        openBaseDialogViewImage(
+                          element.downloadURL,
+                          element.file.type
+                        )
+                      "
                       flat
                       dense
                       class="gt-xs text-body1"
@@ -190,7 +199,12 @@
                     <q-btn
                       target="_blank"
                       no-caps
-                      @click="openDialogViewImage(element.downloadURL, element.file.type)"
+                      @click="
+                        openBaseDialogViewImage(
+                          element.downloadURL,
+                          element.file.type
+                        )
+                      "
                       flat
                       dense
                       class="lt-sm text-body1"
@@ -241,8 +255,8 @@ import { dbDocRefs } from 'src/utils/db';
 import { updateDoc } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
 import draggable from 'vuedraggable';
-import DialogFormTips from './DialogFormTips.vue';
-import DialogViewImage from './DialogViewImage.vue';
+import DialogFormTips from '../DialogFormTips.vue';
+import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
 
 const drag = ref(false);
 
@@ -296,7 +310,7 @@ const setSample = async () => {
       props.form.dashboard.id,
       props.doc.sample.file
     );
-    const metadata = await getMetadata(sampleRef)
+    const metadata = await getMetadata(sampleRef);
     const contentType = metadata.contentType;
     const url = await getDownloadURL(sampleRef);
     if (url && contentType) {
@@ -306,7 +320,7 @@ const setSample = async () => {
       };
     }
   }
-}
+};
 
 const sample = ref<{
   url: string;
@@ -469,9 +483,9 @@ const submitPages = async (pagesList: FormPage[]) => {
   });
 };
 
-const openDialogViewImage = (imgURL: string, contentType: string) => {
+const openBaseDialogViewImage = (imgURL: string, contentType: string) => {
   $q.dialog({
-    component: DialogViewImage,
+    component: BaseDialogViewImage,
     componentProps: {
       imgURL,
       contentType,
