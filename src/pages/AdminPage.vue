@@ -94,7 +94,7 @@ import {
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
 import { dbDocRefs } from 'src/utils/db';
-import { updateDoc } from '@firebase/firestore';
+import { serverTimestamp, updateDoc } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
 import DialogAdminCheckReject from 'src/components/admin/DialogAdminCheckReject.vue';
 
@@ -174,6 +174,10 @@ const onReject = async () => {
     await updatePageStatusToRejected(reason, message);
     await updateDocAndApplicantStatus();
   }
+
+  if (rejection === 'rejectFullSubmission') {
+    // TODO: reject submission
+  }
 };
 
 const updatePageStatusToRejected = async (
@@ -226,8 +230,7 @@ const updateDocAndApplicantStatus = async () => {
     await updateDocStatusAndCreateSystemTask(
       DOC_STATUS,
       props.selectedAdminCheck.id,
-      doc.id,
-      doc.rejection
+      doc.id
     );
     // Check if all docs are checked
     const adminCheck = { ...props.selectedAdminCheck };
@@ -244,16 +247,25 @@ const updateDocAndApplicantStatus = async () => {
 const updateDocStatusAndCreateSystemTask = async (
   docStatus: 'Accepted' | 'Rejected',
   adminCheckId: string,
-  docId: string,
-  rejection?: DocRejection
+  docId: string
 ) => {
   const adminCheckRef = dbDocRefs.getAdminCheckRef(adminCheckId);
   const DOC_COMPUTED_KEY = `docs.${docId}`;
-  const updatedData: { [key: string]: string } = {
+  const updatedData: { [key: string]: string | DocRejection } = {
     [`${DOC_COMPUTED_KEY}.adminCheckStatus`]: docStatus,
   };
-  if (rejection && rejection.code) {
-    updatedData[`${DOC_COMPUTED_KEY}.systemTask`] = rejection.code;
+  if (docStatus === 'Rejected') {
+    const REJECTION_CODE = 'rejectPages';
+    const REJECTION_REASON = 'imageQuality';
+    const REJECTED_BY = 'admin';
+    const DOC_REJECTION = {
+      code: REJECTION_CODE,
+      reason: REJECTION_REASON,
+      rejectedBy: REJECTED_BY,
+      rejectedAt: serverTimestamp(),
+    } as DocRejection;
+    updatedData[`${DOC_COMPUTED_KEY}.systemTask`] = REJECTION_CODE;
+    updatedData[`${DOC_COMPUTED_KEY}.rejection`] = DOC_REJECTION;
   } else {
     updatedData[`${DOC_COMPUTED_KEY}.systemTask`] = 'acceptDoc';
   }
