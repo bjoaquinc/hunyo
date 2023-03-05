@@ -8,8 +8,6 @@ export type FormTask = 'createDoc' | 'resubmitDoc' | 'resubmitPages';
 
 export type ActionsType = 'verifyDocuments' | 'messageNotSent';
 
-export type RejectionCode = 'replacePages' | 'replaceDoc' | 'additionalDocs';
-
 export type ApplicantStatus = 'Not Submitted' | 'Incomplete' | 'Complete';
 
 export type ApplicantDashboardMessageStatus =
@@ -27,6 +25,10 @@ export type DocumentStatus =
 export type PageStatus = 'Submitted' | 'Accepted' | 'Rejected';
 
 export type AdminCheckStatus = 'Accepted' | 'Rejected' | 'Not Checked';
+
+export type RejectionCode = 'rejectPages' | 'rejectFullSubmission';
+
+export type RejectionReason = 'imageQuality' | 'wrongDoc' | 'other';
 
 // Firebase models
 
@@ -283,10 +285,7 @@ export interface DashboardDoc {
 export interface FormDoc extends DashboardDoc {
   name: string;
   status: DocumentStatus;
-  rejection?: {
-    code: RejectionCode;
-    message: string;
-  };
+  rejection?: DocRejection;
   systemTask: FormTask | null;
   pages?: { [key: string]: FormPage };
   delayed?: {
@@ -318,6 +317,7 @@ export interface WorkerDoc extends Omit<AdminCheckDoc, 'pages'> {
 export interface FormPage {
   name: string;
   status: PageStatus;
+  rejection?: PageRejection;
   pageNumber: number;
   submissionCount: number;
   submittedSize?: number;
@@ -374,4 +374,31 @@ export interface MessageMetadata {
   applicantId: string;
   dashboardId: string;
   companyId: string;
+}
+
+// Rejections
+
+export interface RejectionPagesDocument {
+  formId: string;
+  docId: string;
+  pages: (AdminCheckPage & { id: string })[];
+  rejectionData: DocRejection;
+}
+
+export interface DocRejection {
+  code: RejectionCode;
+  reason: RejectionReason;
+  message?: string;
+  rejectedBy: string;
+  rejectedAt: Timestamp;
+}
+
+export interface PageRejection {
+  reason: RejectionReason;
+  message?: string;
+  imageProperties: {
+    brightness: number;
+    contrast: number;
+    sharpness: number;
+  };
 }

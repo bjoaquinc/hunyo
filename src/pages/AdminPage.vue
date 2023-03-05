@@ -67,7 +67,7 @@
           color="positive"
           size="lg"
         />
-        <q-btn label="Reject" color="negative" size="lg" />
+        <q-btn @click="onReject" label="Reject" color="negative" size="lg" />
         <q-btn label="Replace" color="primary" size="lg" />
       </div>
       <div
@@ -88,6 +88,8 @@ import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
 import { dbDocRefs } from 'src/utils/db';
 import { updateDoc } from '@firebase/firestore';
+import { useQuasar } from 'quasar';
+import DialogAdminCheckReject from 'src/components/admin/DialogAdminCheckReject.vue';
 
 const props = defineProps<{
   selectedPage: (AdminCheckPage & { id: string }) | null;
@@ -95,6 +97,7 @@ const props = defineProps<{
   selectedAdminCheck: (AdminCheck & { id: string }) | null;
 }>();
 
+const $q = useQuasar();
 const originalPage = ref('');
 const fixedPage = ref('');
 const isReady = ref(false);
@@ -152,6 +155,21 @@ const onAccept = async () => {
     });
     acceptIsLoading.value = false;
   }
+};
+
+const onReject = async () => {
+  openDialogAdminCheckReject();
+};
+
+const openDialogAdminCheckReject = () => {
+  $q.dialog({
+    component: DialogAdminCheckReject,
+    componentProps: {
+      adminCheck: props.selectedAdminCheck,
+      doc: props.selectedDoc,
+      page: props.selectedPage,
+    },
+  });
 };
 </script>
 
