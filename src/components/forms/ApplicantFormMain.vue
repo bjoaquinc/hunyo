@@ -49,7 +49,13 @@
             <q-item-section
               :class="`text-${documentItemStyles[doc.status].textColor}`"
               >{{ doc.name }}
-              {{ doc.delayed && doc.delayed.isDelayed ? ' (Delayed)' : '' }}
+              {{
+                doc.delayed &&
+                doc.delayed.isDelayed &&
+                doc.status === 'Not Submitted'
+                  ? ' (Delayed)'
+                  : ''
+              }}
             </q-item-section>
             <q-item-section class="text-subtitle1 text-grey-8">
               <div
@@ -105,15 +111,17 @@
 </template>
 
 <script setup lang="ts">
-import { useQuasar } from 'quasar';
+import { QSpinnerPie, useQuasar } from 'quasar';
 import { onMounted, ref, computed } from 'vue';
 import DialogFormSubmitDoc from 'src/components/forms/dialogs/DialogFormSubmitDoc.vue';
-import { Form } from 'src/utils/types';
+import { Form, RejectionCode } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
 import { DateTime } from 'luxon';
 import DialogFormDocumentAvailability from './dialogs/DialogFormDocumentAvailability.vue';
 import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
+import { dbDocRefs } from 'src/utils/db';
+import { updateDoc } from '@firebase/firestore';
 
 const props = defineProps<{
   form: Form & { id: string };
@@ -194,13 +202,10 @@ const onDocumentClick = (index: number) => {
     onNotSubmitted(index);
   }
   if (docStatus === 'Rejected' && rejection) {
-    // TODO: Add a function to handle rejection codes;
+    onRejected(index, rejection);
   }
   if (docStatus === 'Not Applicable') {
-    // TODO: Add a dialog to change to applicable
-  }
-  if (docStatus === 'Accepted' || docStatus === 'Submitted') {
-    // TODO: Add a dialog to view the document
+    onNotApplicable(index);
   }
 };
 
@@ -208,7 +213,8 @@ const onNotSubmitted = (index: number) => {
   $q.dialog({
     component: DialogFormDocumentAvailability,
     componentProps: {
-      docName: sortedDocs.value[index].name,
+      formId: props.form.id,
+      doc: sortedDocs.value[index],
     },
   }).onOk((documentAvailability) => {
     if (documentAvailability === 'available') {
@@ -246,6 +252,48 @@ const onNotSubmitted = (index: number) => {
     }
   });
 };
+
+const onRejected = (
+  index: number,
+  rejection: {
+    code: RejectionCode;
+    message: string;
+  }
+) => {
+  const rejectionCode = rejection.code;
+
+  if (rejectionCode === 'replaceDoc') {
+    // TODO: Add a dialog to replace the document
+  }
+
+  if (rejectionCode === 'replacePages') {
+    // TODO: Add a dialog to replace the pages
+  }
+};
+
+const onNotApplicable = (index: number) => {
+  $q.dialog({
+    title: 'Change to Applicable?',
+    ok: 'Yes',
+    cancel: 'No',
+  }).onOk(async () => {
+    const loadingDialog = $q.dialog({
+      title: 'Changing document to Applicable...',
+      progress: {
+        spinner: QSpinnerPie,
+      },
+      persistent: true,
+      ok: false,
+    });
+    const formRef = dbDocRefs.getFormRef(props.form.id);
+    const COMPUTED_DOC_STATUS = `docs.${sortedDocs.value[index].docId}.status`;
+    await updateDoc(formRef, {
+      [COMPUTED_DOC_STATUS]: 'Not Submitted',
+    });
+    loadingDialog.hide();
+  });
+};
+
 </script>
 
 <style lang="sass" scoped>
