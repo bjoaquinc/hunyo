@@ -225,6 +225,12 @@ const onNotSubmitted = (index: number) => {
           form: props.form,
           index,
         },
+      }).onOk(() => {
+        const docName = sortedDocs.value[index].name;
+        $q.notify({
+          message: `${docName} submitted. Thank you.`,
+          type: 'positive',
+        });
       });
     }
 
