@@ -72,8 +72,6 @@
         <div class="text-h5">Give more details for the rejection?</div>
         <q-input
           class="q-mt-md"
-          name="rejectionMessage"
-          id="rejectionMessage"
           v-model="rejectionMessage"
           filled
           placeholder="Enter details here..."
@@ -106,11 +104,8 @@
 import { QDialog, QStepper, useDialogPluginComponent, useQuasar } from 'quasar';
 import { ref } from 'vue';
 import { RejectionCode, RejectionReason } from 'src/utils/types';
-import { dbDocRefs } from 'src/utils/db';
-import { AdminCheck, AdminCheckDoc, AdminCheckPage } from 'src/utils/types';
-import { updateDoc } from '@firebase/firestore';
 
-const { dialogRef, onDialogHide } = useDialogPluginComponent();
+const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
 
 const step = ref(1);
@@ -120,12 +115,6 @@ const selectedRejection = ref<RejectionCode | null>(null);
 const selectedReason = ref<RejectionReason | null>(null);
 const rejectionMessage = ref('');
 const isLoading = ref(false);
-
-const props = defineProps<{
-  adminCheck: AdminCheck & { id: string };
-  doc: AdminCheckDoc & { id: string };
-  page: AdminCheckPage & { id: string };
-}>();
 
 const rejections: {
   code: RejectionCode;
@@ -168,26 +157,14 @@ const onNext = () => {
 const onSubmit = async () => {
   isLoading.value = true;
   if (selectedRejection.value === 'rejectPages') {
-    await updatePage();
-  }
-  isLoading.value = false;
-};
-
-const updatePage = async () => {
-  const adminRef = dbDocRefs.getAdminCheckRef(props.adminCheck.id);
-  const docId = props.doc.id;
-  const pageId = props.page.id;
-  const PAGE_COMPUTED_KEY = `docs.${docId}.pages.${pageId}`;
-  const updatedAdminCheckData = {
-    [`${PAGE_COMPUTED_KEY}.adminCheckStatus`]: 'Rejected',
-    [`${PAGE_COMPUTED_KEY}.rejection`]: {
+    onDialogOK({
+      rejection: selectedRejection.value,
       reason: selectedReason.value,
       message: rejectionMessage.value,
-    },
-  };
-  await updateDoc(adminRef, {
-    ...updatedAdminCheckData,
-  });
+    });
+  }
+  onDialogOK();
+  isLoading.value = false;
 };
 
 defineEmits([

@@ -171,6 +171,7 @@
     <q-page-container>
       <router-view
         ref="adminPageRef"
+        @clear-selected-index-data="clearSelectedIndexData"
         :selected-page="selectedPage"
         :selected-doc="selectedDoc"
         :selected-admin-check="selectedAdminCheck"
@@ -182,18 +183,11 @@
 <script lang="ts" setup>
 import { ref, onMounted, watch, computed } from 'vue';
 import { dbColRefs } from 'src/utils/db';
-import {
-  onSnapshot,
-  query,
-  Unsubscribe,
-  updateDoc,
-  where,
-} from '@firebase/firestore';
+import { onSnapshot, query, Unsubscribe, where } from '@firebase/firestore';
 import { AdminCheck, AdminCheckDoc, AdminCheckPage } from 'src/utils/types';
 import { QStepper } from 'quasar';
 import { FullMetadata, getMetadata } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
-import { dbDocRefs } from 'src/utils/db';
 
 interface ImageProperties {
   sharpness: number;
@@ -203,10 +197,7 @@ interface ImageProperties {
 
 onMounted(async () => {
   const adminChecksRef = dbColRefs.adminChecks;
-  const q = query(
-    adminChecksRef,
-    where('adminCheckStatus', '==', 'Not Checked')
-  );
+  const q = query(adminChecksRef, where('isChecked', '==', false));
   await new Promise((resolve, reject) => {
     let runOnce = () => {
       runOnce = () => {
@@ -374,53 +365,10 @@ watch(selectedPage, async (newValue) => {
   }
 });
 
-watch(selectedAdminCheck, async () => {
-  console.log('Running Check');
-  await updateDocStatus();
-});
-
-const updateDocStatus = async () => {
-  if (selectedDoc.value && selectedAdminCheck.value) {
-    for (const pageId of Object.keys(selectedDoc.value.pages)) {
-      const page = selectedDoc.value.pages[pageId];
-      if (!page.adminCheckStatus) {
-        return console.log('Page not checked');
-      }
-    }
-    const adminCheckRef = dbDocRefs.getAdminCheckRef(
-      selectedAdminCheck.value.id
-    );
-    const DOC_COMPUTED_KEY = `docs.${selectedDoc.value.id}`;
-    const SYSTEM_TASK = 'acceptDoc';
-    const updatedAdminCheckData = {
-      [`${DOC_COMPUTED_KEY}.adminCheckStatus`]: 'Accepted',
-      [`${DOC_COMPUTED_KEY}.systemTask`]: SYSTEM_TASK,
-    };
-    if (applicantIsChecked()) {
-      updatedAdminCheckData['adminCheckStatus'] = 'Accepted';
-    }
-    await updateDoc(adminCheckRef, {
-      ...updatedAdminCheckData,
-    });
-  }
-};
-
-const applicantIsChecked = () => {
-  if (selectedAdminCheck.value) {
-    let uncheckedDocs = 0;
-    for (const docId of Object.keys(selectedAdminCheck.value.docs)) {
-      const doc = selectedAdminCheck.value.docs[docId];
-      if (doc.adminCheckStatus === 'Not Checked') {
-        uncheckedDocs++;
-      }
-    }
-    if (uncheckedDocs > 1) {
-      return false;
-    } else {
-      return true;
-    }
-  }
-  return false;
+const clearSelectedIndexData = () => {
+  selectedPageIndex.value = null;
+  selectedDocIndex.value = null;
+  selectedAdminCheckIndex.value = null;
 };
 
 const step = ref(1);

@@ -246,7 +246,7 @@ export interface AdminCheck {
   };
   formId: string;
   docs: { [key: string]: AdminCheckDoc };
-  adminCheckStatus: AdminCheckStatus;
+  isChecked: boolean;
 }
 
 export interface Action {
