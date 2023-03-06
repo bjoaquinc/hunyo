@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { useQuasar } from 'quasar';
+import { useQuasar, QSpinnerPie } from 'quasar';
 import { onMounted, ref, computed } from 'vue';
 import DialogFormSubmitDoc from 'src/components/forms/dialogs/DialogFormSubmitDoc.vue';
 import { Form } from 'src/utils/types';
@@ -113,8 +113,8 @@ import { getDownloadURL } from '@firebase/storage';
 import { DateTime } from 'luxon';
 import DialogFormDocumentAvailability from './dialogs/DialogFormDocumentAvailability.vue';
 // import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
-// import { dbDocRefs } from 'src/utils/db';
-// import { updateDoc } from '@firebase/firestore';
+import { dbDocRefs } from 'src/utils/db';
+import { updateDoc } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
 
 const props = defineProps<{
@@ -203,7 +203,7 @@ const onDocumentClick = (index: number) => {
     // onRejected(index, rejection);
   }
   if (docStatus === 'not-applicable') {
-    // onNotApplicable(index);
+    onNotApplicable(index);
   }
 };
 
@@ -248,12 +248,12 @@ const onNotSubmitted = (index: number) => {
     //   });
     // }
 
-    // if (documentAvailability === 'not-applicable') {
-    //   $q.notify({
-    //     message: 'Document changed to Not Applicable.',
-    //     type: 'grey-8',
-    //   });
-    // }
+    if (documentAvailability === 'not-applicable') {
+      $q.notify({
+        message: 'Document changed to Not Applicable.',
+        type: 'grey-8',
+      });
+    }
   });
 };
 
@@ -275,28 +275,31 @@ const onNotSubmitted = (index: number) => {
 //   }
 // };
 
-// const onNotApplicable = (index: number) => {
-//   $q.dialog({
-//     title: 'Change to Applicable?',
-//     ok: 'Yes',
-//     cancel: 'No',
-//   }).onOk(async () => {
-//     const loadingDialog = $q.dialog({
-//       title: 'Changing document to Applicable...',
-//       progress: {
-//         spinner: QSpinnerPie,
-//       },
-//       persistent: true,
-//       ok: false,
-//     });
-//     const formRef = dbDocRefs.getFormRef(props.form.id);
-//     const COMPUTED_DOC_STATUS = `docs.${props.documents[index].docId}.status`;
-//     await updateDoc(formRef, {
-//       [COMPUTED_DOC_STATUS]: 'Not Submitted',
-//     });
-//     loadingDialog.hide();
-//   });
-// };
+const onNotApplicable = (index: number) => {
+  $q.dialog({
+    title: 'Change to Applicable?',
+    ok: 'Yes',
+    cancel: 'No',
+  }).onOk(async () => {
+    const loadingDialog = $q.dialog({
+      title: 'Changing document to Applicable...',
+      progress: {
+        spinner: QSpinnerPie,
+      },
+      persistent: true,
+      ok: false,
+    });
+    const selectedDoc = props.documents[index];
+    const documentRef = dbDocRefs.getDocumentRef(
+      selectedDoc.companyId,
+      selectedDoc.id
+    );
+    await updateDoc(documentRef, {
+      status: 'not-submitted',
+    });
+    loadingDialog.hide();
+  });
+};
 </script>
 
 <style lang="sass" scoped>

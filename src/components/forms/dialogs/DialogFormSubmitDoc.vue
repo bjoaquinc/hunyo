@@ -95,7 +95,7 @@
             group="people"
             @start="drag = true"
             @end="drag = false"
-            item-key="index"
+            item-key="file.name"
           >
             <template #item="{ element }">
               <q-item class="q-mt-sm" clickable>
@@ -121,7 +121,6 @@
                       </div>
                     </q-btn>
                     <q-btn
-                      target="_blank"
                       no-caps
                       @click="
                         openBaseDialogViewImage(
@@ -142,7 +141,7 @@
                 </q-item-section>
                 <q-item-section avatar side>
                   <q-btn
-                    @click="removeFile(index)"
+                    @click="removeFile(element)"
                     :outline="uploadedFileItemStyles[(element as UploadedFile).status].outline"
                     :color="uploadedFileItemStyles[(element as UploadedFile).status].color"
                     :label="uploadedFileItemStyles[(element as UploadedFile).status].label"
@@ -287,7 +286,9 @@ watch(files, (newFiles) => {
   }
 });
 
-const removeFile = (index: number) => {
+const removeFile = (element: UploadedFile) => {
+  console.log('test', element);
+  const index = uploadedFiles.value.indexOf(element);
   uploadedFiles.value.splice(index, 1);
 };
 

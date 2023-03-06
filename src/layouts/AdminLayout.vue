@@ -43,12 +43,12 @@
             <q-item
               clickable
               v-ripple
-              v-for="(form, index) in adminChecks"
+              v-for="(form, index) in applicants"
               :key="index"
             >
               <q-item-section
                 v-if="form.applicant.name"
-                @click="selectedAdminCheckIndex = index"
+                @click="selectedApplicantIndex = index"
                 class="text-primary text-h6"
                 >{{
                   `${form.applicant.name.first} ${form.applicant.name.last}`
@@ -67,14 +67,14 @@
           :done="step > 2"
         >
           <div
-            v-if="selectedAdminCheck"
+            v-if="selectedApplicant"
             class="text-h6 q-mb-md flex items-center"
           >
             <span
               ><q-btn
                 @click="
                   () => {
-                    selectedAdminCheckIndex = null;
+                    selectedApplicantIndex = null;
                     selectedDocIndex = null;
                   }
                 "
@@ -83,9 +83,9 @@
                 flat
                 color="primary"
                 dense /></span
-            >{{ selectedAdminCheck.applicant.name?.first }}'s Documents
+            >{{ selectedApplicant.applicant.name?.first }}'s Documents
           </div>
-          <q-list separator v-if="selectedAdminCheck">
+          <q-list separator v-if="selectedApplicant">
             <q-separator />
             <q-item
               :clickable="!selectedDoc || selectedDoc.name !== doc.name"
@@ -174,7 +174,7 @@
         @clear-selected-index-data="clearSelectedIndexData"
         :selected-page="selectedPage"
         :selected-doc="selectedDoc"
-        :selected-admin-check="selectedAdminCheck"
+        :selected-applicant="selectedApplicant"
       />
     </q-page-container>
   </q-layout>
@@ -183,11 +183,18 @@
 <script lang="ts" setup>
 import { ref, onMounted, watch, computed } from 'vue';
 import { dbColRefs } from 'src/utils/db';
-import { onSnapshot, query, Unsubscribe, where } from '@firebase/firestore';
-import { AdminCheck, AdminCheckDoc, AdminCheckPage } from 'src/utils/types';
+import {
+  onSnapshot,
+  orderBy,
+  query,
+  Unsubscribe,
+  where,
+} from '@firebase/firestore';
+import { Form } from 'src/utils/types';
 import { QStepper } from 'quasar';
 import { FullMetadata, getMetadata } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
+import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
 
 interface ImageProperties {
   sharpness: number;
@@ -196,8 +203,8 @@ interface ImageProperties {
 }
 
 onMounted(async () => {
-  const adminChecksRef = dbColRefs.adminChecks;
-  const q = query(adminChecksRef, where('isChecked', '==', false));
+  const formsRef = dbColRefs.forms;
+  const q = query(formsRef, where('isChecked', '==', false));
   await new Promise((resolve, reject) => {
     let runOnce = () => {
       runOnce = () => {
@@ -205,15 +212,15 @@ onMounted(async () => {
       };
       resolve;
     };
-    unsubAdminChecks.value = onSnapshot(
+    unsubApplicants.value = onSnapshot(
       q,
-      (adminChecksSnap) => {
-        const adminChecksList: (AdminCheck & { id: string })[] = [];
-        adminChecksSnap.forEach((adminCheckSnap) => {
-          const adminCheckData = adminCheckSnap.data();
-          adminChecksList.push({ id: adminCheckSnap.id, ...adminCheckData });
+      (applicantsSnap) => {
+        const applicantsList: (Form & { id: string })[] = [];
+        applicantsSnap.forEach((applicantSnap) => {
+          const applicantData = applicantSnap.data();
+          applicantsList.push({ id: applicantSnap.id, ...applicantData });
         });
-        adminChecks.value = adminChecksList;
+        applicants.value = applicantsList;
         runOnce();
       },
       reject
@@ -221,70 +228,120 @@ onMounted(async () => {
   });
 });
 
-const adminChecks = ref<(AdminCheck & { id: string })[]>([]);
-const unsubAdminChecks = ref<Unsubscribe | null>(null);
-const selectedAdminCheckIndex = ref<null | number>(null);
-const selectedAdminCheck = computed<null | (AdminCheck & { id: string })>(
-  () => {
-    if (
-      typeof selectedAdminCheckIndex.value === 'number' &&
-      adminChecks.value.length > 0
-    ) {
-      return adminChecks.value[selectedAdminCheckIndex.value];
-    } else {
-      return null;
-    }
-  }
-);
-const sortedDocs = computed(() => {
-  if (selectedAdminCheck.value) {
-    const docs = selectedAdminCheck.value.docs;
-    const sortedDocs = Object.keys(docs)
-      .map((key) => ({ id: key, ...docs[key] }))
-      .sort((docA, docB) => docA.docNumber - docB.docNumber);
-    return sortedDocs.filter((doc) => doc.adminCheckStatus === 'Not Checked');
+const applicants = ref<(Form & { id: string })[]>([]);
+const unsubApplicants = ref<Unsubscribe | null>(null);
+const selectedApplicantIndex = ref<null | number>(null);
+const selectedApplicant = computed<null | (Form & { id: string })>(() => {
+  if (typeof selectedApplicantIndex.value === 'number') {
+    return applicants.value[selectedApplicantIndex.value];
   } else {
-    return [];
+    return null;
   }
 });
+
+const sortedDocs = ref<(ApplicantDocument & { id: string })[]>([]);
+// Get applicant documents form firestore
+watch(selectedApplicant, async (newVal) => {
+  if (newVal) {
+    const applicantDocsRef = dbColRefs.getDocumentsRef(newVal.company.id);
+    const q = query(
+      applicantDocsRef,
+      where('status', '==', 'submitted'),
+      where('formId', '==', newVal.id),
+      orderBy('docNumber')
+    );
+    await new Promise((resolve, reject) => {
+      let runOnce = () => {
+        runOnce = () => {
+          return;
+        };
+        resolve;
+      };
+      unsubSortedDocs.value = onSnapshot(
+        q,
+        (applicantDocsSnap) => {
+          const applicantDocsList: (ApplicantDocument & { id: string })[] = [];
+          applicantDocsSnap.forEach((applicantDocSnap) => {
+            const applicantDocData = applicantDocSnap.data();
+            applicantDocsList.push({
+              id: applicantDocSnap.id,
+              ...applicantDocData,
+            });
+          });
+          sortedDocs.value = applicantDocsList;
+          runOnce();
+        },
+        reject
+      );
+    });
+  } else {
+    unsubSortedDocs.value?.();
+  }
+});
+const unsubSortedDocs = ref<Unsubscribe | null>(null);
 const selectedDocIndex = ref<null | number>(null);
-const selectedDoc = computed<null | (AdminCheckDoc & { id: string })>(() => {
-  if (
-    typeof selectedDocIndex.value === 'number' &&
-    sortedDocs.value.length > 0
-  ) {
+const selectedDoc = computed(() => {
+  if (typeof selectedDocIndex.value === 'number') {
     return sortedDocs.value[selectedDocIndex.value];
   } else {
     return null;
   }
 });
-const sortedPages = computed(() => {
-  if (selectedDoc.value) {
-    const pages = selectedDoc.value.pages;
-    return Object.keys(pages)
-      .map((key) => ({ id: key, ...pages[key] }))
-      .sort((pageA, pageB) => pageA.pageNumber - pageB.pageNumber);
+
+const sortedPages = ref<(ApplicantPage & { id: string })[]>([]);
+// Get document pages form firestore
+watch(selectedDoc, async (newVal) => {
+  if (newVal) {
+    const applicantDocsRef = dbColRefs.getPagesRef(newVal.companyId);
+    const q = query(
+      applicantDocsRef,
+      where('docId', '==', newVal.id),
+      orderBy('pageNumber')
+    );
+    await new Promise((resolve, reject) => {
+      let runOnce = () => {
+        runOnce = () => {
+          return;
+        };
+        resolve;
+      };
+      unsubSortedPages.value = onSnapshot(
+        q,
+        (pagesSnap) => {
+          const pagesList: (ApplicantPage & { id: string })[] = [];
+          pagesSnap.forEach((pageSnap) => {
+            const applicantDocData = pageSnap.data();
+            pagesList.push({
+              id: pageSnap.id,
+              ...applicantDocData,
+            });
+          });
+          sortedPages.value = pagesList;
+          runOnce();
+        },
+        reject
+      );
+    });
   } else {
-    return [];
+    unsubSortedPages.value?.();
   }
 });
+const unsubSortedPages = ref<Unsubscribe | null>(null);
 const selectedPageIndex = ref<null | number>(null);
-const selectedPage = computed<null | (AdminCheckPage & { id: string })>(() => {
-  if (
-    typeof selectedPageIndex.value === 'number' &&
-    sortedPages.value.length > 0
-  ) {
+const selectedPage = computed(() => {
+  if (typeof selectedPageIndex.value === 'number') {
     return sortedPages.value[selectedPageIndex.value];
   } else {
     return null;
   }
 });
+
 const originalMetadata = ref<FullMetadata | null>(null);
 const fixedMetadata = ref<FullMetadata | null>(null);
 const CONVERT_TO_KILO_BYTES = 0.001;
 const displayData = computed(() => {
   if (
-    selectedAdminCheck.value &&
+    selectedApplicant.value &&
     selectedDoc.value &&
     selectedPage.value &&
     originalMetadata.value &&
@@ -306,15 +363,15 @@ const displayData = computed(() => {
       'Fixed Contrast': fixedImageProperties.contrast,
       'Submitted Format': selectedPage.value.submittedFormat,
       'Submitted Size': `${Math.round(selectedPage.value.submittedSize)} KB`,
-      'Requested Format': selectedDoc.value.format,
+      'Requested Format': selectedDoc.value.requestedFormat,
       'Compressed Size': `${Math.round(
         originalMetadata.value.size * CONVERT_TO_KILO_BYTES
       )} KB`,
       'Page Number': selectedPage.value.pageNumber,
       'Total Pages': sortedPages.value.length,
       'Device Submitted': selectedDoc.value.deviceSubmitted,
-      Job: selectedAdminCheck.value.dashboard.job,
-      Country: selectedAdminCheck.value.dashboard.country,
+      Job: selectedApplicant.value.dashboard.job,
+      Country: selectedApplicant.value.dashboard.country,
     };
     return data;
   } else {
@@ -322,7 +379,7 @@ const displayData = computed(() => {
   }
 });
 
-watch(selectedAdminCheck, (newValue, oldValue) => {
+watch(selectedApplicant, (newValue, oldValue) => {
   if (newValue && !oldValue) {
     step.value = 2;
   } else if (!newValue) {
@@ -332,10 +389,10 @@ watch(selectedAdminCheck, (newValue, oldValue) => {
 
 // Update original and fixed metadata
 watch(selectedPage, async (newValue) => {
-  if (newValue && selectedAdminCheck.value) {
-    const companyId = selectedAdminCheck.value.companyId;
-    const dashboardId = selectedAdminCheck.value.dashboard.id;
-    const applicantId = selectedAdminCheck.value.applicant.id;
+  if (newValue && selectedApplicant.value && selectedDoc.value) {
+    const companyId = selectedApplicant.value.company.id;
+    const dashboardId = selectedApplicant.value.dashboard.id;
+    const applicantId = selectedApplicant.value.applicant.id;
     const submittedFormat = newValue.submittedFormat;
     const getFileName = (format: string) => `${newValue.name}.${format}`;
     const ORIGINAL_FORMAT =
@@ -355,7 +412,7 @@ watch(selectedPage, async (newValue) => {
         companyId,
         dashboardId,
         applicantId,
-        getFileName((selectedDoc.value as AdminCheckDoc).format)
+        getFileName(selectedDoc.value.requestedFormat)
       );
       fixedMetadata.value = await getMetadata(fixedPageRef);
     }
@@ -368,7 +425,7 @@ watch(selectedPage, async (newValue) => {
 const clearSelectedIndexData = () => {
   selectedPageIndex.value = null;
   selectedDocIndex.value = null;
-  selectedAdminCheckIndex.value = null;
+  selectedApplicantIndex.value = null;
 };
 
 const step = ref(1);

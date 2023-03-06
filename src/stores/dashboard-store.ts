@@ -24,8 +24,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     if (!user) return;
     const docRef = dashboardRef;
     await new Promise<void>((resolve, reject) => {
-      let resolveOnce = () => {
-        resolveOnce = () => {
+      let runOnce = () => {
+        runOnce = () => {
           return;
         };
         resolve();
@@ -38,7 +38,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
           } else {
             dashboard.value = null;
           }
-          resolveOnce();
+          runOnce();
         },
         reject
       );

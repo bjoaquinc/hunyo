@@ -97,7 +97,7 @@ const setDocuments = async () => {
   const q = query(
     documentsRef,
     where('formId', '==', props.formId),
-    orderBy('docNumber', 'desc')
+    orderBy('docNumber', 'asc')
   );
   await new Promise<void>((resolve, reject) => {
     let runOnce = () => {

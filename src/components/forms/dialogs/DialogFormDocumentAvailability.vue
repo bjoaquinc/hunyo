@@ -65,11 +65,11 @@
 import { updateDoc } from '@firebase/firestore';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { dbDocRefs } from 'src/utils/db';
-import { FormDoc } from 'src/utils/types';
+import { ApplicantDocument } from 'src/utils/new-types';
 import { ref } from 'vue';
 
 const props = defineProps<{
-  doc: FormDoc & { docId: string };
+  doc: ApplicantDocument & { id: string };
   formId: string;
 }>();
 
@@ -84,13 +84,9 @@ defineEmits([
 
 const changeStatusToNotApplicable = async () => {
   isLoading.value = true;
-  const formRef = dbDocRefs.getFormRef(props.formId);
-  const DOC_STATUS_COMPUTED_KEY = `docs.${props.doc.docId}.status`;
-  const updatedData = {
-    [DOC_STATUS_COMPUTED_KEY]: 'Not Applicable',
-  };
-  await updateDoc(formRef, {
-    ...updatedData,
+  const docRef = dbDocRefs.getDocumentRef(props.doc.companyId, props.doc.id);
+  await updateDoc(docRef, {
+    status: 'not-applicable',
   });
   onDialogOK('not-applicable');
   isLoading.value = false;

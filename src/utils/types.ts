@@ -209,7 +209,7 @@ export interface Form {
       opening: string;
     };
   };
-  // docs: { [key: string]: FormDoc };
+  isChecked: boolean;
 }
 
 export interface UpdatedForm extends Omit<Form, 'applicant'> {

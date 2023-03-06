@@ -150,7 +150,7 @@ const onSubmit = async () => {
     isLoading.value = true;
     const pages = await uploadFilesToStorage();
     const totalPages = await createApplicantPages(pages);
-    await updateDocStatusAndTotalPages(totalPages);
+    await updateApplicantDocument(totalPages);
     isLoading.value = false;
     onDialogOK();
   } catch (error) {
@@ -240,6 +240,9 @@ const createApplicantPages = async (
       createdAt: serverTimestamp() as Timestamp,
       docId: props.doc.id,
       formId: props.form.id,
+      companyId: props.doc.companyId,
+      dashboardId: props.doc.dashboardId,
+      applicantId: props.doc.applicantId,
       status: 'submitted',
       ...page,
     };
@@ -250,12 +253,13 @@ const createApplicantPages = async (
   return TOTAL_PAGES_NUMBER;
 };
 
-const updateDocStatusAndTotalPages = async (totalPages: number) => {
+const updateApplicantDocument = async (totalPages: number) => {
   const docRef = dbDocRefs.getDocumentRef(props.doc.companyId, props.doc.id);
   const UPDATED_DOC_STATUS = 'submitted';
   await updateDoc(docRef, {
     status: UPDATED_DOC_STATUS,
     totalPages,
+    deviceSubmitted: $q.platform.is.mobile ? 'mobile' : 'desktop',
   });
 };
 

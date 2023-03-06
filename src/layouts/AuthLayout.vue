@@ -190,7 +190,7 @@ const getDraftDashboards = async () => {
   const q = query(
     draftDashboardsRef,
     where('isPublished', '==', false),
-    orderBy('createdAt', 'desc')
+    orderBy('createdAt')
   );
   unsubDraftDashboards.value = onSnapshot(q, (snapshot) => {
     draftDashboards.value = snapshot.docs.map((doc) => {

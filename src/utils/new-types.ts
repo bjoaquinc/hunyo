@@ -63,6 +63,7 @@ export interface ApplicantDocument {
   };
   instructions?: string;
   status: DocumentStatus;
+  deviceSubmitted?: 'desktop' | 'mobile';
   docNumber: number;
   totalPages: number;
   rejection?: {
@@ -77,12 +78,16 @@ export interface ApplicantPage {
   createdAt: Timestamp;
   docId: string;
   formId: string;
+  dashboardId: string;
+  applicantId: string;
+  companyId: string;
   name: string;
   pageNumber: number;
   status: PageStatus;
   submittedFormat: string;
   submittedSize: number;
   submissionCount: number;
+  systemCheckStatus?: 'accepted' | 'rejected';
   rejection?: {
     reason: string;
     message: string;
