@@ -111,16 +111,27 @@ import { uploadBytes } from '@firebase/storage';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
 import { ref } from 'vue';
-import { FormDoc, Form, PageStatus, FormPage } from 'src/utils/types';
-import { dbDocRefs } from 'src/utils/db';
-import { updateDoc } from '@firebase/firestore';
+import { Form } from 'src/utils/types';
+import { dbColRefs, dbDocRefs } from 'src/utils/db';
+import {
+  addDoc,
+  updateDoc,
+  DocumentReference,
+  serverTimestamp,
+  Timestamp,
+} from '@firebase/firestore';
 import { useQuasar } from 'quasar';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
+import {
+  ApplicantDocument,
+  ApplicantPage,
+  PageStatus,
+} from 'src/utils/new-types';
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
 const props = defineProps<{
-  doc: FormDoc & { docId: string };
+  doc: ApplicantDocument & { id: string };
   form: Form & { id: string };
   uploadedFiles: UploadedFile[];
 }>();
@@ -128,7 +139,7 @@ const props = defineProps<{
 interface UploadedFile {
   name: string;
   file: File;
-  status: PageStatus | 'New';
+  status: PageStatus;
   downloadURL: string;
 }
 
@@ -138,7 +149,8 @@ const onSubmit = async () => {
   try {
     isLoading.value = true;
     const pages = await uploadFilesToStorage();
-    await submitPages(pages);
+    const totalPages = await createApplicantPages(pages);
+    await updateDocStatusAndTotalPages(totalPages);
     isLoading.value = false;
     onDialogOK();
   } catch (error) {
@@ -147,7 +159,13 @@ const onSubmit = async () => {
 };
 
 const uploadFilesToStorage = async () => {
-  const promises: Promise<FormPage>[] = [];
+  const promises: Promise<{
+    name: string;
+    submittedFormat: string;
+    submittedSize: number;
+    submissionCount: number;
+    pageNumber: number;
+  }>[] = [];
 
   props.uploadedFiles.forEach((file, index) => {
     const PAGE_NUMBER = index + 1;
@@ -171,9 +189,9 @@ const uploadFileToStorage = async (
   if (props.uploadedFiles.length <= 1) {
     fileName = applicantName + '-' + props.doc.name;
   }
-  const format = props.doc.format;
+  const format = props.doc.requestedFormat;
   const formId = props.form.id;
-  const docId = props.doc.docId;
+  const docId = props.doc.id;
   const pageId = `${docId}-${pageNumber.toString()}`;
   const companyId = props.form.company.id;
   const dashboardId = props.form.dashboard.id;
@@ -197,34 +215,47 @@ const uploadFileToStorage = async (
       submissionCount: FIRST_TIME_SUBMITTED.toString(),
     },
   });
-  const formPage: FormPage = {
+  return {
     name: fileName,
-    status: 'Submitted',
     submittedFormat: contentType,
     submittedSize: contentSize * CONVERT_TO_KILOBYTES,
     submissionCount: FIRST_TIME_SUBMITTED,
     pageNumber,
   };
-  return formPage;
 };
 
-const submitPages = async (pagesList: FormPage[]) => {
-  const pages: { [key: string]: FormPage } = {};
-  pagesList.forEach((page) => {
-    pages[`${props.doc.docId}-${page.pageNumber.toString()}`] = page;
+const createApplicantPages = async (
+  pages: {
+    name: string;
+    submittedFormat: string;
+    submittedSize: number;
+    submissionCount: number;
+    pageNumber: number;
+  }[]
+) => {
+  const pagesRef = dbColRefs.getPagesRef(props.doc.companyId);
+  const promises: Promise<DocumentReference>[] = [];
+  pages.forEach((page) => {
+    const applicantPage: ApplicantPage = {
+      createdAt: serverTimestamp() as Timestamp,
+      docId: props.doc.id,
+      formId: props.form.id,
+      status: 'submitted',
+      ...page,
+    };
+    const promise = addDoc(pagesRef, applicantPage);
+    promises.push(promise);
   });
-  const formRef = dbDocRefs.getFormRef(props.form.id);
-  const formDoc = `docs.${props.doc.docId}`;
-  const form: Partial<Form> = {
-    [`${formDoc}.pages`]: pages,
-    [`${formDoc}.status`]: 'Submitted',
-    [`${formDoc}.deviceSubmitted`]: $q.platform.is.mobile
-      ? 'mobile'
-      : 'desktop',
-    [`${formDoc}.systemTask`]: 'createDoc',
-  };
-  await updateDoc(formRef, {
-    ...form,
+  const TOTAL_PAGES_NUMBER = pages.length;
+  return TOTAL_PAGES_NUMBER;
+};
+
+const updateDocStatusAndTotalPages = async (totalPages: number) => {
+  const docRef = dbDocRefs.getDocumentRef(props.doc.companyId, props.doc.id);
+  const UPDATED_DOC_STATUS = 'submitted';
+  await updateDoc(docRef, {
+    status: UPDATED_DOC_STATUS,
+    totalPages,
   });
 };
 

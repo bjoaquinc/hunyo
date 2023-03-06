@@ -1,6 +1,10 @@
 <template>
   <q-page>
-    <ApplicantFormMain v-if="isReady && form" :form="form" />
+    <ApplicantFormMain
+      v-if="isReady && form"
+      :form="form"
+      :documents="documents"
+    />
     <div v-else class="absolute-center">
       <q-spinner-pie size="80px" color="primary" />
     </div>
@@ -8,15 +12,22 @@
 </template>
 
 <script setup lang="ts">
-import { onSnapshot, Unsubscribe } from '@firebase/firestore';
+import {
+  onSnapshot,
+  orderBy,
+  query,
+  Unsubscribe,
+  where,
+} from '@firebase/firestore';
 import { getDownloadURL } from '@firebase/storage';
 import { useQuasar } from 'quasar';
 import ApplicantFormMain from 'src/components/forms/ApplicantFormMain.vue';
 import DialogFormName from 'src/components/forms/dialogs/DialogFormName.vue';
 import DialogFormReminder from 'src/components/forms/dialogs/DialogFormReminder.vue';
-import { dbDocRefs } from 'src/utils/db';
+import { dbDocRefs, dbColRefs } from 'src/utils/db';
 import { storageRefs } from 'src/utils/storage';
 import { Form } from 'src/utils/types';
+import { ApplicantDocument } from 'src/utils/new-types';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { signInAnonymously, getAuth } from 'firebase/auth';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -28,30 +39,31 @@ const $q = useQuasar();
 const unsubForm = ref<Unsubscribe | null>(null);
 const authStore = useAuthStore();
 const form = ref<(Form & { id: string }) | null>(null);
+const documents = ref<(ApplicantDocument & { id: string })[]>([]);
+const unsubDocs = ref<Unsubscribe | null>(null);
 const isReady = ref(false);
 const logoURL = ref('');
 
 onMounted(async () => {
   await setApplicantAuth();
   await setForm();
+  await setDocuments();
+  showReminder();
+  isReady.value = true;
 });
 
 onUnmounted(() => {
-  if (unsubForm.value) {
-    unsubForm.value();
-  }
+  unsubForm.value?.();
 });
 
 const setForm = async () => {
   const formRef = dbDocRefs.getFormRef(props.formId);
-  await new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     let runOnce = () => {
       runOnce = () => {
         return;
       };
-      isReady.value = true;
-      showReminder();
-      resolve;
+      resolve();
     };
     unsubForm.value = onSnapshot(
       formRef,
@@ -72,6 +84,34 @@ const setForm = async () => {
             });
           }
         }
+        runOnce();
+      },
+      reject
+    );
+  });
+};
+
+const setDocuments = async () => {
+  if (!form.value) return;
+  const documentsRef = dbColRefs.getDocumentsRef(form.value.company.id);
+  const q = query(
+    documentsRef,
+    where('formId', '==', props.formId),
+    orderBy('docNumber', 'desc')
+  );
+  await new Promise<void>((resolve, reject) => {
+    let runOnce = () => {
+      runOnce = () => {
+        return;
+      };
+      resolve();
+    };
+    unsubDocs.value = onSnapshot(
+      q,
+      (querySnap) => {
+        documents.value = querySnap.docs.map((docSnap) => {
+          return { id: docSnap.id, ...docSnap.data() };
+        });
         runOnce();
       },
       reject

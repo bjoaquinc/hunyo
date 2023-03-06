@@ -181,11 +181,6 @@ export interface Applicant {
   docIds: string[];
 }
 
-export interface ApplicantDoc {
-  status: DocumentStatus;
-  format: Formats;
-}
-
 export interface Form {
   applicant: {
     id: string;
@@ -214,7 +209,7 @@ export interface Form {
       opening: string;
     };
   };
-  docs: { [key: string]: FormDoc };
+  // docs: { [key: string]: FormDoc };
 }
 
 export interface UpdatedForm extends Omit<Form, 'applicant'> {
@@ -245,7 +240,7 @@ export interface AdminCheck {
     deadline: Timestamp;
   };
   formId: string;
-  docs: { [key: string]: AdminCheckDoc };
+  // docs: { [key: string]: AdminCheckDoc };
   isChecked: boolean;
 }
 
@@ -259,7 +254,7 @@ export interface Action {
     };
   };
   workerDocId: string;
-  doc: WorkerDoc;
+  // doc: WorkerDoc;
   isComplete: boolean;
   competedBy?: {
     name: {
@@ -272,6 +267,11 @@ export interface Action {
 
 // Docs
 
+// export interface ApplicantDoc {
+//   status: DocumentStatus;
+//   format: Formats;
+// }
+
 export interface DashboardDoc {
   format: Formats;
   sample?: {
@@ -282,59 +282,59 @@ export interface DashboardDoc {
   docNumber: number;
 }
 
-export interface FormDoc extends DashboardDoc {
-  name: string;
-  status: DocumentStatus;
-  rejection?: DocRejection;
-  systemTask: FormTask | null;
-  pages?: { [key: string]: FormPage };
-  delayed?: {
-    isDelayed: boolean;
-    date: Timestamp;
-  };
-  deviceSubmitted?: 'mobile' | 'desktop';
-}
+// export interface FormDoc extends DashboardDoc {
+//   name: string;
+//   status: DocumentStatus;
+//   rejection?: DocRejection;
+//   systemTask: FormTask | null;
+//   pages?: { [key: string]: FormPage };
+//   delayed?: {
+//     isDelayed: boolean;
+//     date: Timestamp;
+//   };
+//   deviceSubmitted?: 'mobile' | 'desktop';
+// }
 
-export interface AdminCheckDoc
-  extends Omit<FormDoc, 'pages' | 'deviceSubmitted'> {
-  deviceSubmitted: 'mobile' | 'desktop';
-  pages: { [key: string]: AdminCheckPage };
-  adminCheckStatus: AdminCheckStatus;
-}
+// export interface AdminCheckDoc
+//   extends Omit<FormDoc, 'pages' | 'deviceSubmitted'> {
+//   deviceSubmitted: 'mobile' | 'desktop';
+//   pages: { [key: string]: AdminCheckPage };
+//   adminCheckStatus: AdminCheckStatus;
+// }
 
-export interface WorkerDoc extends Omit<AdminCheckDoc, 'pages'> {
-  createdAt: Timestamp;
-  companyId: string;
-  dashboardId: string;
-  applicantId: string;
-  adminCheckId: string;
-  formId: string;
-  pages: { [key: string]: AdminCheckPage };
-}
+// export interface WorkerDoc extends Omit<AdminCheckDoc, 'pages'> {
+//   createdAt: Timestamp;
+//   companyId: string;
+//   dashboardId: string;
+//   applicantId: string;
+//   adminCheckId: string;
+//   formId: string;
+//   pages: { [key: string]: AdminCheckPage };
+// }
 
 // Pages
 
-export interface FormPage {
-  name: string;
-  status: PageStatus;
-  rejection?: PageRejection;
-  pageNumber: number;
-  submissionCount: number;
-  submittedSize?: number;
-  submittedFormat?: string;
-  systemCheckStatus?: 'Accepted' | 'Rejected';
-}
+// export interface FormPage {
+//   name: string;
+//   status: PageStatus;
+//   rejection?: PageRejection;
+//   pageNumber: number;
+//   submissionCount: number;
+//   submittedSize?: number;
+//   submittedFormat?: string;
+//   systemCheckStatus?: 'Accepted' | 'Rejected';
+// }
 
-export interface AdminCheckPage
-  extends Omit<
-    FormPage,
-    'systemCheckStatus' | 'submittedFormat' | 'submittedSize'
-  > {
-  submittedSize: number;
-  submittedFormat: string;
-  systemCheckStatus: 'Accepted' | 'Rejected';
-  adminCheckStatus?: AdminCheckStatus;
-}
+// export interface AdminCheckPage
+//   extends Omit<
+//     FormPage,
+//     'systemCheckStatus' | 'submittedFormat' | 'submittedSize'
+//   > {
+//   submittedSize: number;
+//   submittedFormat: string;
+//   systemCheckStatus: 'Accepted' | 'Rejected';
+//   adminCheckStatus?: AdminCheckStatus;
+// }
 
 // Message types
 
@@ -378,19 +378,6 @@ export interface MessageMetadata {
 
 // Rejections
 
-export interface RejectionPages {
-  createdAt: Timestamp;
-  companyId: string;
-  dashboardId: string;
-  applicantId: string;
-  formId: string;
-  docId: string;
-  pages: (AdminCheckPage & {
-    id: string;
-  })[];
-  rejectionData: DocRejection;
-}
-
 export interface DocRejection {
   code: RejectionCode;
   reason: RejectionReason[];
@@ -407,4 +394,17 @@ export interface PageRejection {
     contrast: number;
     sharpness: number;
   };
+}
+
+export interface RejectionPages {
+  createdAt: Timestamp;
+  companyId: string;
+  dashboardId: string;
+  applicantId: string;
+  formId: string;
+  docId: string;
+  // pages: (AdminCheckPage & {
+  //   id: string;
+  // })[];
+  rejectionData: DocRejection;
 }

@@ -174,8 +174,16 @@ const onReject = async () => {
     $q.loading.show({
       spinner: QSpinnerPie,
     });
-    await updatePageStatusToRejected(reason, message);
-    await updateDocAndApplicantStatus();
+    const updatedPageData = await updatePageStatusToRejected(reason, message);
+    const adminCheck = { ...props.selectedAdminCheck };
+    if (updatedPageData && adminCheck && adminCheck.id) {
+      const adminCheckRef = dbDocRefs.getAdminCheckRef(adminCheck.id);
+      await updateDoc(adminCheckRef, updatedPageData);
+      const updatedDocAndApplicantData = await updateDocAndApplicantStatus();
+      if (updatedDocAndApplicantData) {
+        await updateDoc(adminCheckRef, updatedDocAndApplicantData);
+      }
+    }
     $q.loading.hide();
   }
 
@@ -191,7 +199,6 @@ const updatePageStatusToRejected = async (
   if (!props.selectedAdminCheck || !props.selectedDoc || !props.selectedPage) {
     return;
   }
-  const adminRef = dbDocRefs.getAdminCheckRef(props.selectedAdminCheck.id);
   const docId = props.selectedDoc.id;
   const pageId = props.selectedPage.id;
   const PAGE_COMPUTED_KEY = `docs.${docId}.pages.${pageId}`;
@@ -202,7 +209,7 @@ const updatePageStatusToRejected = async (
       message,
     },
   };
-  await updateDoc(adminRef, updatedPageData);
+  return updatedPageData;
 };
 
 const openDialogAdminCheckReject = async () => {
@@ -226,7 +233,7 @@ const updateDocAndApplicantStatus = async () => {
     const rejectionReasons: RejectionReason[] = [];
     for (const pageId of Object.keys(doc.pages)) {
       if (doc.pages[pageId].adminCheckStatus === undefined) {
-        return console.log('not all pages are checked');
+        return console.log('page not checked');
       }
       const docAdminCheckStatus = doc.pages[pageId].adminCheckStatus;
       const pageRejection = doc.pages[pageId].rejection;
@@ -235,34 +242,40 @@ const updateDocAndApplicantStatus = async () => {
         rejectionReasons.push(pageRejection.reason);
       }
     }
-    await updateDocStatusAndCreateSystemTask(
+    const updatedDocData = await updateDocStatusAndCreateSystemTask(
       DOC_STATUS,
-      props.selectedAdminCheck.id,
       doc.id,
       rejectionReasons
     );
     // Check if all docs are checked
     const adminCheck = { ...props.selectedAdminCheck };
+    let uncheckedDocs = 0;
     for (const docId of Object.keys(adminCheck.docs)) {
       if (adminCheck.docs[docId].adminCheckStatus === 'Not Checked') {
-        return console.log('not all docs are checked');
+        uncheckedDocs++;
       }
+    }
+    if (uncheckedDocs > 1) {
+      console.log('not all docs are checked');
+      return updatedDocData;
     }
     if (props.selectedDoc && props.selectedDoc.id === doc.id) {
       emit('clearSelectedIndexData');
     }
-    await updateAdminIsChecked(adminCheck.id);
+    const updatedAdminCheck = await updateAdminIsChecked();
+    return {
+      ...updatedDocData,
+      ...updatedAdminCheck,
+    };
   }
 };
 
 const updateDocStatusAndCreateSystemTask = async (
   docStatus: 'Accepted' | 'Rejected',
-  adminCheckId: string,
   docId: string,
   rejectionReasons: RejectionReason[]
 ) => {
-  // TODO: decouple doc status update and admin is checked
-  const adminCheckRef = dbDocRefs.getAdminCheckRef(adminCheckId);
+  console.log('doc status', docStatus);
   const DOC_COMPUTED_KEY = `docs.${docId}`;
   const updatedData: { [key: string]: string | DocRejection } = {
     [`${DOC_COMPUTED_KEY}.adminCheckStatus`]: docStatus,
@@ -281,15 +294,15 @@ const updateDocStatusAndCreateSystemTask = async (
   } else {
     updatedData[`${DOC_COMPUTED_KEY}.systemTask`] = 'acceptDoc';
   }
-  await updateDoc(adminCheckRef, updatedData);
+  return updatedData;
 };
 
-const updateAdminIsChecked = async (adminCheckId: string) => {
-  const adminCheckref = dbDocRefs.getAdminCheckRef(adminCheckId);
+const updateAdminIsChecked = async () => {
   const ADMIN_IS_CHECKED_STATUS = true;
-  await updateDoc(adminCheckref, {
+  const updatedData = {
     isChecked: ADMIN_IS_CHECKED_STATUS,
-  });
+  };
+  return updatedData;
 };
 </script>
 

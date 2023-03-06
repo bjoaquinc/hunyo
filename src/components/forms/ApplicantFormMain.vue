@@ -35,7 +35,7 @@
                 ? `bg-${documentItemStyles[doc.status].bgColor}`
                 : ''
             "
-            v-for="(doc, index) in sortedDocs"
+            v-for="(doc, index) in documents"
             :key="index"
             :clickable="documentItemStyles[doc.status].clickable"
             :v-ripple="documentItemStyles[doc.status].clickable"
@@ -49,13 +49,6 @@
             <q-item-section
               :class="`text-${documentItemStyles[doc.status].textColor}`"
               >{{ doc.name }}
-              {{
-                doc.delayed &&
-                doc.delayed.isDelayed &&
-                doc.status === 'Not Submitted'
-                  ? ' (Delayed)'
-                  : ''
-              }}
             </q-item-section>
             <q-item-section class="text-subtitle1 text-grey-8">
               <div
@@ -83,7 +76,7 @@
                 ? `bg-${documentItemStyles[doc.status].bgColor}`
                 : ''
             "
-            v-for="(doc, index) in sortedDocs"
+            v-for="(doc, index) in documents"
             :key="index"
             :clickable="documentItemStyles[doc.status].clickable"
             :v-ripple="documentItemStyles[doc.status].clickable"
@@ -111,20 +104,22 @@
 </template>
 
 <script setup lang="ts">
-import { QSpinnerPie, useQuasar } from 'quasar';
+import { useQuasar } from 'quasar';
 import { onMounted, ref, computed } from 'vue';
 import DialogFormSubmitDoc from 'src/components/forms/dialogs/DialogFormSubmitDoc.vue';
-import { Form, RejectionCode } from 'src/utils/types';
+import { Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
 import { DateTime } from 'luxon';
 import DialogFormDocumentAvailability from './dialogs/DialogFormDocumentAvailability.vue';
-import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
-import { dbDocRefs } from 'src/utils/db';
-import { updateDoc } from '@firebase/firestore';
+// import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
+// import { dbDocRefs } from 'src/utils/db';
+// import { updateDoc } from '@firebase/firestore';
+import { ApplicantDocument } from 'src/utils/new-types';
 
 const props = defineProps<{
   form: Form & { id: string };
+  documents: (ApplicantDocument & { id: string })[];
 }>();
 
 const deadline = computed(() => {
@@ -139,7 +134,7 @@ const deadline = computed(() => {
 
 const $q = useQuasar();
 const documentItemStyles = {
-  'Not Submitted': {
+  'not-submitted': {
     textColor: 'primary',
     actionIcon: 'fas fa-chevron-right',
     actionLabel: 'Submit now',
@@ -147,7 +142,7 @@ const documentItemStyles = {
     clickable: true,
     bgColor: null,
   },
-  Submitted: {
+  submitted: {
     textColor: 'grey-8',
     actionIcon: 'fas fa-check',
     actionLabel: 'Submitted',
@@ -155,7 +150,7 @@ const documentItemStyles = {
     clickable: false,
     bgColor: null,
   },
-  Accepted: {
+  accepted: {
     textColor: 'positive',
     actionIcon: 'fas fa-check',
     actionLabel: 'Accepted',
@@ -163,7 +158,7 @@ const documentItemStyles = {
     clickable: false,
     bgColor: null,
   },
-  Rejected: {
+  rejected: {
     bgColor: 'negative',
     textColor: 'white',
     actionIcon: 'fas fa-chevron-right',
@@ -171,7 +166,15 @@ const documentItemStyles = {
     mobileLabel: 'Rejected',
     clickable: true,
   },
-  'Not Applicable': {
+  'not-applicable': {
+    bgColor: null,
+    textColor: 'grey-6',
+    actionIcon: 'fas fa-minus',
+    actionLabel: 'Not Applicable. Change?',
+    mobileLabel: 'Not Applicable',
+    clickable: true,
+  },
+  'admin-checked': {
     bgColor: null,
     textColor: 'grey-6',
     actionIcon: 'fas fa-minus',
@@ -181,11 +184,6 @@ const documentItemStyles = {
   },
 };
 const logoURL = ref('');
-const sortedDocs = computed(() => {
-  return Object.keys(props.form.docs)
-    .map((key) => ({ docId: key, ...props.form.docs[key] }))
-    .sort((docA, docB) => docA.docNumber - docB.docNumber);
-});
 
 onMounted(async () => {
   const logo = props.form.company.logo;
@@ -196,16 +194,16 @@ onMounted(async () => {
 });
 
 const onDocumentClick = (index: number) => {
-  const docStatus = sortedDocs.value[index].status;
-  const rejection = sortedDocs.value[index].rejection;
-  if (docStatus === 'Not Submitted') {
+  const docStatus = props.documents[index].status;
+  const rejection = props.documents[index].rejection;
+  if (docStatus === 'not-submitted') {
     onNotSubmitted(index);
   }
-  if (docStatus === 'Rejected' && rejection) {
-    onRejected(index, rejection);
+  if (docStatus === 'rejected' && rejection) {
+    // onRejected(index, rejection);
   }
-  if (docStatus === 'Not Applicable') {
-    onNotApplicable(index);
+  if (docStatus === 'not-applicable') {
+    // onNotApplicable(index);
   }
 };
 
@@ -214,19 +212,19 @@ const onNotSubmitted = (index: number) => {
     component: DialogFormDocumentAvailability,
     componentProps: {
       formId: props.form.id,
-      doc: sortedDocs.value[index],
+      doc: props.documents[index],
     },
   }).onOk((documentAvailability) => {
     if (documentAvailability === 'available') {
       $q.dialog({
         component: DialogFormSubmitDoc,
         componentProps: {
-          doc: sortedDocs.value[index],
+          doc: props.documents[index],
           form: props.form,
           index,
         },
       }).onOk(() => {
-        const docName = sortedDocs.value[index].name;
+        const docName = props.documents[index].name;
         $q.notify({
           message: `${docName} submitted. Thank you.`,
           type: 'positive',
@@ -234,72 +232,71 @@ const onNotSubmitted = (index: number) => {
       });
     }
 
-    if (documentAvailability === 'not-available') {
-      $q.dialog({
-        component: DialogFormScheduleSubmission,
-        componentProps: {
-          doc: sortedDocs.value[index],
-          formId: props.form.id,
-        },
-      }).onOk(() => {
-        $q.notify({
-          message:
-            'Noted on this, we will follow up with you on this date. Thank you.',
-          type: 'positive',
-        });
-      });
-    }
+    // if (documentAvailability === 'not-available') {
+    //   $q.dialog({
+    //     component: DialogFormScheduleSubmission,
+    //     componentProps: {
+    //       doc: props.documents[index],
+    //       formId: props.form.id,
+    //     },
+    //   }).onOk(() => {
+    //     $q.notify({
+    //       message:
+    //         'Noted on this, we will follow up with you on this date. Thank you.',
+    //       type: 'positive',
+    //     });
+    //   });
+    // }
 
-    if (documentAvailability === 'not-applicable') {
-      $q.notify({
-        message: 'Document changed to Not Applicable.',
-        type: 'grey-8',
-      });
-    }
+    // if (documentAvailability === 'not-applicable') {
+    //   $q.notify({
+    //     message: 'Document changed to Not Applicable.',
+    //     type: 'grey-8',
+    //   });
+    // }
   });
 };
 
-const onRejected = (
-  index: number,
-  rejection: {
-    code: RejectionCode;
-    message: string;
-  }
-) => {
-  const rejectionCode = rejection.code;
+// const onRejected = (
+//   index: number,
+//   rejection: {
+//     code: RejectionCode;
+//     message: string;
+//   }
+// ) => {
+//   const rejectionCode = rejection.code;
 
-  if (rejectionCode === 'replaceDoc') {
-    // TODO: Add a dialog to replace the document
-  }
+//   if (rejectionCode === 'replaceDoc') {
+//     // TODO: Add a dialog to replace the document
+//   }
 
-  if (rejectionCode === 'replacePages') {
-    // TODO: Add a dialog to replace the pages
-  }
-};
+//   if (rejectionCode === 'replacePages') {
+//     // TODO: Add a dialog to replace the pages
+//   }
+// };
 
-const onNotApplicable = (index: number) => {
-  $q.dialog({
-    title: 'Change to Applicable?',
-    ok: 'Yes',
-    cancel: 'No',
-  }).onOk(async () => {
-    const loadingDialog = $q.dialog({
-      title: 'Changing document to Applicable...',
-      progress: {
-        spinner: QSpinnerPie,
-      },
-      persistent: true,
-      ok: false,
-    });
-    const formRef = dbDocRefs.getFormRef(props.form.id);
-    const COMPUTED_DOC_STATUS = `docs.${sortedDocs.value[index].docId}.status`;
-    await updateDoc(formRef, {
-      [COMPUTED_DOC_STATUS]: 'Not Submitted',
-    });
-    loadingDialog.hide();
-  });
-};
-
+// const onNotApplicable = (index: number) => {
+//   $q.dialog({
+//     title: 'Change to Applicable?',
+//     ok: 'Yes',
+//     cancel: 'No',
+//   }).onOk(async () => {
+//     const loadingDialog = $q.dialog({
+//       title: 'Changing document to Applicable...',
+//       progress: {
+//         spinner: QSpinnerPie,
+//       },
+//       persistent: true,
+//       ok: false,
+//     });
+//     const formRef = dbDocRefs.getFormRef(props.form.id);
+//     const COMPUTED_DOC_STATUS = `docs.${props.documents[index].docId}.status`;
+//     await updateDoc(formRef, {
+//       [COMPUTED_DOC_STATUS]: 'Not Submitted',
+//     });
+//     loadingDialog.hide();
+//   });
+// };
 </script>
 
 <style lang="sass" scoped>

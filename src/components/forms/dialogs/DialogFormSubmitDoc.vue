@@ -174,19 +174,20 @@ import { getDownloadURL, getMetadata } from '@firebase/storage';
 import { QDialog, QFile, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
 import { ref, watch, computed, onMounted } from 'vue';
-import { FormDoc, Form, PageStatus } from 'src/utils/types';
+import { Form, PageStatus } from 'src/utils/types';
 import { useQuasar } from 'quasar';
 import draggable from 'vuedraggable';
 import DialogFormTips from './DialogFormTips.vue';
 import DialogFormSubmitDocPreview from './DialogFormSubmitDocPreview.vue';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
+import { ApplicantDocument } from 'src/utils/new-types';
 
 const drag = ref(false);
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
 const props = defineProps<{
-  doc: FormDoc & { docId: string };
+  doc: ApplicantDocument & { docId: string };
   index: number;
   form: Form & { id: string };
 }>();
@@ -307,88 +308,6 @@ const openDialogFormSubmitDocPreview = async () => {
     }).onOk(resolve);
   });
 };
-
-// const uploadFilesToStorage = async () => {
-//   const promises: Promise<FormPage>[] = [];
-
-//   uploadedFiles.value.forEach((file, index) => {
-//     const PAGE_NUMBER = index + 1;
-//     const promise = uploadFileToStorage(file, PAGE_NUMBER);
-//     promises.push(promise);
-//   });
-//   return await Promise.all(promises);
-// };
-
-// const uploadFileToStorage = async (
-//   file: {
-//     file: File;
-//     name: string;
-//     downloadURL: string;
-//     status: PageStatus | 'New';
-//   },
-//   pageNumber: number
-// ) => {
-//   const applicantName = `${props.form.applicant.name?.first} ${props.form.applicant.name?.last}`;
-//   let fileName = applicantName + '-' + props.doc.name + '-' + pageNumber;
-//   if (uploadedFiles.value.length <= 1) {
-//     fileName = applicantName + '-' + props.doc.name;
-//   }
-//   const format = props.doc.format;
-//   const formId = props.form.id;
-//   const docId = props.doc.docId;
-//   const pageId = `${docId}-${pageNumber.toString()}`;
-//   const companyId = props.form.company.id;
-//   const dashboardId = props.form.dashboard.id;
-//   const applicantId = props.form.applicant.id;
-//   const storageRef = storageRefs.getTemporaryDocsRef(fileName);
-//   const contentType = file.file.type;
-//   const contentSize = file.file.size;
-//   const CONVERT_TO_KILOBYTES = 0.001;
-//   const FIRST_TIME_SUBMITTED = 1;
-
-//   await uploadBytes(storageRef, file.file, {
-//     contentType,
-//     customMetadata: {
-//       companyId,
-//       dashboardId,
-//       applicantId,
-//       formId,
-//       docId,
-//       pageId,
-//       format,
-//       submissionCount: FIRST_TIME_SUBMITTED.toString(),
-//     },
-//   });
-//   const formPage: FormPage = {
-//     name: fileName,
-//     status: 'Submitted',
-//     submittedFormat: contentType,
-//     submittedSize: contentSize * CONVERT_TO_KILOBYTES,
-//     submissionCount: FIRST_TIME_SUBMITTED,
-//     pageNumber,
-//   };
-//   return formPage;
-// };
-
-// const submitPages = async (pagesList: FormPage[]) => {
-//   const pages: { [key: string]: FormPage } = {};
-//   pagesList.forEach((page) => {
-//     pages[`${props.doc.docId}-${page.pageNumber.toString()}`] = page;
-//   });
-//   const formRef = dbDocRefs.getFormRef(props.form.id);
-//   const formDoc = `docs.${props.doc.docId}`;
-//   const form: Partial<Form> = {
-//     [`${formDoc}.pages`]: pages,
-//     [`${formDoc}.status`]: 'Submitted',
-//     [`${formDoc}.deviceSubmitted`]: $q.platform.is.mobile
-//       ? 'mobile'
-//       : 'desktop',
-//     [`${formDoc}.systemTask`]: 'createDoc',
-//   };
-//   await updateDoc(formRef, {
-//     ...form,
-//   });
-// };
 
 const openBaseDialogViewImage = (imgURL: string, contentType: string) => {
   $q.dialog({

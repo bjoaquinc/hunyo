@@ -11,6 +11,8 @@ import {
   AdminCheck,
 } from './types';
 
+import { ApplicantDocument, ApplicantPage } from './new-types';
+
 const converter = <T>() => ({
   toFirestore: (data: T) => data,
   fromFirestore: (snap: QueryDocumentSnapshot) => {
@@ -37,6 +39,14 @@ export const dbColRefs = {
     collection(db, 'companies', companyId, 'dashboards').withConverter(
       converter<PublishedDashboard>()
     ),
+  getDocumentsRef: (companyId: string) =>
+    collection(db, 'companies', companyId, 'documents').withConverter(
+      converter<ApplicantDocument>()
+    ),
+  getPagesRef: (companyId: string) =>
+    collection(db, 'companies', companyId, 'pages').withConverter(
+      converter<ApplicantPage>()
+    ),
   getApplicantsRef: (companyId: string, dashboardId: string) =>
     collection(
       db,
@@ -58,6 +68,10 @@ export const dbDocRefs = {
   getUserRef: (companyId: string, userId: string) =>
     doc(db, 'companies', companyId, 'users', userId).withConverter(
       converter<User>()
+    ),
+  getDocumentRef: (companyId: string, docId: string) =>
+    doc(db, 'companies', companyId, 'documents', docId).withConverter(
+      converter<ApplicantDocument>()
     ),
   getInviteRef: (inviteId: string) =>
     doc(db, 'invites', inviteId).withConverter(converter<Invite>()),
