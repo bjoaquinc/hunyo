@@ -378,16 +378,22 @@ export interface MessageMetadata {
 
 // Rejections
 
-export interface RejectionPagesDocument {
+export interface RejectionPages {
+  createdAt: Timestamp;
+  companyId: string;
+  dashboardId: string;
+  applicantId: string;
   formId: string;
   docId: string;
-  pages: (AdminCheckPage & { id: string })[];
+  pages: (AdminCheckPage & {
+    id: string;
+  })[];
   rejectionData: DocRejection;
 }
 
 export interface DocRejection {
   code: RejectionCode;
-  reason: RejectionReason;
+  reason: RejectionReason[];
   message?: string;
   rejectedBy: string;
   rejectedAt: Timestamp;

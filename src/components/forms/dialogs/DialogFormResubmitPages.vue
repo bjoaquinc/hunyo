@@ -11,12 +11,8 @@
       <q-form @submit.prevent="onSubmit" greedy>
         <q-card-section>
           <div class="flex justify-between q-mt-sm no-wrap">
-            <div class="text-h5 gt-xs">
-              Resubmit {{ doc.name }}
-            </div>
-            <div class="text-h6 lt-sm">
-              Resubmit {{ doc.name }}
-            </div>
+            <div class="text-h5 gt-xs">Resubmit {{ doc.name }}</div>
+            <div class="text-h6 lt-sm">Resubmit {{ doc.name }}</div>
             <q-btn v-close-popup icon="fas fa-times" flat dense />
           </div>
           <q-item class="text-body1 q-mt-md">
@@ -25,10 +21,7 @@
             </q-item-section>
             <q-item-section>
               <div class="flex column">
-                <div
-                  v-if="doc.instructions"
-                  style="white-space: pre-line"
-                >
+                <div v-if="doc.instructions" style="white-space: pre-line">
                   {{ doc.instructions }}
                 </div>
                 <q-btn
@@ -220,7 +213,7 @@ import { dbDocRefs } from 'src/utils/db';
 import { updateDoc } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
 import draggable from 'vuedraggable';
-import DialogFormTips from '../DialogFormTips.vue';
+import DialogFormTips from './DialogFormTips.vue';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
 
 const drag = ref(false);

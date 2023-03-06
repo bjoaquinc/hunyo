@@ -177,7 +177,7 @@ import { ref, watch, computed, onMounted } from 'vue';
 import { FormDoc, Form, PageStatus } from 'src/utils/types';
 import { useQuasar } from 'quasar';
 import draggable from 'vuedraggable';
-import DialogFormTips from '../DialogFormTips.vue';
+import DialogFormTips from './DialogFormTips.vue';
 import DialogFormSubmitDocPreview from './DialogFormSubmitDocPreview.vue';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
 

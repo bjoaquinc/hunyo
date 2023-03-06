@@ -95,7 +95,7 @@ import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
 import { dbDocRefs } from 'src/utils/db';
 import { serverTimestamp, updateDoc } from '@firebase/firestore';
-import { useQuasar } from 'quasar';
+import { QSpinnerPie, useQuasar } from 'quasar';
 import DialogAdminCheckReject from 'src/components/admin/DialogAdminCheckReject.vue';
 
 const props = defineProps<{
@@ -171,8 +171,12 @@ const onReject = async () => {
   const data = await openDialogAdminCheckReject();
   const { rejection, reason, message } = data;
   if (rejection === 'rejectPages') {
+    $q.loading.show({
+      spinner: QSpinnerPie,
+    });
     await updatePageStatusToRejected(reason, message);
     await updateDocAndApplicantStatus();
+    $q.loading.hide();
   }
 
   if (rejection === 'rejectFullSubmission') {
@@ -217,20 +221,25 @@ const openDialogAdminCheckReject = async () => {
 const updateDocAndApplicantStatus = async () => {
   if (props.selectedAdminCheck && props.selectedDoc && props.selectedPage) {
     const doc = { ...props.selectedDoc };
+    // Check if all pages are checked and get rejection reasons;
     let DOC_STATUS: 'Accepted' | 'Rejected' = 'Accepted';
-    // Check if all pages are checked
+    const rejectionReasons: RejectionReason[] = [];
     for (const pageId of Object.keys(doc.pages)) {
       if (doc.pages[pageId].adminCheckStatus === undefined) {
         return console.log('not all pages are checked');
       }
-      if (doc.pages[pageId].adminCheckStatus === 'Rejected') {
+      const docAdminCheckStatus = doc.pages[pageId].adminCheckStatus;
+      const pageRejection = doc.pages[pageId].rejection;
+      if (docAdminCheckStatus === 'Rejected' && pageRejection !== undefined) {
         DOC_STATUS = 'Rejected';
+        rejectionReasons.push(pageRejection.reason);
       }
     }
     await updateDocStatusAndCreateSystemTask(
       DOC_STATUS,
       props.selectedAdminCheck.id,
-      doc.id
+      doc.id,
+      rejectionReasons
     );
     // Check if all docs are checked
     const adminCheck = { ...props.selectedAdminCheck };
@@ -239,7 +248,9 @@ const updateDocAndApplicantStatus = async () => {
         return console.log('not all docs are checked');
       }
     }
-    emit('clearSelectedIndexData');
+    if (props.selectedDoc && props.selectedDoc.id === doc.id) {
+      emit('clearSelectedIndexData');
+    }
     await updateAdminIsChecked(adminCheck.id);
   }
 };
@@ -247,8 +258,10 @@ const updateDocAndApplicantStatus = async () => {
 const updateDocStatusAndCreateSystemTask = async (
   docStatus: 'Accepted' | 'Rejected',
   adminCheckId: string,
-  docId: string
+  docId: string,
+  rejectionReasons: RejectionReason[]
 ) => {
+  // TODO: decouple doc status update and admin is checked
   const adminCheckRef = dbDocRefs.getAdminCheckRef(adminCheckId);
   const DOC_COMPUTED_KEY = `docs.${docId}`;
   const updatedData: { [key: string]: string | DocRejection } = {
@@ -256,11 +269,10 @@ const updateDocStatusAndCreateSystemTask = async (
   };
   if (docStatus === 'Rejected') {
     const REJECTION_CODE = 'rejectPages';
-    const REJECTION_REASON = 'imageQuality';
     const REJECTED_BY = 'admin';
     const DOC_REJECTION = {
       code: REJECTION_CODE,
-      reason: REJECTION_REASON,
+      reason: rejectionReasons,
       rejectedBy: REJECTED_BY,
       rejectedAt: serverTimestamp(),
     } as DocRejection;
