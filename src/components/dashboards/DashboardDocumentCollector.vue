@@ -205,12 +205,12 @@ const companyId = (user as User & { id: string }).company.id;
 
 const incompleteApplicants = computed(() =>
   props.applicants.filter(
-    (applicant) => applicant.dashboard.status === 'Incomplete'
+    (applicant) => applicant.dashboard.status === 'incomplete'
   )
 );
 const completeApplicants = computed(() =>
   props.applicants.filter(
-    (applicant) => applicant.dashboard.status === 'Complete'
+    (applicant) => applicant.dashboard.status === 'complete'
   )
 );
 const actionApplicants = computed(() =>

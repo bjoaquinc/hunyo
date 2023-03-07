@@ -9,6 +9,7 @@ import {
   DraftDashboard,
   PublishedDashboard,
   AdminCheck,
+  AcceptedPage,
 } from './types';
 
 import { ApplicantDocument, ApplicantPage } from './new-types';
@@ -27,6 +28,7 @@ export const dbColRefs = {
   adminChecks: collection(db, 'adminChecks').withConverter(
     converter<AdminCheck>()
   ),
+  acceptedPagesRef: collection(db, 'acceptedPages').withConverter(converter<AcceptedPage>()),
   getUsersRef: (companyId: string) =>
     collection(db, 'companies', companyId, 'users').withConverter(
       converter<User>()
@@ -71,6 +73,10 @@ export const dbDocRefs = {
     ),
   getDocumentRef: (companyId: string, docId: string) =>
     doc(db, 'companies', companyId, 'documents', docId).withConverter(
+      converter<ApplicantDocument>()
+    ),
+  getPageRef: (companyId: string, pageId: string) =>
+    doc(db, 'companies', companyId, 'pages', pageId).withConverter(
       converter<ApplicantDocument>()
     ),
   getInviteRef: (inviteId: string) =>

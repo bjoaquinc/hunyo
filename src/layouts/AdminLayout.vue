@@ -296,6 +296,7 @@ watch(selectedDoc, async (newVal) => {
     const q = query(
       applicantDocsRef,
       where('docId', '==', newVal.id),
+      where('status', '==', 'submitted'),
       orderBy('pageNumber')
     );
     await new Promise((resolve, reject) => {

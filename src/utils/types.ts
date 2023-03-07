@@ -8,7 +8,7 @@ export type FormTask = 'createDoc' | 'resubmitDoc' | 'resubmitPages';
 
 export type ActionsType = 'verifyDocuments' | 'messageNotSent';
 
-export type ApplicantStatus = 'Not Submitted' | 'Incomplete' | 'Complete';
+export type ApplicantStatus = 'not-submitted' | 'incomplete' | 'complete';
 
 export type ApplicantDashboardMessageStatus =
   | 'Pending'
@@ -178,7 +178,9 @@ export interface Applicant {
     status: ApplicantStatus;
     submittedAt?: Timestamp | FieldValue;
   };
-  docIds: string[];
+  totalDocs: number;
+  adminAcceptedDocs: number;
+  acceptedDocs: number;
 }
 
 export interface Form {
@@ -262,6 +264,24 @@ export interface Action {
       last: string;
     };
     id: string;
+  };
+}
+
+export interface AcceptedPage {
+  createdAt: Timestamp;
+  applicantId: string;
+  dashboardId: string;
+  companyId: string;
+  formId: string;
+  docId: string;
+  pageId: string;
+  acceptedBy: string;
+  name: string;
+  contentType: string;
+  imageProperties?: {
+    brightness: number;
+    sharpness: number;
+    contrast: number;
   };
 }
 

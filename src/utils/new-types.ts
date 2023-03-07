@@ -66,6 +66,8 @@ export interface ApplicantDocument {
   deviceSubmitted?: 'desktop' | 'mobile';
   docNumber: number;
   totalPages: number;
+  adminAcceptedPages: number;
+  acceptedPages: number;
   rejection?: {
     reason: string;
     message: string;

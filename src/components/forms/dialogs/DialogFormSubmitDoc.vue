@@ -287,7 +287,6 @@ watch(files, (newFiles) => {
 });
 
 const removeFile = (element: UploadedFile) => {
-  console.log('test', element);
   const index = uploadedFiles.value.indexOf(element);
   uploadedFiles.value.splice(index, 1);
 };

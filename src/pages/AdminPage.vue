@@ -58,6 +58,7 @@
       </div>
       <div class="col-12 flex justify-around q-py-md">
         <q-btn
+          @click="onAccept()"
           :loading="acceptIsLoading"
           label="Accept"
           color="positive"
@@ -79,18 +80,17 @@
 
 <script setup lang="ts">
 import { watch, ref } from 'vue';
-import {
-  Form,
-  DocRejection,
-  RejectionCode,
-  RejectionReason,
-} from 'src/utils/types';
+import { Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
-import { dbDocRefs } from 'src/utils/db';
-import { serverTimestamp, updateDoc } from '@firebase/firestore';
-import { QSpinnerPie, useQuasar } from 'quasar';
-import DialogAdminCheckReject from 'src/components/admin/DialogAdminCheckReject.vue';
+import { dbDocRefs, dbColRefs } from 'src/utils/db';
+import {
+  addDoc,
+  increment,
+  serverTimestamp,
+  updateDoc,
+} from '@firebase/firestore';
+import { useQuasar } from 'quasar';
 import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
 
 const props = defineProps<{
@@ -145,22 +145,43 @@ watch(
   { deep: true }
 );
 
-// const onAccept = async () => {
-//   acceptIsLoading.value = true;
-//   if (props.selectedApplicant && props.selectedDoc && props.selectedPage) {
-//     const DOC_COMPUTED_KEY = `docs.${props.selectedDoc.id}`;
-//     const PAGE_COMPUTED_KEY = `${DOC_COMPUTED_KEY}.pages.${props.selectedPage.id}`;
-//     const adminCheckRef = dbDocRefs.getAdminCheckRef(
-//       props.selectedApplicant.id
-//     );
-//     const updatedAdminCheckData = {
-//       [`${PAGE_COMPUTED_KEY}.adminCheckStatus`]: 'Accepted',
-//     };
-//     await updateDoc(adminCheckRef, updatedAdminCheckData);
-//     await updateDocAndApplicantStatus();
-//     acceptIsLoading.value = false;
-//   }
-// };
+const onAccept = async () => {
+  acceptIsLoading.value = true;
+  if (props.selectedApplicant && props.selectedDoc && props.selectedPage) {
+    const pageRef = dbDocRefs.getPageRef(
+      props.selectedPage.companyId,
+      props.selectedPage.id
+    );
+    // Create success doc
+    const acceptedPagesRef = dbColRefs.acceptedPagesRef;
+    const ACCEPTED_BY = 'admin';
+    await addDoc(acceptedPagesRef, {
+      createdAt: serverTimestamp(),
+      companyId: props.selectedApplicant.company.id,
+      dashboardId: props.selectedApplicant.dashboard.id,
+      applicantId: props.selectedApplicant.applicant.id,
+      docId: props.selectedDoc.id,
+      pageId: props.selectedPage.id,
+      formId: props.selectedApplicant.id,
+      name: props.selectedPage.name,
+      contentType: props.selectedPage.submittedFormat,
+      acceptedBy: ACCEPTED_BY,
+    });
+    // Update page status to admin-checked
+    await updateDoc(pageRef, {
+      status: 'admin-checked',
+    });
+    // Update Applicant Document
+    const documentRef = dbDocRefs.getDocumentRef(
+      props.selectedDoc.companyId,
+      props.selectedDoc.id
+    );
+    await updateDoc(documentRef, {
+      adminCheckedPages: increment(1),
+    });
+    acceptIsLoading.value = false;
+  }
+};
 
 // const onReject = async () => {
 //   const data = await openDialogAdminCheckReject();
