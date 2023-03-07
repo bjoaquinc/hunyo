@@ -211,7 +211,7 @@ export interface Form {
       opening: string;
     };
   };
-  isChecked: boolean;
+  adminCheckDocs: number;
 }
 
 export interface UpdatedForm extends Omit<Form, 'applicant'> {

@@ -119,6 +119,7 @@ import {
   DocumentReference,
   serverTimestamp,
   Timestamp,
+  increment,
 } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
@@ -151,6 +152,7 @@ const onSubmit = async () => {
     const pages = await uploadFilesToStorage();
     const totalPages = await createApplicantPages(pages);
     await updateApplicantDocument(totalPages);
+    await updateForm();
     isLoading.value = false;
     onDialogOK();
   } catch (error) {
@@ -260,6 +262,14 @@ const updateApplicantDocument = async (totalPages: number) => {
     status: UPDATED_DOC_STATUS,
     totalPages,
     deviceSubmitted: $q.platform.is.mobile ? 'mobile' : 'desktop',
+  });
+};
+
+const updateForm = async () => {
+  const formRef = dbDocRefs.getFormRef(props.form.id);
+  const INCREMENT_DOCS_FOR_APPLICANT_CHECK = increment(1);
+  await updateDoc(formRef, {
+    adminCheckDocs: INCREMENT_DOCS_FOR_APPLICANT_CHECK,
   });
 };
 

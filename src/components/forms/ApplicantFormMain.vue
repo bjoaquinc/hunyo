@@ -175,12 +175,12 @@ const documentItemStyles = {
     clickable: true,
   },
   'admin-checked': {
+    textColor: 'grey-8',
+    actionIcon: 'fas fa-check',
+    actionLabel: 'Submitted',
+    mobileLabel: 'Uploaded',
+    clickable: false,
     bgColor: null,
-    textColor: 'grey-6',
-    actionIcon: 'fas fa-minus',
-    actionLabel: 'Not Applicable. Change?',
-    mobileLabel: 'Not Applicable',
-    clickable: true,
   },
 };
 const logoURL = ref('');
