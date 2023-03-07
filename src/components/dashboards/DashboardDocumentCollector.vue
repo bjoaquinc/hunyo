@@ -143,23 +143,23 @@
           <q-td key="document" :props="props">
             <q-btn
               @click="null"
-              v-if="props.row.dashboard.status === 'Complete'"
+              v-if="props.row.status === 'complete'"
               class="text-body2 text-positive"
               no-caps
               flat
               dense
               icon="fas fa-check"
-              :label="props.row.dashboard.status"
+              :label="props.row.status"
             />
             <q-btn
               @click="null"
-              v-else-if="props.row.dashboard.status === 'Incomplete'"
+              v-else-if="props.row.status === 'incomplete'"
               class="text-body2 text-purple"
               no-caps
               flat
               dense
               icon="far fa-dot-circle"
-              :label="props.row.dashboard.status"
+              label="Incomplete"
             />
             <div v-else class="text-grey-7 text-body2">Not Submitted</div>
           </q-td>
@@ -204,14 +204,10 @@ const { user } = useUserStore();
 const companyId = (user as User & { id: string }).company.id;
 
 const incompleteApplicants = computed(() =>
-  props.applicants.filter(
-    (applicant) => applicant.dashboard.status === 'incomplete'
-  )
+  props.applicants.filter((applicant) => applicant.status === 'incomplete')
 );
 const completeApplicants = computed(() =>
-  props.applicants.filter(
-    (applicant) => applicant.dashboard.status === 'complete'
-  )
+  props.applicants.filter((applicant) => applicant.status === 'complete')
 );
 const actionApplicants = computed(() =>
   props.applicants.filter((applicant) => applicant.actions.length > 0)

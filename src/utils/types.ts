@@ -175,9 +175,9 @@ export interface Applicant {
   }[];
   dashboard: {
     id: string;
-    status: ApplicantStatus;
     submittedAt?: Timestamp | FieldValue;
   };
+  status: ApplicantStatus;
   totalDocs: number;
   adminAcceptedDocs: number;
   acceptedDocs: number;

@@ -177,7 +177,7 @@ const onAccept = async () => {
       props.selectedDoc.id
     );
     await updateDoc(documentRef, {
-      adminCheckedPages: increment(1),
+      adminAcceptedPages: increment(1),
     });
     acceptIsLoading.value = false;
   }
