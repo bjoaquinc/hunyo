@@ -2,17 +2,20 @@
   <q-dialog ref="dialogRef" @hide="onDialogHide" maximized persistent>
     <q-layout view="hHr lpR fFf" container>
       <q-header class="bg-white text-grey-8" bordered>
-        <q-toolbar>
+        <q-toolbar class="q-py-sm">
           <q-btn
+            v-close-popup
+            size="lg"
             icon="fas fa-arrow-left"
             color="primary"
             flat
             dense
             class="q-ml-sm"
           />
-          <div class="text-h5 q-ml-auto">{{ applicantDocument.name }}</div>
+          <div class="text-h4 q-ml-auto">{{ applicantDocument.name }}</div>
 
           <q-btn
+            size="lg"
             class="q-ml-auto"
             dense
             flat
@@ -24,37 +27,62 @@
       </q-header>
 
       <q-drawer show-if-above v-model="drawerRight" side="right" bordered>
-        <q-list class="q-pa-md">
-          <div class="text-h5 q-mb-md">Page 1 of 7</div>
+        <q-list class="q-pa-md" v-if="documentPages.length > 0">
+          <div class="text-h5 q-mb-md">
+            Page {{ slide }} of {{ documentPages.length }}
+          </div>
           <q-separator />
-          <q-item clickable v-ripple class="bg-positive">
+          <q-item
+            @click="documentPages[selectedPageIndex].updatedStatus = 'accepted'"
+            clickable
+            v-ripple
+            :class="
+              documentPages[selectedPageIndex].updatedStatus === 'accepted'
+                ? 'bg-positive text-white'
+                : 'accept-border text-positive'
+            "
+          >
             <q-item-section>
-              <q-item-label class="text-subtitle1 text-white text-weight-bold"
-                >Accept Page 1</q-item-label
+              <q-item-label class="text-subtitle1 text-weight-bold"
+                >Accept Page {{ slide }}</q-item-label
               >
             </q-item-section>
             <q-item-section avatar side>
-              <q-icon name="fas fa-check" color="white" />
+              <q-icon name="fas fa-check" />
             </q-item-section>
           </q-item>
-          <q-item clickable v-ripple class="bg-negative q-mt-md">
+          <q-item
+            @click="documentPages[selectedPageIndex].updatedStatus = 'rejected'"
+            clickable
+            v-ripple
+            class="q-mt-md"
+            :class="
+              documentPages[selectedPageIndex].updatedStatus === 'rejected'
+                ? 'bg-negative text-white'
+                : 'reject-border text-negative'
+            "
+          >
             <q-item-section>
-              <q-item-label class="text-subtitle1 text-white text-weight-bold"
-                >Reject Page 1</q-item-label
+              <q-item-label class="text-subtitle1 text-weight-bold"
+                >Reject Page {{ slide }}</q-item-label
               >
             </q-item-section>
             <q-item-section avatar side>
-              <q-icon name="fas fa-times" color="white" />
+              <q-icon name="fas fa-times" />
             </q-item-section>
           </q-item>
-          <q-item clickable v-ripple class="bg-grey-8 q-mt-md">
+          <q-item
+            clickable
+            v-ripple
+            class="text-grey-8 q-mt-md download-border"
+          >
             <q-item-section>
-              <q-item-label class="text-subtitle1 text-white text-weight-bold"
-                >Download Page 1</q-item-label
+              <q-item-label class="text-subtitle1 text-weight-bold"
+                >Download Page {{ slide }}</q-item-label
               >
             </q-item-section>
             <q-item-section avatar side>
-              <q-icon name="fas fa-arrow-down" color="white" />
+              <q-icon name="fas fa-arrow-down" />
             </q-item-section>
           </q-item>
           <q-item
@@ -110,6 +138,26 @@
             </q-item>
           </q-list>
         </q-slide-transition>
+        <q-btn
+          @click="onSubmit"
+          color="primary"
+          label="Done"
+          class="full-width q-mt-xl"
+        />
+        <div
+          class="text-body1 q-mt-md text-negative q-px-sm"
+          v-if="showWarningMessage"
+        >
+          <div class="q-mt-md text-center">
+            <q-icon size="lg" name="fas fa-exclamation-triangle" />
+          </div>
+          <div class="q-mt-md text-center">
+            <span>Warning!</span>
+          </div>
+          <div class="q-mt-md text-center">
+            You missed some pages. Please review and accept or reject them.
+          </div>
+        </div>
       </q-drawer>
 
       <q-page-container>
@@ -129,7 +177,7 @@
               size="lg"
             />
             <q-btn
-              v-if="slide < 4"
+              v-if="slide < documentPages.length"
               @click="slide++"
               outline
               round
@@ -143,6 +191,7 @@
               style="max-height: 100%; overflow: auto !important"
             >
               <q-carousel
+                v-if="documentPages.length > 0 || !isLoading"
                 style="height: 100%; width: 80%"
                 animated
                 v-model="slide"
@@ -150,27 +199,30 @@
                 transition-prev="slide-right"
                 transition-next="slide-left"
               >
-                <q-carousel-slide :name="1" class="column no-wrap flex-center">
+                <q-carousel-slide
+                  :name="index + 1"
+                  class="column no-wrap flex-center"
+                  v-for="(page, index) in documentPages"
+                  :key="index"
+                >
                   <q-img
-                    src="https://images.unsplash.com/photo-1677461404800-55ba48012cce?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1887&q=80"
+                    v-if="applicantDocument.requestedFormat === 'jpeg'"
+                    :src="documentPages[index].url"
                   />
-                </q-carousel-slide>
-                <q-carousel-slide :name="2" class="column no-wrap flex-center">
-                  <q-img
-                    src="https://images.unsplash.com/photo-1677461404800-55ba48012cce?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1887&q=80"
-                  />
-                </q-carousel-slide>
-                <q-carousel-slide :name="3" class="column no-wrap flex-center">
-                  <q-img
-                    src="https://images.unsplash.com/photo-1677461404800-55ba48012cce?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1887&q=80"
-                  />
-                </q-carousel-slide>
-                <q-carousel-slide :name="4" class="column no-wrap flex-center">
-                  <q-img
-                    src="https://images.unsplash.com/photo-1677461404800-55ba48012cce?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1887&q=80"
+                  <embed
+                    v-else
+                    :src="documentPages[index].url"
+                    type="application/pdf"
+                    style="width: 100%; height: 85vh"
                   />
                 </q-carousel-slide>
               </q-carousel>
+              <q-spinner-pie
+                class="absolute-center"
+                color="primary"
+                v-else
+                size="100px"
+              />
             </div>
           </div>
         </q-page>
@@ -181,17 +233,157 @@
 
 <script setup lang="ts">
 import { QDialog, useDialogPluginComponent } from 'quasar';
-import { ref } from 'vue';
-import { ApplicantDocument } from 'src/utils/new-types';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
+import { dbColRefs, dbDocRefs } from 'src/utils/db';
+import {
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  Unsubscribe,
+  updateDoc,
+  increment,
+} from 'firebase/firestore';
+import { getDownloadURL } from '@firebase/storage';
+import { storageRefs } from 'src/utils/storage';
 
-const { dialogRef, onDialogHide } = useDialogPluginComponent();
+const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const drawerRight = ref(true);
 const slide = ref(1);
+const selectedPageIndex = computed(() => slide.value - 1);
 const showOptions = ref(false);
+const documentPages = ref<
+  (ApplicantPage & {
+    id: string;
+    url: string;
+    updatedStatus: 'not-checked' | 'accepted' | 'rejected';
+  })[]
+>([]);
+// const pageStatusAndURL = ref<string[]>([]);
+const unsubDocumentPages = ref<Unsubscribe | null>(null);
+const showWarningMessage = ref(false);
+const isLoading = ref(false);
 
-defineProps<{
-  applicantDocument: ApplicantDocument;
+const props = defineProps<{
+  applicantDocument: ApplicantDocument & { id: string };
 }>();
+
+onMounted(async () => {
+  console.log(props.applicantDocument.companyId);
+  const pagesRef = dbColRefs.getPagesRef(props.applicantDocument.companyId);
+  const q = query(
+    pagesRef,
+    where('docId', '==', props.applicantDocument.id),
+    where('status', '==', 'admin-checked'),
+    orderBy('pageNumber', 'asc')
+  );
+  await new Promise<void>((resolve, reject) => {
+    let runOnce = () => {
+      runOnce = () => {
+        return;
+      };
+      resolve();
+    };
+    unsubDocumentPages.value = onSnapshot(
+      q,
+      async (snapshot) => {
+        documentPages.value = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            const { name, companyId, dashboardId, applicantId } = doc.data();
+            const requestedFormat = props.applicantDocument.requestedFormat;
+            const storageRef = storageRefs.getFixedDocRef(
+              companyId,
+              dashboardId,
+              applicantId,
+              `${name}.${requestedFormat}`
+            );
+            const url = await getDownloadURL(storageRef);
+            return {
+              id: doc.id,
+              url,
+              updatedStatus: 'not-checked',
+              ...doc.data(),
+            };
+          })
+        );
+        // console.log(documentPages.value);
+        // for (const page of documentPages.value) {
+        //   const { name, companyId, dashboardId, applicantId } = page;
+        //   const requestedFormat = props.applicantDocument.requestedFormat;
+        //   const storageRef = storageRefs.getFixedDocRef(
+        //     companyId,
+        //     dashboardId,
+        //     applicantId,
+        //     `${name}.${requestedFormat}`
+        //   );
+        //   const url = await getDownloadURL(storageRef);
+        //   pageStatusAndURL.value.push(url);
+        // }
+        runOnce();
+      },
+      (err) => {
+        reject(err);
+      }
+    );
+  });
+});
+
+onUnmounted(() => {
+  unsubDocumentPages.value?.();
+});
+
+const onSubmit = async () => {
+  for (let i = 0; i < documentPages.value.length; i++) {
+    const page = documentPages.value[i];
+    if (page.updatedStatus === 'not-checked') {
+      slide.value = i + 1;
+      showWarningMessage.value = true;
+      await new Promise<void>((resolve) => {
+        setTimeout(() => {
+          resolve();
+        }, 8000);
+      });
+      showWarningMessage.value = false;
+      return;
+    }
+  }
+  isLoading.value = true;
+  let ACCEPTED_PAGES = 0;
+  const promises: Promise<void>[] = [];
+  for (const page of documentPages.value) {
+    if (page.updatedStatus === 'accepted') {
+      const promise = updatePageStatus();
+      promises.push(promise);
+      ACCEPTED_PAGES++;
+    } else if (page.updatedStatus === 'rejected') {
+      // TODO: handle rejection
+    }
+  }
+  await Promise.all(promises);
+  await incrementAcceptedPages(ACCEPTED_PAGES);
+  onDialogOK();
+};
+
+const updatePageStatus = async () => {
+  console.log('accept page', documentPages.value[selectedPageIndex.value]);
+  // update page status
+  const page = documentPages.value[selectedPageIndex.value];
+  const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
+  await updateDoc(pageRef, {
+    status: 'accepted',
+  });
+};
+
+const incrementAcceptedPages = async (incrementNumber: number) => {
+  const applicantDocRef = dbDocRefs.getDocumentRef(
+    props.applicantDocument.companyId,
+    props.applicantDocument.id
+  );
+  await updateDoc(applicantDocRef, {
+    acceptedPages: increment(incrementNumber),
+  });
+};
 
 defineEmits([
   // REQUIRED; need to specify some events that your
@@ -209,4 +401,11 @@ defineEmits([
   position: absolute
   top: calc(50% - 25.7px)
   right: 60px
+
+.download-border
+  border: 1px solid $grey-8
+.reject-border
+  border: 1px solid $negative
+.accept-border
+  border: 1px solid $positive
 </style>

@@ -1,50 +1,50 @@
 <template>
   <q-dialog ref="dialogRef" @hide="onDialogHide" persistent>
-    <q-card v-if="action" class="full-width">
+    <q-card class="full-width">
       <q-card-section>
         <div class="full-width">
           <q-card-section>
             <div class="flex justify-between">
               <div class="text-h5">
-                Verify
-                {{
-                  `${action.applicant.name?.first} ${action.applicant.name?.last}`
-                }}'s Documents
+                Check
+                {{ `${applicantName?.first} ${applicantName?.last}` }}'s
+                Documents
               </div>
               <q-btn icon="fas fa-times" color="grey-8" flat v-close-popup />
             </div>
           </q-card-section>
           <q-card-section>
-            <q-list separator>
+            <q-list
+              separator
+              v-if="applicantDocuments && applicantDocuments.length > 0"
+            >
               <q-separator />
               <q-item
                 @click="openDialogActionVerifyDocument(index)"
-                class="flex column"
                 v-for="(doc, index) in applicantDocuments"
                 :key="index"
-                clickable
-                v-ripple
+                :clickable="!doc.isUpdating"
               >
                 <q-item-section>
-                  <div class="flex justify-between">
-                    <div class="text-h6">{{ doc.name }}</div>
-                    <div class="flex text-grey-8 text-subtitle2 items-center">
-                      <div>VIEW DOCUMENT</div>
-                      <q-icon class="q-ml-sm" name="fas fa-chevron-right" />
+                  <q-item-label class="text-h6">{{ doc.name }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <div class="flex text-body1 items-center">
+                    <div>
+                      {{ doc.isUpdating ? 'Updating...' : 'View Document' }}
                     </div>
+                    <q-icon
+                      v-if="!doc.isUpdating"
+                      class="q-ml-sm"
+                      name="fas fa-chevron-right"
+                    />
+                    <q-spinner-pie v-else class="q-ml-md" size="md" />
                   </div>
                 </q-item-section>
               </q-item>
               <q-separator />
             </q-list>
-          </q-card-section>
-          <q-card-section>
-            <q-slide-transition v-show="hasCheckedAllDocs">
-              <div class="flex justify-around">
-                <q-btn label="Documents Complete" color="primary" />
-                <q-btn label="Documents Incomplete" color="primary" outline />
-              </div>
-            </q-slide-transition>
+            <q-skeleton v-else height="200px" square />
           </q-card-section>
         </div>
       </q-card-section>
@@ -67,14 +67,20 @@ import {
 import { ApplicantDocument } from 'src/utils/new-types';
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
-const hasCheckedAllDocs = ref(false);
 const $q = useQuasar();
-const applicantDocuments = ref<(ApplicantDocument & { id: string })[]>([]);
+const applicantDocuments = ref<
+  (ApplicantDocument & { id: string; isUpdating: boolean })[]
+>([]);
 const unsubApplicantDocuments = ref<Unsubscribe | null>(null);
 
 const props = defineProps<{
   companyId: string;
   applicantId: string;
+  applicantName: {
+    first: string;
+    middle: string;
+    last: string;
+  };
 }>();
 onMounted(async () => {
   const documentsRef = dbColRefs.getDocumentsRef(props.companyId);
@@ -92,10 +98,45 @@ onMounted(async () => {
       resolve();
     };
     unsubApplicantDocuments.value = onSnapshot(q, (snapshot) => {
-      applicantDocuments.value = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'removed') {
+          // remove doc
+          if (applicantDocuments.value.length === 1) {
+            unsubApplicantDocuments.value?.();
+            dialogRef.value?.hide();
+          }
+          const index = change.oldIndex;
+          applicantDocuments.value.splice(index, 1);
+        }
+        if (change.type === 'modified') {
+          // update doc
+          const index = change.oldIndex;
+          applicantDocuments.value[index] = {
+            id: change.doc.id,
+            isUpdating: true,
+            ...change.doc.data(),
+          };
+        }
+        if (change.type === 'added') {
+          // add doc
+          applicantDocuments.value.push({
+            id: change.doc.id,
+            isUpdating: false,
+            ...change.doc.data(),
+          });
+        }
+      });
+      // applicantDocuments.value = snapshot.docs.map((doc) => {
+      //   let isUpdating = false;
+      //   if (doc.data().acceptedPages === doc.data().totalPages) {
+      //     isUpdating = true;
+      //   }
+      //   return {
+      //     id: doc.id,
+      //     isUpdating,
+      //     ...doc.data(),
+      //   };
+      // });
       runOnce();
     });
   });
@@ -105,42 +146,17 @@ onUnmounted(() => {
   unsubApplicantDocuments.value?.();
 });
 
-const docsWithFiles = [
-  {
-    name: 'Passport',
-    url: 'https://www.google.com',
-    status: 'accepted',
-    reasonForRejection: '',
-  },
-  {
-    name: 'Proof of Address',
-    url: 'https://www.google.com',
-    status: 'accepted',
-    reasonForRejection: '',
-  },
-  {
-    name: 'Proof of Income',
-    url: 'https://www.google.com',
-    status: 'accepted',
-    reasonForRejection: '',
-  },
-];
-const action = {
-  applicant: {
-    name: {
-      first: 'Joaquin',
-      last: 'Coromina',
-    },
-  },
-};
-
 const openDialogActionVerifyDocument = (index: number) => {
   console.log('running');
+  const applicantDocument = applicantDocuments.value[index];
   $q.dialog({
     component: DialogActionVerifyDocument,
     componentProps: {
-      doc: docsWithFiles[index],
+      applicantDocument,
     },
+  }).onOk(async () => {
+    console.log('onOk');
+    applicantDocument.isUpdating = true;
   });
 };
 

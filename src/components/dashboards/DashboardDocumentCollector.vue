@@ -149,7 +149,7 @@
               flat
               dense
               icon="fas fa-check"
-              :label="props.row.status"
+              label="Complete"
             />
             <q-btn
               @click="null"
@@ -168,11 +168,7 @@
             <q-btn
               @click="openDialogAction(props.row.id)"
               v-if="props.row.adminAcceptedDocs > props.row.acceptedDocs"
-              :label="
-                props.row.adminAcceptedDocs > props.row.acceptedDocs
-                  ? 'Verify Documents'
-                  : 'Other Action'
-              "
+              label="Check Documents"
               color="negative"
               class="full-width"
               no-caps
@@ -285,6 +281,9 @@ const openDialogAction = (applicantId: string) => {
     componentProps: {
       companyId,
       applicantId,
+      applicantName: props.applicants.find(
+        (applicant) => applicant.id === applicantId
+      )?.name,
     },
   });
 };
