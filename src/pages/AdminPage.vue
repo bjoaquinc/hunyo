@@ -90,7 +90,6 @@ import {
   serverTimestamp,
   updateDoc,
 } from '@firebase/firestore';
-import { useQuasar } from 'quasar';
 import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
 
 const props = defineProps<{
@@ -99,11 +98,10 @@ const props = defineProps<{
   selectedApplicant: (Form & { id: string }) | null;
 }>();
 
-const emit = defineEmits<{
-  (e: 'clearSelectedIndexData'): void;
-}>();
+// const emit = defineEmits<{
+//   (e: 'clearSelectedIndexData'): void;
+// }>();
 
-const $q = useQuasar();
 const originalPage = ref('');
 const fixedPage = ref('');
 const isReady = ref(false);

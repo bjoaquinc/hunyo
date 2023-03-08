@@ -20,7 +20,7 @@
               <q-item
                 @click="openDialogActionVerifyDocument(index)"
                 class="flex column"
-                v-for="(doc, index) in docsWithFiles"
+                v-for="(doc, index) in applicantDocuments"
                 :key="index"
                 clickable
                 v-ripple
@@ -54,12 +54,56 @@
 
 <script setup lang="ts">
 import { QDialog, useDialogPluginComponent, useQuasar } from 'quasar';
-import { ref } from 'vue';
+import { dbColRefs } from 'src/utils/db';
+import { ref, onMounted, onUnmounted } from 'vue';
 import DialogActionVerifyDocument from './DialogActionVerifyDocument.vue';
+import {
+  query,
+  where,
+  orderBy,
+  Unsubscribe,
+  onSnapshot,
+} from '@firebase/firestore';
+import { ApplicantDocument } from 'src/utils/new-types';
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const hasCheckedAllDocs = ref(false);
 const $q = useQuasar();
+const applicantDocuments = ref<(ApplicantDocument & { id: string })[]>([]);
+const unsubApplicantDocuments = ref<Unsubscribe | null>(null);
+
+const props = defineProps<{
+  companyId: string;
+  applicantId: string;
+}>();
+onMounted(async () => {
+  const documentsRef = dbColRefs.getDocumentsRef(props.companyId);
+  const q = query(
+    documentsRef,
+    where('applicantId', '==', props.applicantId),
+    where('status', '==', 'admin-checked'),
+    orderBy('docNumber')
+  );
+  await new Promise<void>((resolve) => {
+    let runOnce = () => {
+      runOnce = () => {
+        return;
+      };
+      resolve();
+    };
+    unsubApplicantDocuments.value = onSnapshot(q, (snapshot) => {
+      applicantDocuments.value = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      runOnce();
+    });
+  });
+});
+
+onUnmounted(() => {
+  unsubApplicantDocuments.value?.();
+});
 
 const docsWithFiles = [
   {

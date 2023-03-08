@@ -6,8 +6,6 @@ export type Formats = 'jpeg' | 'pdf';
 
 export type FormTask = 'createDoc' | 'resubmitDoc' | 'resubmitPages';
 
-export type ActionsType = 'verifyDocuments' | 'messageNotSent';
-
 export type ApplicantStatus = 'not-submitted' | 'incomplete' | 'complete';
 
 export type ApplicantDashboardMessageStatus =
@@ -169,10 +167,6 @@ export interface Applicant {
     status: ApplicantDashboardMessageStatus;
     sentAt: Timestamp;
   };
-  actions: {
-    id: string;
-    type: ActionsType;
-  }[];
   dashboard: {
     id: string;
     submittedAt?: Timestamp | FieldValue;
@@ -222,48 +216,6 @@ export interface UpdatedForm extends Omit<Form, 'applicant'> {
       first: string;
       last: string;
     };
-  };
-}
-
-export interface AdminCheck {
-  createdAt: Timestamp;
-  applicant: {
-    name: {
-      first: string;
-      last: string;
-    };
-    id: string;
-  };
-  companyId: string;
-  dashboard: {
-    id: string;
-    job: string;
-    country: string;
-    deadline: Timestamp;
-  };
-  formId: string;
-  // docs: { [key: string]: AdminCheckDoc };
-  isChecked: boolean;
-}
-
-export interface Action {
-  createdAt: Timestamp;
-  applicant: {
-    id: string;
-    name: {
-      first: string;
-      last: string;
-    };
-  };
-  workerDocId: string;
-  // doc: WorkerDoc;
-  isComplete: boolean;
-  competedBy?: {
-    name: {
-      first: string;
-      last: string;
-    };
-    id: string;
   };
 }
 

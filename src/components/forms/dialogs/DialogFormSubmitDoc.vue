@@ -53,7 +53,7 @@
               <q-file
                 ref="uploadFileRef"
                 v-model="files"
-                accept=".jpg, images/*, .pdf"
+                accept=".jpg, image/*, .pdf"
                 multiple
                 :reactive-rules="true"
                 :rules="[

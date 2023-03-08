@@ -166,10 +166,10 @@
           <!-- Action Button -->
           <q-td key="action" :props="props">
             <q-btn
-              @click="openActionDialog(props.row.actions[0].id, props.row.id)"
-              v-if="props.row.actions.length > 0"
+              @click="openDialogAction(props.row.id)"
+              v-if="props.row.adminAcceptedDocs > props.row.acceptedDocs"
               :label="
-                props.row.actions[0].type === 'verifyDocuments'
+                props.row.adminAcceptedDocs > props.row.acceptedDocs
                   ? 'Verify Documents'
                   : 'Other Action'
               "
@@ -210,7 +210,9 @@ const completeApplicants = computed(() =>
   props.applicants.filter((applicant) => applicant.status === 'complete')
 );
 const actionApplicants = computed(() =>
-  props.applicants.filter((applicant) => applicant.actions.length > 0)
+  props.applicants.filter(
+    (applicant) => applicant.adminAcceptedDocs > applicant.acceptedDocs
+  )
 );
 
 const activeHeader = computed(() => {
@@ -274,7 +276,7 @@ const columns: QTableProps['columns'] = [
 
 const selected = ref([]);
 
-const openActionDialog = (actionId: string, applicantId: string) => {
+const openDialogAction = (applicantId: string) => {
   q.dialog({
     component: defineAsyncComponent(
       () =>
@@ -282,9 +284,7 @@ const openActionDialog = (actionId: string, applicantId: string) => {
     ),
     componentProps: {
       companyId,
-      dashboardId: props.dashboard.id,
       applicantId,
-      actionId,
     },
   });
 };

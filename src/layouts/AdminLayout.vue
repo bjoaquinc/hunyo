@@ -204,7 +204,7 @@ interface ImageProperties {
 
 onMounted(async () => {
   const formsRef = dbColRefs.forms;
-  const q = query(formsRef, where('adminCheckDocs', '>', '0'));
+  const q = query(formsRef, where('adminCheckDocs', '>', 0));
   await new Promise((resolve, reject) => {
     let runOnce = () => {
       runOnce = () => {

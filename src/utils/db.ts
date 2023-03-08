@@ -8,7 +8,6 @@ import {
   Form,
   DraftDashboard,
   PublishedDashboard,
-  AdminCheck,
   AcceptedPage,
 } from './types';
 
@@ -25,10 +24,9 @@ export const dbColRefs = {
   companies: collection(db, 'companies').withConverter(converter<Company>()),
   invites: collection(db, 'invites').withConverter(converter<Invite>()),
   forms: collection(db, 'forms').withConverter(converter<Form>()),
-  adminChecks: collection(db, 'adminChecks').withConverter(
-    converter<AdminCheck>()
+  acceptedPagesRef: collection(db, 'acceptedPages').withConverter(
+    converter<AcceptedPage>()
   ),
-  acceptedPagesRef: collection(db, 'acceptedPages').withConverter(converter<AcceptedPage>()),
   getUsersRef: (companyId: string) =>
     collection(db, 'companies', companyId, 'users').withConverter(
       converter<User>()
@@ -65,8 +63,6 @@ export const dbDocRefs = {
     doc(db, 'companies', companyId).withConverter(converter<Company>()),
   getFormRef: (formId: string) =>
     doc(db, 'forms', formId).withConverter(converter<Form>()),
-  getAdminCheckRef: (adminCheckId: string) =>
-    doc(db, 'adminChecks', adminCheckId).withConverter(converter<AdminCheck>()),
   getUserRef: (companyId: string, userId: string) =>
     doc(db, 'companies', companyId, 'users', userId).withConverter(
       converter<User>()

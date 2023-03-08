@@ -10,9 +10,7 @@
             dense
             class="q-ml-sm"
           />
-          <div class="text-h5 q-ml-auto">Joaquin Coromina-Passport.jpeg</div>
-          <!-- <q-btn label="Accept All Pages" class="q-ml-md" color="positive" />
-          <q-btn label="Reject All Pages" class="q-ml-md" color="negative" /> -->
+          <div class="text-h5 q-ml-auto">{{ applicantDocument.name }}</div>
 
           <q-btn
             class="q-ml-auto"
@@ -184,11 +182,16 @@
 <script setup lang="ts">
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { ref } from 'vue';
+import { ApplicantDocument } from 'src/utils/new-types';
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const drawerRight = ref(true);
 const slide = ref(1);
 const showOptions = ref(false);
+
+defineProps<{
+  applicantDocument: ApplicantDocument;
+}>();
 
 defineEmits([
   // REQUIRED; need to specify some events that your
