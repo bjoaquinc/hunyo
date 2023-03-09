@@ -172,6 +172,7 @@
       <router-view
         ref="adminPageRef"
         @clear-selected-index-data="clearSelectedIndexData"
+        @clear-selected-page="clearSelectedPage"
         :selected-page="selectedPage"
         :selected-doc="selectedDoc"
         :selected-applicant="selectedApplicant"
@@ -427,6 +428,9 @@ const clearSelectedIndexData = () => {
   selectedPageIndex.value = null;
   selectedDocIndex.value = null;
   selectedApplicantIndex.value = null;
+};
+const clearSelectedPage = () => {
+  selectedPageIndex.value = null;
 };
 
 const step = ref(1);

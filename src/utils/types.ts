@@ -228,21 +228,23 @@ export interface AcceptedPage {
   docId: string;
   pageId: string;
   acceptedBy: string;
-  name: string;
+  docName: string;
   contentType: string;
-  imageProperties?: {
-    brightness: number;
-    sharpness: number;
-    contrast: number;
-  };
 }
 
-// Docs
-
-// export interface ApplicantDoc {
-//   status: DocumentStatus;
-//   format: Formats;
-// }
+export interface RejectedPage {
+  createdAt: Timestamp;
+  applicantId: string;
+  dashboardId: string;
+  companyId: string;
+  formId: string;
+  docId: string;
+  pageId: string;
+  rejectedBy: string;
+  reasonForRejection: RejectionReason;
+  docName: string;
+  contentType: string;
+}
 
 export interface DashboardDoc {
   format: Formats;
@@ -253,62 +255,6 @@ export interface DashboardDoc {
   instructions?: string;
   docNumber: number;
 }
-
-// export interface FormDoc extends DashboardDoc {
-//   name: string;
-//   status: DocumentStatus;
-//   rejection?: DocRejection;
-//   systemTask: FormTask | null;
-//   pages?: { [key: string]: FormPage };
-//   delayed?: {
-//     isDelayed: boolean;
-//     date: Timestamp;
-//   };
-//   deviceSubmitted?: 'mobile' | 'desktop';
-// }
-
-// export interface AdminCheckDoc
-//   extends Omit<FormDoc, 'pages' | 'deviceSubmitted'> {
-//   deviceSubmitted: 'mobile' | 'desktop';
-//   pages: { [key: string]: AdminCheckPage };
-//   adminCheckStatus: AdminCheckStatus;
-// }
-
-// export interface WorkerDoc extends Omit<AdminCheckDoc, 'pages'> {
-//   createdAt: Timestamp;
-//   companyId: string;
-//   dashboardId: string;
-//   applicantId: string;
-//   adminCheckId: string;
-//   formId: string;
-//   pages: { [key: string]: AdminCheckPage };
-// }
-
-// Pages
-
-// export interface FormPage {
-//   name: string;
-//   status: PageStatus;
-//   rejection?: PageRejection;
-//   pageNumber: number;
-//   submissionCount: number;
-//   submittedSize?: number;
-//   submittedFormat?: string;
-//   systemCheckStatus?: 'Accepted' | 'Rejected';
-// }
-
-// export interface AdminCheckPage
-//   extends Omit<
-//     FormPage,
-//     'systemCheckStatus' | 'submittedFormat' | 'submittedSize'
-//   > {
-//   submittedSize: number;
-//   submittedFormat: string;
-//   systemCheckStatus: 'Accepted' | 'Rejected';
-//   adminCheckStatus?: AdminCheckStatus;
-// }
-
-// Message types
 
 export interface Message {
   createdAt: Timestamp;

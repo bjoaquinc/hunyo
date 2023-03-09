@@ -245,9 +245,17 @@ const createUserAuth = async (): Promise<string> => {
 
 const uploadLogoToStorage = async () => {
   if (!logo.value) return;
-  const logoName = companyName.value + '-' + uid() + '-' + logo.value.name;
+  const logoName =
+    companyName.value.toLowerCase().replace(' ', '-').replace(',', '') +
+    '-' +
+    uid() +
+    '-' +
+    logo.value.name;
   const logoRef = storageRefs.getLogoRef(logoName);
-  await uploadBytes(logoRef, logo.value);
+  const contentType = logo.value.type;
+  await uploadBytes(logoRef, logo.value, {
+    contentType,
+  });
   return logoName;
 };
 

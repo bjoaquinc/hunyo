@@ -27,7 +27,7 @@
       </q-header>
 
       <q-drawer show-if-above v-model="drawerRight" side="right" bordered>
-        <q-list class="q-pa-md" v-if="documentPages.length > 0">
+        <q-list class="q-pa-md" v-if="documentPages.length > 0 && !isLoading">
           <div class="text-h5 q-mb-md">
             Page {{ slide }} of {{ documentPages.length }}
           </div>
@@ -191,7 +191,7 @@
               style="max-height: 100%; overflow: auto !important"
             >
               <q-carousel
-                v-if="documentPages.length > 0 || !isLoading"
+                v-if="documentPages.length > 0 && !isLoading"
                 style="height: 100%; width: 80%"
                 animated
                 v-model="slide"
@@ -244,11 +244,16 @@ import {
   Unsubscribe,
   updateDoc,
   increment,
+  addDoc,
+  serverTimestamp,
+  Timestamp,
 } from 'firebase/firestore';
-import { getDownloadURL } from '@firebase/storage';
+import { getDownloadURL, updateMetadata } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
+import { useUserStore } from 'src/stores/user-store';
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
+const { user } = useUserStore();
 const drawerRight = ref(true);
 const slide = ref(1);
 const selectedPageIndex = computed(() => slide.value - 1);
@@ -290,15 +295,32 @@ onMounted(async () => {
       async (snapshot) => {
         documentPages.value = await Promise.all(
           snapshot.docs.map(async (doc) => {
-            const { name, companyId, dashboardId, applicantId } = doc.data();
-            const requestedFormat = props.applicantDocument.requestedFormat;
-            const storageRef = storageRefs.getFixedDocRef(
+            const {
+              name,
               companyId,
               dashboardId,
               applicantId,
-              `${name}.${requestedFormat}`
-            );
-            const url = await getDownloadURL(storageRef);
+              submittedFormat,
+            } = doc.data();
+            const requestedFormat = props.applicantDocument.requestedFormat;
+            let url = '';
+            if (submittedFormat === 'application/pdf') {
+              const storageRef = storageRefs.getOriginalDocRef(
+                companyId,
+                dashboardId,
+                applicantId,
+                `${name}.${requestedFormat}`
+              );
+              url = await getDownloadURL(storageRef);
+            } else {
+              const storageRef = storageRefs.getFixedDocRef(
+                companyId,
+                dashboardId,
+                applicantId,
+                `${name}.${requestedFormat}`
+              );
+              url = await getDownloadURL(storageRef);
+            }
             return {
               id: doc.id,
               url,
@@ -307,19 +329,6 @@ onMounted(async () => {
             };
           })
         );
-        // console.log(documentPages.value);
-        // for (const page of documentPages.value) {
-        //   const { name, companyId, dashboardId, applicantId } = page;
-        //   const requestedFormat = props.applicantDocument.requestedFormat;
-        //   const storageRef = storageRefs.getFixedDocRef(
-        //     companyId,
-        //     dashboardId,
-        //     applicantId,
-        //     `${name}.${requestedFormat}`
-        //   );
-        //   const url = await getDownloadURL(storageRef);
-        //   pageStatusAndURL.value.push(url);
-        // }
         runOnce();
       },
       (err) => {
@@ -353,8 +362,9 @@ const onSubmit = async () => {
   const promises: Promise<void>[] = [];
   for (const page of documentPages.value) {
     if (page.updatedStatus === 'accepted') {
-      const promise = updatePageStatus();
-      promises.push(promise);
+      promises.push(updatePageStatus(page));
+      promises.push(createAcceptedPageDoc(page));
+      promises.push(addMetadataToImage(page, 'accepted'));
       ACCEPTED_PAGES++;
     } else if (page.updatedStatus === 'rejected') {
       // TODO: handle rejection
@@ -365,13 +375,50 @@ const onSubmit = async () => {
   onDialogOK();
 };
 
-const updatePageStatus = async () => {
+const updatePageStatus = async (page: ApplicantPage & { id: string }) => {
   console.log('accept page', documentPages.value[selectedPageIndex.value]);
   // update page status
-  const page = documentPages.value[selectedPageIndex.value];
   const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
   await updateDoc(pageRef, {
     status: 'accepted',
+  });
+};
+
+const createAcceptedPageDoc = async (page: ApplicantPage & { id: string }) => {
+  if (!user) return;
+  const acceptedPagesRef = dbColRefs.acceptedPagesRef;
+  await addDoc(acceptedPagesRef, {
+    createdAt: serverTimestamp() as Timestamp,
+    companyId: page.companyId,
+    dashboardId: page.dashboardId,
+    applicantId: page.applicantId,
+    formId: page.formId,
+    docId: page.docId,
+    docName: props.applicantDocument.name,
+    pageId: page.id,
+    contentType: props.applicantDocument.requestedFormat,
+    acceptedBy: user.id,
+  });
+};
+
+const addMetadataToImage = async (
+  page: ApplicantPage & { id: string },
+  status: 'accepted' | 'rejected'
+) => {
+  const FILE_SUFFIX = props.applicantDocument.requestedFormat;
+  const imageRef = storageRefs.getFixedDocRef(
+    page.companyId,
+    page.dashboardId,
+    page.applicantId,
+    `${page.name}.${FILE_SUFFIX}`
+  );
+  await updateMetadata(imageRef, {
+    customMetadata: {
+      status,
+      companyId: page.companyId,
+      dashboardId: page.dashboardId,
+      applicantId: page.applicantId,
+    },
   });
 };
 

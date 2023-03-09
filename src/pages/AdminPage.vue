@@ -2,7 +2,7 @@
   <q-page>
     <div
       class="row q-col-gutter-md q-py-md"
-      v-if="selectedPage && selectedDoc && isReady"
+      v-if="selectedPage && selectedDoc && isReady && !acceptIsLoading"
     >
       <!-- Original Page Render -->
       <div class="col">
@@ -98,9 +98,9 @@ const props = defineProps<{
   selectedApplicant: (Form & { id: string }) | null;
 }>();
 
-// const emit = defineEmits<{
-//   (e: 'clearSelectedIndexData'): void;
-// }>();
+const emit = defineEmits<{
+  (e: 'clearSelectedPage'): void;
+}>();
 
 const originalPage = ref('');
 const fixedPage = ref('');
@@ -146,10 +146,9 @@ watch(
 const onAccept = async () => {
   acceptIsLoading.value = true;
   if (props.selectedApplicant && props.selectedDoc && props.selectedPage) {
-    const pageRef = dbDocRefs.getPageRef(
-      props.selectedPage.companyId,
-      props.selectedPage.id
-    );
+    const page = { ...props.selectedPage };
+    emit('clearSelectedPage');
+    const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
     // Create success doc
     const acceptedPagesRef = dbColRefs.acceptedPagesRef;
     const ACCEPTED_BY = 'admin';
@@ -159,10 +158,10 @@ const onAccept = async () => {
       dashboardId: props.selectedApplicant.dashboard.id,
       applicantId: props.selectedApplicant.applicant.id,
       docId: props.selectedDoc.id,
-      pageId: props.selectedPage.id,
+      pageId: page.id,
       formId: props.selectedApplicant.id,
-      name: props.selectedPage.name,
-      contentType: props.selectedPage.submittedFormat,
+      name: page.name,
+      contentType: page.submittedFormat,
       acceptedBy: ACCEPTED_BY,
     });
     // Update page status to admin-checked
@@ -180,144 +179,6 @@ const onAccept = async () => {
     acceptIsLoading.value = false;
   }
 };
-
-// const onReject = async () => {
-//   const data = await openDialogAdminCheckReject();
-//   const { rejection, reason, message } = data;
-//   if (rejection === 'rejectPages') {
-//     $q.loading.show({
-//       spinner: QSpinnerPie,
-//     });
-//     const updatedPageData = await updatePageStatusToRejected(reason, message);
-//     const adminCheck = { ...props.selectedApplicant };
-//     if (updatedPageData && adminCheck && adminCheck.id) {
-//       const adminCheckRef = dbDocRefs.getAdminCheckRef(adminCheck.id);
-//       await updateDoc(adminCheckRef, updatedPageData);
-//       const updatedDocAndApplicantData = await updateDocAndApplicantStatus();
-//       if (updatedDocAndApplicantData) {
-//         await updateDoc(adminCheckRef, updatedDocAndApplicantData);
-//       }
-//     }
-//     $q.loading.hide();
-//   }
-
-//   if (rejection === 'rejectFullSubmission') {
-//     // TODO: reject submission
-//   }
-// };
-
-// const updatePageStatusToRejected = async (
-//   reason: RejectionReason,
-//   message?: string
-// ) => {
-//   if (!props.selectedApplicant || !props.selectedDoc || !props.selectedPage) {
-//     return;
-//   }
-//   const docId = props.selectedDoc.id;
-//   const pageId = props.selectedPage.id;
-//   const PAGE_COMPUTED_KEY = `docs.${docId}.pages.${pageId}`;
-//   const updatedPageData = {
-//     [`${PAGE_COMPUTED_KEY}.adminCheckStatus`]: 'Rejected',
-//     [`${PAGE_COMPUTED_KEY}.rejection`]: {
-//       reason,
-//       message,
-//     },
-//   };
-//   return updatedPageData;
-// };
-
-// const openDialogAdminCheckReject = async () => {
-//   const data = await new Promise<{
-//     rejection: RejectionCode;
-//     reason: RejectionReason;
-//     message: string;
-//   }>((resolve) => {
-//     $q.dialog({
-//       component: DialogAdminCheckReject,
-//     }).onOk((data) => resolve(data));
-//   });
-//   return data;
-// };
-
-// const updateDocAndApplicantStatus = async () => {
-//   if (props.selectedApplicant && props.selectedDoc && props.selectedPage) {
-//     const doc = { ...props.selectedDoc };
-//     // Check if all pages are checked and get rejection reasons;
-//     let DOC_STATUS: 'Accepted' | 'Rejected' = 'Accepted';
-//     const rejectionReasons: RejectionReason[] = [];
-//     for (const pageId of Object.keys(doc.pages)) {
-//       if (doc.pages[pageId].adminCheckStatus === undefined) {
-//         return console.log('page not checked');
-//       }
-//       const docAdminCheckStatus = doc.pages[pageId].adminCheckStatus;
-//       const pageRejection = doc.pages[pageId].rejection;
-//       if (docAdminCheckStatus === 'Rejected' && pageRejection !== undefined) {
-//         DOC_STATUS = 'Rejected';
-//         rejectionReasons.push(pageRejection.reason);
-//       }
-//     }
-//     const updatedDocData = await updateDocStatusAndCreateSystemTask(
-//       DOC_STATUS,
-//       doc.id,
-//       rejectionReasons
-//     );
-//     // Check if all docs are checked
-//     const adminCheck = { ...props.selectedApplicant };
-//     let uncheckedDocs = 0;
-//     for (const docId of Object.keys(adminCheck.docs)) {
-//       if (adminCheck.docs[docId].adminCheckStatus === 'Not Checked') {
-//         uncheckedDocs++;
-//       }
-//     }
-//     if (uncheckedDocs > 1) {
-//       console.log('not all docs are checked');
-//       return updatedDocData;
-//     }
-//     if (props.selectedDoc && props.selectedDoc.id === doc.id) {
-//       emit('clearSelectedIndexData');
-//     }
-//     const updatedAdminCheck = await updateAdminIsChecked();
-//     return {
-//       ...updatedDocData,
-//       ...updatedAdminCheck,
-//     };
-//   }
-// };
-
-// const updateDocStatusAndCreateSystemTask = async (
-//   docStatus: 'Accepted' | 'Rejected',
-//   docId: string,
-//   rejectionReasons: RejectionReason[]
-// ) => {
-//   console.log('doc status', docStatus);
-//   const DOC_COMPUTED_KEY = `docs.${docId}`;
-//   const updatedData: { [key: string]: string | DocRejection } = {
-//     [`${DOC_COMPUTED_KEY}.adminCheckStatus`]: docStatus,
-//   };
-//   if (docStatus === 'Rejected') {
-//     const REJECTION_CODE = 'rejectPages';
-//     const REJECTED_BY = 'admin';
-//     const DOC_REJECTION = {
-//       code: REJECTION_CODE,
-//       reason: rejectionReasons,
-//       rejectedBy: REJECTED_BY,
-//       rejectedAt: serverTimestamp(),
-//     } as DocRejection;
-//     updatedData[`${DOC_COMPUTED_KEY}.systemTask`] = REJECTION_CODE;
-//     updatedData[`${DOC_COMPUTED_KEY}.rejection`] = DOC_REJECTION;
-//   } else {
-//     updatedData[`${DOC_COMPUTED_KEY}.systemTask`] = 'acceptDoc';
-//   }
-//   return updatedData;
-// };
-
-// const updateAdminIsChecked = async () => {
-//   const ADMIN_IS_CHECKED_STATUS = true;
-//   const updatedData = {
-//     isChecked: ADMIN_IS_CHECKED_STATUS,
-//   };
-//   return updatedData;
-// };
 </script>
 
 <style scoped></style>
