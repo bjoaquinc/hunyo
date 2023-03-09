@@ -113,6 +113,7 @@
             separator
           >
             <q-item
+              @click="onAcceptAll"
               class="text-subtitle1 text-weight-bold text-positive"
               clickable
               v-ripple
@@ -341,6 +342,13 @@ onMounted(async () => {
 onUnmounted(() => {
   unsubDocumentPages.value?.();
 });
+
+const onAcceptAll = async () => {
+  for (const page of documentPages.value) {
+    page.updatedStatus = 'accepted';
+  }
+  await onSubmit();
+};
 
 const onSubmit = async () => {
   for (let i = 0; i < documentPages.value.length; i++) {
