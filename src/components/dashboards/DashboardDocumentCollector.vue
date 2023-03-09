@@ -200,7 +200,10 @@ const { user } = useUserStore();
 const companyId = (user as User & { id: string }).company.id;
 
 const incompleteApplicants = computed(() =>
-  props.applicants.filter((applicant) => applicant.status === 'incomplete')
+  props.applicants.filter(
+    (applicant) =>
+      applicant.status === 'incomplete' || applicant.status === 'not-submitted'
+  )
 );
 const completeApplicants = computed(() =>
   props.applicants.filter((applicant) => applicant.status === 'complete')
