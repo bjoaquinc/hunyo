@@ -83,13 +83,8 @@ import { watch, ref } from 'vue';
 import { Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
-import { dbDocRefs, dbColRefs } from 'src/utils/db';
-import {
-  addDoc,
-  increment,
-  serverTimestamp,
-  updateDoc,
-} from '@firebase/firestore';
+import { dbDocRefs } from 'src/utils/db';
+import { increment, updateDoc } from '@firebase/firestore';
 import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
 
 const props = defineProps<{
@@ -149,21 +144,6 @@ const onAccept = async () => {
     const page = { ...props.selectedPage };
     emit('clearSelectedPage');
     const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
-    // Create success doc
-    const acceptedPagesRef = dbColRefs.acceptedPagesRef;
-    const ACCEPTED_BY = 'admin';
-    await addDoc(acceptedPagesRef, {
-      createdAt: serverTimestamp(),
-      companyId: props.selectedApplicant.company.id,
-      dashboardId: props.selectedApplicant.dashboard.id,
-      applicantId: props.selectedApplicant.applicant.id,
-      docId: props.selectedDoc.id,
-      pageId: page.id,
-      formId: props.selectedApplicant.id,
-      name: page.name,
-      contentType: page.submittedFormat,
-      acceptedBy: ACCEPTED_BY,
-    });
     // Update page status to admin-checked
     await updateDoc(pageRef, {
       status: 'admin-checked',
