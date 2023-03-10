@@ -22,14 +22,14 @@
         <div class="text-h5">What are you rejecting?</div>
         <q-list>
           <q-item
-            @click="selectedRejection = rejection.code"
+            @click="selectedRejectionType = rejection.code"
             class="text-subtitle1 q-mt-md"
             v-for="rejection in rejections"
             :key="rejection.code"
             clickable
-            :active="selectedRejection === rejection.code"
+            :active="selectedRejectionType === rejection.code"
             :active-class="
-              selectedRejection === rejection.code
+              selectedRejectionType === rejection.code
                 ? 'bg-primary text-white'
                 : ''
             "
@@ -111,7 +111,7 @@ const $q = useQuasar();
 const step = ref(1);
 const stepperRef = ref<QStepper | null>(null);
 
-const selectedRejection = ref<RejectionCode | null>(null);
+const selectedRejectionType = ref<RejectionCode | null>(null);
 const selectedReason = ref<RejectionReason | null>(null);
 const rejectionMessage = ref('');
 const isLoading = ref(false);
@@ -125,14 +125,14 @@ const rejections: {
 ];
 
 const reasonsForRejection: { code: RejectionReason; title: string }[] = [
-  { code: 'imageQuality', title: 'Poor Image Quality' },
-  { code: 'wrongDoc', title: 'Incorrect Document' },
+  { code: 'image-quality', title: 'Poor Image Quality' },
+  { code: 'wrong-doc', title: 'Incorrect Document' },
   { code: 'other', title: 'Other' },
 ];
 
 const onNext = () => {
   if (step.value === 1) {
-    if (selectedRejection.value === null) {
+    if (selectedRejectionType.value === null) {
       $q.notify({
         type: 'negative',
         message: 'Please select a rejection type',
@@ -156,14 +156,12 @@ const onNext = () => {
 
 const onSubmit = async () => {
   isLoading.value = true;
-  if (selectedRejection.value === 'rejectPages') {
-    onDialogOK({
-      rejection: selectedRejection.value,
-      reason: selectedReason.value,
-      message: rejectionMessage.value,
-    });
-  }
-  onDialogOK();
+  onDialogOK({
+    type: selectedRejectionType.value,
+    reason: selectedReason.value,
+    message: rejectionMessage.value,
+  });
+
   isLoading.value = false;
 };
 

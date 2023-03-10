@@ -24,9 +24,9 @@ export type PageStatus = 'Submitted' | 'Accepted' | 'Rejected';
 
 export type AdminCheckStatus = 'Accepted' | 'Rejected' | 'Not Checked';
 
-export type RejectionCode = 'rejectPages' | 'rejectFullSubmission';
+export type RejectionCode = 'pages' | 'full-submission';
 
-export type RejectionReason = 'imageQuality' | 'wrongDoc' | 'other';
+export type RejectionReason = 'image-quality' | 'wrong-doc' | 'other';
 
 // Firebase models
 

@@ -69,10 +69,11 @@ export interface ApplicantDocument {
   adminAcceptedPages: number;
   acceptedPages: number;
   rejection?: {
-    reason: string;
-    message: string;
+    type: 'pages' | 'full-submission';
+    reasons: string[];
     rejectedBy: string;
     rejectedAt: Timestamp;
+    pageIds?: string[];
   };
 }
 
@@ -92,7 +93,7 @@ export interface ApplicantPage {
   systemCheckStatus?: 'accepted' | 'rejected';
   rejection?: {
     reason: string;
-    message: string;
+    message?: string;
   };
 }
 

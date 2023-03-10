@@ -107,7 +107,11 @@
                 ><div class="text-primary text-h6">{{ doc.name }}</div>
                 <q-slide-transition>
                   <q-list
-                    v-if="selectedDoc && selectedDoc.name === doc.name"
+                    v-if="
+                      selectedDoc &&
+                      selectedDoc.name === doc.name &&
+                      sortedPages.length > 0
+                    "
                     separator
                   >
                     <q-item
@@ -123,6 +127,27 @@
                     >
                       <q-item-section>{{ page.name }}</q-item-section>
                     </q-item>
+                    <q-btn
+                      @click="updateDocAndPagesStatus"
+                      label="Done"
+                      color="primary"
+                      class="full-width q-mt-md"
+                    />
+                    <div
+                      class="text-body1 q-mt-md text-negative q-px-sm"
+                      v-if="showWarningMessage"
+                    >
+                      <div class="q-mt-md text-center">
+                        <q-icon size="lg" name="fas fa-exclamation-triangle" />
+                      </div>
+                      <div class="q-mt-md text-center">
+                        <span>Warning!</span>
+                      </div>
+                      <div class="q-mt-md text-center">
+                        You missed some pages. Please review and accept or
+                        reject them.
+                      </div>
+                    </div>
                   </q-list>
                 </q-slide-transition>
               </q-item-section>
@@ -171,9 +196,11 @@
     <q-page-container>
       <router-view
         ref="adminPageRef"
-        @clear-selected-index-data="clearSelectedIndexData"
+        @update-page-status="updatePageStatus"
+        @add-page-rejection="addPageRejection"
         @clear-selected-page="clearSelectedPage"
-        :selected-page="selectedPage"
+        :pages="sortedPages"
+        :selected-page-index="selectedPageIndex"
         :selected-doc="selectedDoc"
         :selected-applicant="selectedApplicant"
       />
@@ -183,17 +210,20 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, watch, computed } from 'vue';
-import { dbColRefs } from 'src/utils/db';
+import { dbColRefs, dbDocRefs } from 'src/utils/db';
 import {
+  increment,
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
   Unsubscribe,
+  updateDoc,
   where,
 } from '@firebase/firestore';
-import { Form } from 'src/utils/types';
+import { Form, RejectionReason } from 'src/utils/types';
 import { QStepper } from 'quasar';
-import { FullMetadata, getMetadata } from '@firebase/storage';
+import { FullMetadata, getDownloadURL, getMetadata } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
 import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
 
@@ -228,6 +258,7 @@ onMounted(async () => {
     );
   });
 });
+const showWarningMessage = ref(false);
 
 const applicants = ref<(Form & { id: string })[]>([]);
 const unsubApplicants = ref<Unsubscribe | null>(null);
@@ -289,8 +320,15 @@ const selectedDoc = computed(() => {
   }
 });
 
-const sortedPages = ref<(ApplicantPage & { id: string })[]>([]);
-// Get document pages form firestore
+const sortedPages = ref<
+  (ApplicantPage & {
+    id: string;
+    originalURL: string;
+    fixedURL?: string;
+    updatedStatus: 'not-checked' | 'accepted' | 'rejected' | 'replaced';
+  })[]
+>([]);
+// Get document pages from firestore
 watch(selectedDoc, async (newVal) => {
   if (newVal) {
     const applicantDocsRef = dbColRefs.getPagesRef(newVal.companyId);
@@ -309,16 +347,46 @@ watch(selectedDoc, async (newVal) => {
       };
       unsubSortedPages.value = onSnapshot(
         q,
-        (pagesSnap) => {
-          const pagesList: (ApplicantPage & { id: string })[] = [];
-          pagesSnap.forEach((pageSnap) => {
-            const applicantDocData = pageSnap.data();
-            pagesList.push({
-              id: pageSnap.id,
-              ...applicantDocData,
-            });
-          });
-          sortedPages.value = pagesList;
+        async (pagesSnap) => {
+          sortedPages.value = await Promise.all(
+            pagesSnap.docs.map(async (pageSnap) => {
+              const ORIGINAL_IMAGE_SUFFIX =
+                pageSnap.data().submittedFormat === 'application/pdf'
+                  ? 'pdf'
+                  : 'jpeg';
+              const ORIGINAL_DOC_NAME = `${
+                pageSnap.data().name
+              }.${ORIGINAL_IMAGE_SUFFIX}`;
+              const originalImageRef = storageRefs.getOriginalDocRef(
+                newVal.companyId,
+                newVal.dashboardId,
+                newVal.applicantId,
+                ORIGINAL_DOC_NAME
+              );
+              const originalURL = await getDownloadURL(originalImageRef);
+              let fixedURL = '';
+              if (pageSnap.data().submittedFormat.includes('image')) {
+                const FIXED_IMAGE_SUFFIX = newVal.requestedFormat;
+                const FIXED_DOC_NAME = `${
+                  pageSnap.data().name
+                }.${FIXED_IMAGE_SUFFIX}`;
+                const fixedImageRef = storageRefs.getFixedDocRef(
+                  newVal.companyId,
+                  newVal.dashboardId,
+                  newVal.applicantId,
+                  FIXED_DOC_NAME
+                );
+                fixedURL = await getDownloadURL(fixedImageRef);
+              }
+              return {
+                id: pageSnap.id,
+                updatedStatus: 'not-checked',
+                originalURL,
+                fixedURL,
+                ...pageSnap.data(),
+              };
+            })
+          );
           runOnce();
         },
         reject
@@ -337,6 +405,135 @@ const selectedPage = computed(() => {
     return null;
   }
 });
+
+const updatePageStatus = (
+  pageId: string,
+  status: 'accepted' | 'rejected' | 'replaced'
+) => {
+  const pageIndex = sortedPages.value.findIndex((page) => page.id === pageId);
+  sortedPages.value[pageIndex].updatedStatus = status;
+};
+
+const addPageRejection = (
+  pageId: string,
+  reason: RejectionReason,
+  message?: string
+) => {
+  const pageIndex = sortedPages.value.findIndex((page) => page.id === pageId);
+  sortedPages.value[pageIndex].rejection = {
+    reason,
+    message,
+  };
+  console.log(sortedPages.value[pageIndex]);
+};
+
+const updateDocAndPagesStatus = async () => {
+  if (!pagesAreChecked()) return;
+  if (!selectedDoc.value) return;
+  selectedPageIndex.value = null;
+  let isRejected = false;
+  let numOfAcceptedPages = 0;
+  let totalPages = 0;
+  const rejectionReasons: string[] = [];
+  const rejectedPageIds: string[] = [];
+  const promises: Promise<void>[] = [];
+  sortedPages.value.forEach((page) => {
+    totalPages++;
+    if (page.updatedStatus === 'rejected' && page.rejection) {
+      isRejected = true;
+      if (!rejectionReasons.includes(page.rejection.reason)) {
+        rejectionReasons.push(page.rejection.reason);
+      }
+      rejectedPageIds.push(page.id);
+      const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
+      const promise = updateDoc(pageRef, {
+        status: 'rejected',
+        rejection: page.rejection,
+      });
+      promises.push(promise);
+    }
+    if (
+      page.updatedStatus === 'accepted' ||
+      page.updatedStatus === 'replaced'
+    ) {
+      numOfAcceptedPages++;
+      const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
+      const promise = updateDoc(pageRef, {
+        status: 'admin-checked',
+      });
+      promises.push(promise);
+    }
+  });
+
+  const docRef = dbDocRefs.getDocumentRef(
+    selectedDoc.value.companyId,
+    selectedDoc.value.id
+  );
+
+  if (!isRejected) {
+    // Accept Document
+    const promise = updateDoc(docRef, {
+      adminAcceptedPages: increment(numOfAcceptedPages),
+    });
+    promises.push(promise);
+  }
+
+  if (isRejected && numOfAcceptedPages > 0) {
+    // Resubmit Pages
+    const promise = updateDoc(docRef, {
+      adminAcceptedPages: increment(numOfAcceptedPages),
+      status: 'rejected',
+      rejection: {
+        rejectedAt: serverTimestamp(),
+        type: 'pages',
+        pageIds: rejectedPageIds,
+        reasons: rejectionReasons,
+        rejectedBy: 'admin',
+      },
+    });
+    promises.push(promise);
+  }
+
+  if (isRejected && numOfAcceptedPages === 0) {
+    // Resubmit Full Document
+    const promise = updateDoc(docRef, {
+      status: 'rejected',
+      rejection: {
+        rejectedAt: serverTimestamp(),
+        type: 'full-submission',
+        reasons: rejectionReasons,
+        rejectedBy: 'admin',
+      },
+    });
+    promises.push(promise);
+  }
+
+  const formRef = dbDocRefs.getFormRef(selectedDoc.value.formId);
+  const DECREMENT = increment(totalPages * -1);
+  const promise = updateDoc(formRef, {
+    adminCheckDocs: DECREMENT,
+  });
+  promises.push(promise);
+
+  await Promise.all(promises);
+};
+
+const pagesAreChecked = () => {
+  for (const page of sortedPages.value) {
+    if (page.updatedStatus === 'not-checked') {
+      showWarningMessage.value = true;
+      selectedPageIndex.value = sortedPages.value.findIndex(
+        (p) => p.id === page.id
+      );
+      const timeout = setTimeout(() => {
+        showWarningMessage.value = false;
+        clearTimeout(timeout);
+      }, 10000);
+      return false;
+    }
+  }
+  return true;
+};
 
 const originalMetadata = ref<FullMetadata | null>(null);
 const fixedMetadata = ref<FullMetadata | null>(null);
@@ -424,11 +621,11 @@ watch(selectedPage, async (newValue) => {
   }
 });
 
-const clearSelectedIndexData = () => {
-  selectedPageIndex.value = null;
-  selectedDocIndex.value = null;
-  selectedApplicantIndex.value = null;
-};
+// const clearSelectedIndexData = () => {
+//   selectedPageIndex.value = null;
+//   selectedDocIndex.value = null;
+//   selectedApplicantIndex.value = null;
+// };
 const clearSelectedPage = () => {
   selectedPageIndex.value = null;
 };

@@ -73,7 +73,7 @@ export const dbDocRefs = {
     ),
   getPageRef: (companyId: string, pageId: string) =>
     doc(db, 'companies', companyId, 'pages', pageId).withConverter(
-      converter<ApplicantDocument>()
+      converter<ApplicantPage>()
     ),
   getInviteRef: (inviteId: string) =>
     doc(db, 'invites', inviteId).withConverter(converter<Invite>()),

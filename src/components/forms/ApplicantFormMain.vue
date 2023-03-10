@@ -112,7 +112,7 @@ import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
 import { DateTime } from 'luxon';
 import DialogFormDocumentAvailability from './dialogs/DialogFormDocumentAvailability.vue';
-// import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
+import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
 import { dbDocRefs } from 'src/utils/db';
 import { updateDoc } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
@@ -232,21 +232,21 @@ const onNotSubmitted = (index: number) => {
       });
     }
 
-    // if (documentAvailability === 'not-available') {
-    //   $q.dialog({
-    //     component: DialogFormScheduleSubmission,
-    //     componentProps: {
-    //       doc: props.documents[index],
-    //       formId: props.form.id,
-    //     },
-    //   }).onOk(() => {
-    //     $q.notify({
-    //       message:
-    //         'Noted on this, we will follow up with you on this date. Thank you.',
-    //       type: 'positive',
-    //     });
-    //   });
-    // }
+    if (documentAvailability === 'not-available') {
+      $q.dialog({
+        component: DialogFormScheduleSubmission,
+        componentProps: {
+          doc: props.documents[index],
+          formId: props.form.id,
+        },
+      }).onOk(() => {
+        $q.notify({
+          message:
+            'Noted on this, we will follow up with you on this date. Thank you.',
+          type: 'positive',
+        });
+      });
+    }
 
     if (documentAvailability === 'not-applicable') {
       $q.notify({
