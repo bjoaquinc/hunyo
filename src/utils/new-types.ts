@@ -79,6 +79,7 @@ export interface ApplicantDocument {
 
 export interface ApplicantPage {
   createdAt: Timestamp;
+  updatedAt?: Timestamp;
   docId: string;
   formId: string;
   dashboardId: string;
@@ -90,7 +91,6 @@ export interface ApplicantPage {
   submittedFormat: string;
   submittedSize: number;
   submissionCount: number;
-  systemCheckStatus?: 'accepted' | 'rejected';
   rejection?: {
     reason: string;
     message?: string;

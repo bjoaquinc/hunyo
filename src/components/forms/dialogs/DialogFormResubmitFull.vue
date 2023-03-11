@@ -11,8 +11,8 @@
       <q-form @submit.prevent="onSubmit" greedy>
         <q-card-section>
           <div class="flex justify-between q-mt-sm no-wrap">
-            <div class="text-h5 gt-xs">Upload {{ doc.name }}</div>
-            <div class="text-h6 lt-sm">Upload {{ doc.name }}</div>
+            <div class="text-h5 gt-xs">Resubmit {{ doc.name }}</div>
+            <div class="text-h6 lt-sm">Resubmit {{ doc.name }}</div>
             <q-btn v-close-popup icon="fas fa-times" flat dense />
           </div>
           <q-item class="text-body1 q-mt-md">
@@ -186,7 +186,7 @@ const drag = ref(false);
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
 const props = defineProps<{
-  doc: ApplicantDocument & { id: string };
+  doc: ApplicantDocument & { docId: string };
   index: number;
   form: Form & { id: string };
 }>();

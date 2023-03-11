@@ -97,8 +97,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Form, RejectionCode, RejectionReason } from 'src/utils/types';
-import { dbDocRefs } from 'src/utils/db';
-import { increment, updateDoc } from '@firebase/firestore';
 import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
 import { useQuasar } from 'quasar';
 import DialogAdminCheckReject from 'src/components/admin/DialogAdminCheckReject.vue';

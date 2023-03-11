@@ -3,17 +3,22 @@
     ref="dialogRef"
     @hide="onDialogHide"
     maximized
-    :persistent="isLoading"
+    :persistent="isLoading || hasUploadedPages"
     transition-show="slide-up"
     transition-hide="slide-down"
   >
     <q-card class="card-container text-grey-8">
-      <q-form @submit.prevent="onSubmit" greedy>
+      <q-form @submit.prevent="onResubmit" greedy>
         <q-card-section>
           <div class="flex justify-between q-mt-sm no-wrap">
             <div class="text-h5 gt-xs">Resubmit {{ doc.name }}</div>
             <div class="text-h6 lt-sm">Resubmit {{ doc.name }}</div>
-            <q-btn v-close-popup icon="fas fa-times" flat dense />
+            <q-btn
+              @click="onExitWithUploadedFiles"
+              icon="fas fa-times"
+              flat
+              dense
+            />
           </div>
           <q-item class="text-body1 q-mt-md">
             <q-item-section avatar class="gt-xs" top side>
@@ -48,148 +53,85 @@
           </q-item>
 
           <q-separator class="q-my-md" />
-
-          <div class="q-mt-xs">
-            <div class="text-h6 text-negative">Rejected</div>
-            <div
-              class="q-mt-md flex justify-between no-wrap"
-              v-for="(fileObject, index) in rejectedFiles"
-              :key="index"
-            >
-              <q-btn
-                target="_blank"
-                no-caps
-                flat
-                dense
-                class="gt-xs q-pr-sm"
-                :color="uploadedFileItemStyles[fileObject.status].textColor"
-                size="md"
-                :label="fileObject.name"
-              />
-              <q-btn
-                target="_blank"
-                no-caps
-                flat
-                dense
-                class="lt-sm q-pr-sm"
-                :color="uploadedFileItemStyles[fileObject.status].textColor"
-                :label="fileObject.name"
-              />
-              <q-btn
-                @click="removeFile(index)"
-                :outline="uploadedFileItemStyles[fileObject.status].outline"
-                :color="uploadedFileItemStyles[fileObject.status].color"
-                :label="uploadedFileItemStyles[fileObject.status].label"
-                :flat="uploadedFileItemStyles[fileObject.status].flat"
-              />
+          <q-list>
+            <div class="text-h6 text-grey-8 q-mt-sm">
+              Resubmit following pages
             </div>
-            <q-separator class="q-mt-md" />
-            <div class="text-h6 text-grey-8 q-mt-md">In Progress</div>
-            <div
-              class="q-mt-md flex justify-between no-wrap"
-              v-for="(fileObject, index) in submittedFiles"
-              :key="index"
+            <q-item
+              v-for="(page, index) in rejectedPages"
+              :key="page.id"
+              class="q-mt-sm"
             >
-              <q-btn
-                target="_blank"
-                no-caps
-                flat
-                dense
-                class="gt-xs q-pr-sm"
-                :color="uploadedFileItemStyles[fileObject.status].textColor"
-                size="md"
-                :label="fileObject.name"
-              />
-              <q-btn
-                target="_blank"
-                no-caps
-                flat
-                dense
-                class="lt-sm q-pr-sm"
-                :color="uploadedFileItemStyles[fileObject.status].textColor"
-                :label="fileObject.name"
-              />
-              <q-btn
-                @click="removeFile(index)"
-                :outline="uploadedFileItemStyles[fileObject.status].outline"
-                :color="uploadedFileItemStyles[fileObject.status].color"
-                :label="uploadedFileItemStyles[fileObject.status].label"
-                :flat="uploadedFileItemStyles[fileObject.status].flat"
-              />
-            </div>
-          </div>
-          <div
-            v-if="uploadedFiles.length > 0"
-            class="text-h6 text-grey-8 q-mt-sm"
-          >
-            Your uploads (drag and drop to reorder the pages)
-          </div>
-          <draggable
-            v-model="uploadedFiles"
-            group="people"
-            @start="drag = true"
-            @end="drag = false"
-            item-key="index"
-          >
-            <template #item="{ element }">
-              <q-item class="q-mt-sm" clickable>
-                <q-item-section>
-                  <q-item-label>
-                    <q-btn
-                      target="_blank"
-                      no-caps
-                      @click="
-                        openBaseDialogViewImage(
-                          element.downloadURL,
-                          element.file.type
-                        )
-                      "
-                      flat
-                      dense
-                      class="gt-xs text-body1"
-                      :color="uploadedFileItemStyles[(element as UploadedFile).status].textColor"
-                      size="md"
-                    >
-                      <div class="text-left">
-                        {{ element.file.name }}
-                      </div>
-                    </q-btn>
-                    <q-btn
-                      target="_blank"
-                      no-caps
-                      @click="
-                        openBaseDialogViewImage(
-                          element.downloadURL,
-                          element.file.type
-                        )
-                      "
-                      flat
-                      dense
-                      class="lt-sm text-body1"
-                      :color="uploadedFileItemStyles[(element as UploadedFile).status].textColor"
-                    >
-                      <div class="text-left">
-                        {{ element.file.name }}
-                      </div>
-                    </q-btn>
-                  </q-item-label>
-                </q-item-section>
-                <q-item-section avatar side>
+              <q-item-section>
+                <q-item-label>
                   <q-btn
-                    @click="removeFile(index)"
-                    :outline="uploadedFileItemStyles[(element as UploadedFile).status].outline"
-                    :color="uploadedFileItemStyles[(element as UploadedFile).status].color"
-                    :label="uploadedFileItemStyles[(element as UploadedFile).status].label"
-                    :flat="uploadedFileItemStyles[(element as UploadedFile).status].flat"
-                  />
-                </q-item-section>
-              </q-item>
-            </template>
-          </draggable>
+                    @click="
+                      openBaseDialogViewImage(
+                        page.url,
+                        page.contentType,
+                        page.uploadedFile
+                      )
+                    "
+                    no-caps
+                    flat
+                    dense
+                    class="gt-xs text-body1"
+                    color="primary"
+                    size="md"
+                  >
+                    <div class="text-left">
+                      {{
+                        page.uploadedFile ? page.uploadedFile.name : page.name
+                      }}
+                    </div>
+                  </q-btn>
+                  <q-btn
+                    @click="
+                      openBaseDialogViewImage(
+                        page.url,
+                        page.contentType,
+                        page.uploadedFile
+                      )
+                    "
+                    no-caps
+                    flat
+                    dense
+                    class="lt-sm text-body1"
+                    color="primary"
+                  >
+                    <div class="text-left">
+                      {{
+                        page.uploadedFile ? page.uploadedFile.name : page.name
+                      }}
+                    </div>
+                  </q-btn>
+                </q-item-label>
+              </q-item-section>
+              <q-item-section avatar side>
+                <q-btn
+                  @click="onClickResubmit(index)"
+                  :outline="!page.uploadedFile ? false : true"
+                  :color="
+                    !page.uploadedFile && page.error ? 'negative' : 'primary'
+                  "
+                  :label="!page.uploadedFile ? 'Update' : 'Updated. Change?'"
+                />
+                <q-file
+                  :ref="(el: QFile) => {
+                  if (filePickerRefs.length < rejectedPages.length) {
+                    filePickerRefs.push(el);
+                  }
+                }"
+                  v-model="page.uploadedFile"
+                  style="display: none"
+                />
+              </q-item-section>
+            </q-item>
+          </q-list>
         </q-card-section>
         <q-card-actions>
           <q-btn
-            label="Submit"
+            label="Resubmit Document(s)"
             type="submit"
             class="full-width"
             color="primary"
@@ -204,61 +146,103 @@
 </template>
 
 <script setup lang="ts">
-import { getDownloadURL, getMetadata, uploadBytes } from '@firebase/storage';
-import { QDialog, useDialogPluginComponent } from 'quasar';
+import { getDownloadURL, getMetadata } from '@firebase/storage';
+import { QDialog, QFile, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
-import { ref, computed, onMounted } from 'vue';
-import { FormDoc, Form, PageStatus, FormPage } from 'src/utils/types';
-import { dbDocRefs } from 'src/utils/db';
-import { updateDoc } from '@firebase/firestore';
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import { Form } from 'src/utils/types';
 import { useQuasar } from 'quasar';
-import draggable from 'vuedraggable';
 import DialogFormTips from './DialogFormTips.vue';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
+import DialogFormResubmitPagesPreview from './DialogFormResubmitPagesPreview.vue';
+import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
+import { dbColRefs } from 'src/utils/db';
+import {
+  query,
+  where,
+  documentId,
+  Unsubscribe,
+  onSnapshot,
+} from '@firebase/firestore';
 
-const drag = ref(false);
-
-const { dialogRef, onDialogHide } = useDialogPluginComponent();
+const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
 const props = defineProps<{
-  doc: FormDoc & { docId: string };
+  doc: ApplicantDocument & { id: string };
   index: number;
   form: Form & { id: string };
 }>();
-const uploadedFileItemStyles = {
-  New: {
-    label: 'Delete',
-    flat: false,
-    outline: true,
-    color: 'grey-8',
-    textColor: 'primary',
-  },
-  Submitted: {
-    label: 'Submitted',
-    flat: true,
-    outline: false,
-    color: 'grey-8',
-    textColor: 'grey-8',
-  },
-  Rejected: {
-    label: 'Resubmit',
-    flat: false,
-    outline: true,
-    color: 'negative',
-    textColor: 'negative',
-  },
-  Accepted: {
-    label: 'Accepted',
-    flat: true,
-    outline: false,
-    color: 'positive',
-    textColor: 'positive',
-  },
-};
-
+const filePickerRefs = ref<QFile[]>([]);
+const rejectedPages = ref<
+  (ApplicantPage & {
+    id: string;
+    uploadedFile: null | File;
+    url: string;
+    contentType: string;
+    error: boolean;
+  })[]
+>([]);
+const hasUploadedPages = computed(() =>
+  rejectedPages.value.some((p) => p.uploadedFile)
+);
+const unsubRejectedPages = ref<Unsubscribe | null>(null);
 onMounted(async () => {
+  await setRejectedPages();
   await setSample();
 });
+
+onBeforeUnmount(() => {
+  return false;
+});
+
+const setRejectedPages = async () => {
+  if (!props.doc.rejection || !props.doc.rejection.pageIds) return;
+  const pagesRef = dbColRefs.getPagesRef(props.doc.companyId);
+  const q = query(
+    pagesRef,
+    where('docId', '==', props.doc.id),
+    where(documentId(), 'in', props.doc.rejection.pageIds)
+  );
+  await new Promise<void>((resolve, reject) => {
+    let runOnce = () => {
+      runOnce = () => {
+        return;
+      };
+      resolve();
+    };
+    unsubRejectedPages.value = onSnapshot(
+      q,
+      async (snapshot) => {
+        rejectedPages.value = await Promise.all(
+          snapshot.docs.map(async (pageSnap) => {
+            const page = pageSnap.data();
+            const DOC_NAME = `${page.name}.${
+              page.submittedFormat.includes('image') ? 'jpeg' : 'pdf'
+            }`;
+            const storageRef = storageRefs.getOriginalDocRef(
+              page.companyId,
+              page.dashboardId,
+              page.applicantId,
+              DOC_NAME
+            );
+            const metadata = await getMetadata(storageRef);
+            const url = await getDownloadURL(storageRef);
+            return {
+              ...page,
+              error: false,
+              id: pageSnap.id,
+              uploadedFile: null,
+              url,
+              contentType: metadata.contentType as string,
+            };
+          })
+        );
+        runOnce();
+      },
+      (err) => reject(err)
+    );
+  });
+};
 
 const setSample = async () => {
   if (props.doc.sample) {
@@ -279,35 +263,69 @@ const setSample = async () => {
   }
 };
 
+const onClickResubmit = (index: number) => {
+  if (!rejectedPages.value[index].uploadedFile) {
+    filePickerRefs.value[index].pickFiles();
+  } else {
+    $q.dialog({
+      title: 'Do you want to change this page?',
+      cancel: true,
+    }).onOk(() => {
+      filePickerRefs.value[index].pickFiles();
+    });
+  }
+};
+
+const onExitWithUploadedFiles = () => {
+  if (hasUploadedPages.value) {
+    $q.dialog({
+      title: 'Are you sure you want to leave this page?',
+      message:
+        'You have not finished resubmitting all the requested pages. If you leave this page now, your changes will be lost. Do you want to leave this page anyway?',
+      ok: {
+        label: 'Yes',
+        outline: true,
+      },
+      cancel: {
+        label: 'No',
+        color: 'primary',
+      },
+    }).onOk(() => {
+      dialogRef.value?.hide();
+    });
+  } else {
+    dialogRef.value?.hide();
+  }
+};
+
+const onResubmit = () => {
+  for (const page of rejectedPages.value) {
+    if (page.uploadedFile === null) {
+      page.error = true;
+      return;
+    }
+  }
+  // TODO: open confirm resubmitted pages
+  openDialogFormResubmitPagesPreview();
+};
+
+const openDialogFormResubmitPagesPreview = () => {
+  $q.dialog({
+    component: DialogFormResubmitPagesPreview,
+    componentProps: {
+      doc: props.doc,
+      form: props.form,
+      pages: rejectedPages.value,
+    },
+  }).onOk(() => {
+    onDialogOK();
+  });
+};
+
 const sample = ref<{
   url: string;
   contentType: string;
 } | null>(null);
-interface UploadedFile {
-  name: string;
-  file: File;
-  status: PageStatus | 'New';
-  downloadURL: string;
-}
-const uploadedFiles = ref<UploadedFile[]>([]);
-const sortedPages = computed(() => {
-  if (props.doc.pages) {
-    return Object.keys(props.doc.pages)
-      .map((key) => ({
-        id: key,
-        ...(props.doc.pages as { [key: string]: FormPage })[key],
-      }))
-      .sort((pageA, pageB) => pageA.pageNumber - pageB.pageNumber);
-  } else {
-    return [];
-  }
-});
-const rejectedFiles = computed(() => {
-  return sortedPages.value.filter((page) => page.status === 'Rejected');
-});
-const submittedFiles = computed(() => {
-  return sortedPages.value.filter((page) => page.status === 'Submitted');
-});
 const isLoading = ref(false);
 
 const openDialogFormTips = () => {
@@ -316,113 +334,30 @@ const openDialogFormTips = () => {
   });
 };
 
-const removeFile = (index: number) => {
-  uploadedFiles.value.splice(index, 1);
-};
-
-const onSubmit = async () => {
-  console.log('Submit');
-  try {
-    isLoading.value = true;
-    const pages = await uploadFilesToStorage();
-    await submitPages(pages);
-    dialogRef.value?.hide();
-    isLoading.value = false;
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-const uploadFilesToStorage = async () => {
-  const promises: Promise<FormPage>[] = [];
-
-  uploadedFiles.value.forEach((file, index) => {
-    const PAGE_NUMBER = index + 1;
-    const promise = uploadFileToStorage(file, PAGE_NUMBER);
-    promises.push(promise);
-  });
-  return await Promise.all(promises);
-};
-
-const uploadFileToStorage = async (
-  file: {
-    file: File;
-    name: string;
-    downloadURL: string;
-    status: PageStatus | 'New';
-  },
-  pageNumber: number
+const openBaseDialogViewImage = (
+  imgURL: string,
+  contentType: string,
+  file?: File | null
 ) => {
-  const applicantName = `${props.form.applicant.name?.first} ${props.form.applicant.name?.last}`;
-  let fileName = applicantName + '-' + props.doc.name + '-' + pageNumber;
-  if (uploadedFiles.value.length <= 1) {
-    fileName = applicantName + '-' + props.doc.name;
+  if (file) {
+    const fileBlob = new Blob([file], { type: file.type });
+    const downloadURL = URL.createObjectURL(fileBlob);
+    $q.dialog({
+      component: BaseDialogViewImage,
+      componentProps: {
+        imgURL: downloadURL,
+        contentType: file.type,
+      },
+    });
+  } else {
+    $q.dialog({
+      component: BaseDialogViewImage,
+      componentProps: {
+        imgURL,
+        contentType,
+      },
+    });
   }
-  const format = props.doc.format;
-  const formId = props.form.id;
-  const docId = props.doc.docId;
-  const pageId = `${docId}-${pageNumber.toString()}`;
-  const companyId = props.form.company.id;
-  const dashboardId = props.form.dashboard.id;
-  const applicantId = props.form.applicant.id;
-  const storageRef = storageRefs.getTemporaryDocsRef(fileName);
-  const contentType = file.file.type;
-  const contentSize = file.file.size;
-  const CONVERT_TO_KILOBYTES = 0.001;
-  const FIRST_TIME_SUBMITTED = 1;
-
-  await uploadBytes(storageRef, file.file, {
-    contentType,
-    customMetadata: {
-      companyId,
-      dashboardId,
-      applicantId,
-      formId,
-      docId,
-      pageId,
-      format,
-      submissionCount: FIRST_TIME_SUBMITTED.toString(),
-    },
-  });
-  const formPage: FormPage = {
-    name: fileName,
-    status: 'Submitted',
-    submittedFormat: contentType,
-    submittedSize: contentSize * CONVERT_TO_KILOBYTES,
-    submissionCount: FIRST_TIME_SUBMITTED,
-    pageNumber,
-  };
-  return formPage;
-};
-
-const submitPages = async (pagesList: FormPage[]) => {
-  const pages: { [key: string]: FormPage } = {};
-  pagesList.forEach((page) => {
-    pages[`${props.doc.docId}-${page.pageNumber.toString()}`] = page;
-  });
-  const formRef = dbDocRefs.getFormRef(props.form.id);
-  const formDoc = `docs.${props.doc.docId}`;
-  const form: Partial<Form> = {
-    [`${formDoc}.pages`]: pages,
-    [`${formDoc}.status`]: 'Submitted',
-    [`${formDoc}.deviceSubmitted`]: $q.platform.is.mobile
-      ? 'mobile'
-      : 'desktop',
-    [`${formDoc}.systemTask`]: 'createDoc',
-  };
-  await updateDoc(formRef, {
-    ...form,
-  });
-};
-
-const openBaseDialogViewImage = (imgURL: string, contentType: string) => {
-  $q.dialog({
-    component: BaseDialogViewImage,
-    componentProps: {
-      imgURL,
-      contentType,
-    },
-  });
 };
 
 defineEmits([

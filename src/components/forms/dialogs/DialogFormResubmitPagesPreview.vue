@@ -12,10 +12,10 @@
         <q-card-section>
           <div class="flex justify-between q-mt-sm no-wrap">
             <div class="text-h5 gt-xs">
-              These are the pages/documents you are submitting in this order
+              These are the pages you are submitting
             </div>
             <div class="text-h6 lt-sm">
-              These are the pages/documents you are submitting in this order
+              These are the pages you are submitting
             </div>
             <q-btn v-close-popup icon="fas fa-times" flat dense />
           </div>
@@ -26,22 +26,13 @@
             If this is not correct, press cancel and fix your pages/documents
           </div>
           <q-list separator>
-            <q-item
-              v-for="(uploadedFile, index) in uploadedFiles"
-              :key="index"
-              class="q-py-md"
-            >
+            <q-item v-for="(page, index) in pages" :key="index" class="q-py-md">
               <q-item-section>
                 <q-item-label>
                   <q-btn
                     target="_blank"
                     no-caps
-                    @click="
-                      openBaseDialogViewImage(
-                        uploadedFile.downloadURL,
-                        uploadedFile.file.type
-                      )
-                    "
+                    @click="openBaseDialogViewImage(page.uploadedFile)"
                     flat
                     dense
                     class="gt-xs text-body1"
@@ -49,37 +40,27 @@
                     size="md"
                   >
                     <div class="text-left">
-                      {{ uploadedFile.file.name }}
+                      {{ page.uploadedFile.name }}
                     </div>
                   </q-btn>
                   <q-btn
                     target="_blank"
                     no-caps
-                    @click="
-                      openBaseDialogViewImage(
-                        uploadedFile.downloadURL,
-                        uploadedFile.file.type
-                      )
-                    "
+                    @click="openBaseDialogViewImage(page.uploadedFile)"
                     flat
                     dense
                     class="lt-sm text-body1"
                     color="primary"
                   >
                     <div class="text-left">
-                      {{ uploadedFile.file.name }}
+                      {{ page.name }}
                     </div>
                   </q-btn>
                 </q-item-label>
               </q-item-section>
               <q-item-section avatar side>
                 <q-btn
-                  @click="
-                    openBaseDialogViewImage(
-                      uploadedFile.downloadURL,
-                      uploadedFile.file.type
-                    )
-                  "
+                  @click="openBaseDialogViewImage(page.uploadedFile)"
                   outline
                   color="grey-8"
                   label="View"
@@ -112,46 +93,33 @@ import { QDialog, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
 import { ref } from 'vue';
 import { Form } from 'src/utils/types';
-import { dbColRefs, dbDocRefs } from 'src/utils/db';
+import { dbDocRefs } from 'src/utils/db';
 import {
-  addDoc,
   updateDoc,
-  DocumentReference,
   serverTimestamp,
-  Timestamp,
   increment,
+  deleteField,
 } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
-import {
-  ApplicantDocument,
-  ApplicantPage,
-  PageStatus,
-} from 'src/utils/new-types';
+import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
 const props = defineProps<{
   doc: ApplicantDocument & { id: string };
   form: Form & { id: string };
-  uploadedFiles: UploadedFile[];
+  pages: (ApplicantPage & { id: string; url: string; uploadedFile: File })[];
 }>();
-
-interface UploadedFile {
-  name: string;
-  file: File;
-  status: PageStatus;
-  downloadURL: string;
-}
 
 const isLoading = ref(false);
 
 const onSubmit = async () => {
   try {
     isLoading.value = true;
-    const pages = await uploadFilesToStorage();
-    const totalPages = await createApplicantPages(pages);
-    await updateApplicantDocument(totalPages);
+    await uploadFilesToStorage();
+    await updateApplicantPages();
+    await updateApplicantDocument();
     await updateForm();
     isLoading.value = false;
     onDialogOK();
@@ -161,50 +129,28 @@ const onSubmit = async () => {
 };
 
 const uploadFilesToStorage = async () => {
-  const promises: Promise<{
-    name: string;
-    submittedFormat: string;
-    submittedSize: number;
-    submissionCount: number;
-    pageNumber: number;
-  }>[] = [];
+  const promises: Promise<void>[] = [];
 
-  props.uploadedFiles.forEach((file, index) => {
-    const PAGE_NUMBER = index + 1;
-    const promise = uploadFileToStorage(file, PAGE_NUMBER);
+  props.pages.forEach((page) => {
+    const promise = uploadFileToStorage(page);
     promises.push(promise);
   });
   return await Promise.all(promises);
 };
 
 const uploadFileToStorage = async (
-  file: {
-    file: File;
-    name: string;
-    downloadURL: string;
-    status: PageStatus | 'New';
-  },
-  pageNumber: number
+  page: ApplicantPage & { id: string; url: string; uploadedFile: File }
 ) => {
-  const applicantName = `${props.form.applicant.name?.first} ${props.form.applicant.name?.last}`;
-  let fileName = applicantName + '-' + props.doc.name + '-' + pageNumber;
-  if (props.uploadedFiles.length <= 1) {
-    fileName = applicantName + '-' + props.doc.name;
-  }
   const format = props.doc.requestedFormat;
-  const formId = props.form.id;
-  const docId = props.doc.id;
-  const pageId = `${docId}-${pageNumber.toString()}`;
-  const companyId = props.form.company.id;
-  const dashboardId = props.form.dashboard.id;
-  const applicantId = props.form.applicant.id;
-  const storageRef = storageRefs.getTemporaryDocsRef(fileName);
-  const contentType = file.file.type;
-  const contentSize = file.file.size;
-  const CONVERT_TO_KILOBYTES = 0.001;
-  const FIRST_TIME_SUBMITTED = 1;
+  const formId = page.formId;
+  const docId = page.docId;
+  const companyId = page.companyId;
+  const dashboardId = page.dashboardId;
+  const applicantId = page.applicantId;
+  const storageRef = storageRefs.getTemporaryDocsRef(page.name);
+  const contentType = page.uploadedFile.type;
 
-  await uploadBytes(storageRef, file.file, {
+  await uploadBytes(storageRef, page.uploadedFile, {
     contentType,
     customMetadata: {
       companyId,
@@ -212,56 +158,34 @@ const uploadFileToStorage = async (
       applicantId,
       formId,
       docId,
-      pageId,
       format,
-      submissionCount: FIRST_TIME_SUBMITTED.toString(),
     },
   });
-  return {
-    name: fileName,
-    submittedFormat: contentType,
-    submittedSize: contentSize * CONVERT_TO_KILOBYTES,
-    submissionCount: FIRST_TIME_SUBMITTED,
-    pageNumber,
-  };
 };
 
-const createApplicantPages = async (
-  pages: {
-    name: string;
-    submittedFormat: string;
-    submittedSize: number;
-    submissionCount: number;
-    pageNumber: number;
-  }[]
-) => {
-  const pagesRef = dbColRefs.getPagesRef(props.doc.companyId);
-  const promises: Promise<DocumentReference>[] = [];
-  pages.forEach((page) => {
-    const applicantPage: ApplicantPage = {
-      createdAt: serverTimestamp() as Timestamp,
-      docId: props.doc.id,
-      formId: props.form.id,
-      companyId: props.doc.companyId,
-      dashboardId: props.doc.dashboardId,
-      applicantId: props.doc.applicantId,
+const updateApplicantPages = async () => {
+  const promises: Promise<void>[] = [];
+  const CONVERT_TO_KILOBYTES = 0.001;
+  props.pages.forEach((page) => {
+    const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
+    const promise = updateDoc(pageRef, {
+      submissionCount: increment(1),
+      submittedFormat: page.uploadedFile.type,
+      submittedSize: page.uploadedFile.size * CONVERT_TO_KILOBYTES,
       status: 'submitted',
-      ...page,
-    };
-    const promise = addDoc(pagesRef, applicantPage);
+      rejection: deleteField(),
+      updatedAt: serverTimestamp(),
+    });
     promises.push(promise);
   });
-  const TOTAL_PAGES_NUMBER = pages.length;
-  return TOTAL_PAGES_NUMBER;
+  return await Promise.all(promises);
 };
 
-const updateApplicantDocument = async (totalPages: number) => {
+const updateApplicantDocument = async () => {
   const docRef = dbDocRefs.getDocumentRef(props.doc.companyId, props.doc.id);
   const UPDATED_DOC_STATUS = 'submitted';
   await updateDoc(docRef, {
     status: UPDATED_DOC_STATUS,
-    totalPages,
-    deviceSubmitted: $q.platform.is.mobile ? 'mobile' : 'desktop',
   });
 };
 
@@ -273,12 +197,14 @@ const updateForm = async () => {
   });
 };
 
-const openBaseDialogViewImage = (imgURL: string, contentType: string) => {
+const openBaseDialogViewImage = (file: File) => {
+  const fileBlob = new Blob([file], { type: file.type });
+  const downloadURL = URL.createObjectURL(fileBlob);
   $q.dialog({
     component: BaseDialogViewImage,
     componentProps: {
-      imgURL,
-      contentType,
+      imgURL: downloadURL,
+      contentType: file.type,
     },
   });
 };

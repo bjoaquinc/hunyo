@@ -433,12 +433,10 @@ const updateDocAndPagesStatus = async () => {
   selectedPageIndex.value = null;
   let isRejected = false;
   let numOfAcceptedPages = 0;
-  let totalPages = 0;
   const rejectionReasons: string[] = [];
   const rejectedPageIds: string[] = [];
   const promises: Promise<void>[] = [];
   sortedPages.value.forEach((page) => {
-    totalPages++;
     if (page.updatedStatus === 'rejected' && page.rejection) {
       isRejected = true;
       if (!rejectionReasons.includes(page.rejection.reason)) {
@@ -478,7 +476,11 @@ const updateDocAndPagesStatus = async () => {
     promises.push(promise);
   }
 
-  if (isRejected && numOfAcceptedPages > 0) {
+  if (
+    isRejected &&
+    (numOfAcceptedPages > 0 ||
+      sortedPages.value.length < selectedDoc.value.totalPages)
+  ) {
     // Resubmit Pages
     const promise = updateDoc(docRef, {
       adminAcceptedPages: increment(numOfAcceptedPages),
@@ -494,7 +496,11 @@ const updateDocAndPagesStatus = async () => {
     promises.push(promise);
   }
 
-  if (isRejected && numOfAcceptedPages === 0) {
+  if (
+    isRejected &&
+    numOfAcceptedPages === 0 &&
+    sortedPages.value.length === selectedDoc.value.totalPages
+  ) {
     // Resubmit Full Document
     const promise = updateDoc(docRef, {
       status: 'rejected',
@@ -509,7 +515,7 @@ const updateDocAndPagesStatus = async () => {
   }
 
   const formRef = dbDocRefs.getFormRef(selectedDoc.value.formId);
-  const DECREMENT = increment(totalPages * -1);
+  const DECREMENT = increment(-1);
   const promise = updateDoc(formRef, {
     adminCheckDocs: DECREMENT,
   });

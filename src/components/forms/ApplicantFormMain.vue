@@ -113,8 +113,9 @@ import { getDownloadURL } from '@firebase/storage';
 import { DateTime } from 'luxon';
 import DialogFormDocumentAvailability from './dialogs/DialogFormDocumentAvailability.vue';
 import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
+import DialogFormResubmitPages from './dialogs/DialogFormResubmitPages.vue';
 import { dbDocRefs } from 'src/utils/db';
-import { updateDoc } from '@firebase/firestore';
+import { Timestamp, updateDoc } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
 
 const props = defineProps<{
@@ -200,7 +201,7 @@ const onDocumentClick = (index: number) => {
     onNotSubmitted(index);
   }
   if (docStatus === 'rejected' && rejection) {
-    // onRejected(index, rejection);
+    onRejected(index, rejection);
   }
   if (docStatus === 'not-applicable') {
     onNotApplicable(index);
@@ -257,23 +258,37 @@ const onNotSubmitted = (index: number) => {
   });
 };
 
-// const onRejected = (
-//   index: number,
-//   rejection: {
-//     code: RejectionCode;
-//     message: string;
-//   }
-// ) => {
-//   const rejectionCode = rejection.code;
+const onRejected = (
+  index: number,
+  rejection: {
+    type: 'pages' | 'full-submission';
+    reasons: string[];
+    rejectedBy: string;
+    rejectedAt: Timestamp;
+    pageIds?: string[] | undefined;
+  }
+) => {
+  if (rejection.type === 'full-submission') {
+    // TODO: Add a dialog to replace the document
+    console.log('Full Submission');
+  }
 
-//   if (rejectionCode === 'replaceDoc') {
-//     // TODO: Add a dialog to replace the document
-//   }
-
-//   if (rejectionCode === 'replacePages') {
-//     // TODO: Add a dialog to replace the pages
-//   }
-// };
+  if (rejection.type === 'pages') {
+    // TODO: Add a dialog to replace the pages
+    $q.dialog({
+      component: DialogFormResubmitPages,
+      componentProps: {
+        doc: props.documents[index],
+        form: props.form,
+      },
+    }).onOk(() => {
+      $q.notify({
+        message: 'Document resubmitted. Thank you.',
+        type: 'positive',
+      });
+    });
+  }
+};
 
 const onNotApplicable = (index: number) => {
   $q.dialog({
