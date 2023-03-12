@@ -472,7 +472,6 @@ const onSubmit = async () => {
   // Update document status
   const DECREMENT_REJECTED_PAGES = increment(rejectedPages * -1);
   const INCREMENT_ACCEPTED_PAGES = increment(acceptedPages);
-  const INCREMENT = increment(1);
   const DECREMENT = increment(-1);
   const docRef = dbDocRefs.getDocumentRef(
     props.applicantDocument.companyId,
@@ -598,15 +597,6 @@ const validateFields = () => {
   return true;
 };
 
-// const updatePageStatus = async (page: ApplicantPage & { id: string }) => {
-//   console.log('accept page', documentPages.value[selectedPageIndex.value]);
-//   // update page status
-//   const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
-//   await updateDoc(pageRef, {
-//     status: 'accepted',
-//   });
-// };
-
 const createAcceptedPageDoc = async (page: ApplicantPage & { id: string }) => {
   if (!user) return;
   const acceptedPagesRef = dbColRefs.acceptedPagesRef;
@@ -653,8 +643,9 @@ const addMetadataToImage = async (
   page: ApplicantPage & { id: string },
   status: 'accepted' | 'rejected'
 ) => {
-  const FILE_SUFFIX = props.applicantDocument.requestedFormat;
-  const imageRef = storageRefs.getFixedDocRef(
+  const FILE_SUFFIX = page.submittedFormat.includes('image') ? 'jpeg' : 'pdf';
+  const UPDATED_IMAGE_NAME = `${page.id}.${FILE_SUFFIX}`;
+  const imageRef = storageRefs.getOriginalDocRef(
     page.companyId,
     page.dashboardId,
     page.applicantId,
@@ -666,19 +657,10 @@ const addMetadataToImage = async (
       companyId: page.companyId,
       dashboardId: page.dashboardId,
       applicantId: page.applicantId,
+      updatedName: UPDATED_IMAGE_NAME,
     },
   });
 };
-
-// const incrementAcceptedPages = async (incrementNumber: number) => {
-//   const applicantDocRef = dbDocRefs.getDocumentRef(
-//     props.applicantDocument.companyId,
-//     props.applicantDocument.id
-//   );
-//   await updateDoc(applicantDocRef, {
-//     acceptedPages: increment(incrementNumber),
-//   });
-// };
 
 const warningMessages = {
   notChecked: 'You missed some pages. Please review and accept or reject them.',

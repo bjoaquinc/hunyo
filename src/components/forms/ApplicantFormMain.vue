@@ -348,6 +348,13 @@ const onDelayed = (index: number) => {
           index,
         },
       });
+      dialog.onOk(() => {
+        const docName = props.documents[index].name;
+        $q.notify({
+          message: `${docName} submitted. Thank you.`,
+          type: 'positive',
+        });
+      });
     }
     if (payload === 'reschedule') {
       const dialog = $q.dialog({
