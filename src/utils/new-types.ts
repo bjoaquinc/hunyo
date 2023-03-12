@@ -5,6 +5,7 @@ import { Timestamp } from '@firebase/firestore';
 export type RequestStatus = 'not-submitted' | 'incomplete' | 'complete';
 export type DocumentStatus =
   | 'not-submitted'
+  | 'delayed'
   | 'submitted'
   | 'admin-checked'
   | 'accepted'
@@ -68,6 +69,7 @@ export interface ApplicantDocument {
   totalPages: number;
   adminAcceptedPages: number;
   acceptedPages: number;
+  delayedUntil?: Timestamp;
   rejection?: {
     type: 'pages' | 'full-submission';
     reasons: string[];

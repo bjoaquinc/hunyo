@@ -115,6 +115,7 @@ import DialogFormDocumentAvailability from './dialogs/DialogFormDocumentAvailabi
 import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
 import DialogFormResubmitPages from './dialogs/DialogFormResubmitPages.vue';
 import DialogFormResubmitFull from './dialogs/DialogFormResubmitFull.vue';
+import DialogFormDelayedUpdate from './dialogs/DialogFormDelayedUpdate.vue';
 import { dbDocRefs } from 'src/utils/db';
 import { Timestamp, updateDoc } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
@@ -141,6 +142,14 @@ const documentItemStyles = {
     actionIcon: 'fas fa-chevron-right',
     actionLabel: 'Submit now',
     mobileLabel: 'Upload',
+    clickable: true,
+    bgColor: null,
+  },
+  delayed: {
+    textColor: 'orange-8',
+    actionIcon: 'fas fa-clock',
+    actionLabel: 'Delayed. Update?',
+    mobileLabel: 'Delayed',
     clickable: true,
     bgColor: null,
   },
@@ -206,6 +215,9 @@ const onDocumentClick = (index: number) => {
   }
   if (docStatus === 'not-applicable') {
     onNotApplicable(index);
+  }
+  if (docStatus === 'delayed') {
+    onDelayed(index);
   }
 };
 
@@ -319,6 +331,33 @@ const onNotApplicable = (index: number) => {
       status: 'not-submitted',
     });
     loadingDialog.hide();
+  });
+};
+
+const onDelayed = (index: number) => {
+  const dialog = $q.dialog({
+    component: DialogFormDelayedUpdate,
+  });
+  dialog.onOk((payload: 'submit-now' | 'reschedule') => {
+    if (payload === 'submit-now') {
+      const dialog = $q.dialog({
+        component: DialogFormSubmitDoc,
+        componentProps: {
+          doc: props.documents[index],
+          form: props.form,
+          index,
+        },
+      });
+    }
+    if (payload === 'reschedule') {
+      const dialog = $q.dialog({
+        component: DialogFormScheduleSubmission,
+        componentProps: {
+          doc: props.documents[index],
+          formId: props.form.id,
+        },
+      });
+    }
   });
 };
 </script>

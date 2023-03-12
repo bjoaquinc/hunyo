@@ -9,11 +9,11 @@
     <q-card class="card-container text-grey-8">
       <q-form @submit.prevent="onSubmit" greedy>
         <q-card-section>
-          <div class="flex">
+          <div class="flex items-center no-wrap">
             <div class="text-h5 gt-xs">
               When can you submit your {{ doc.name }}?
             </div>
-            <div class="text-h6 lt-sm">
+            <div class="text-body1 lt-sm">
               When can you submit your {{ doc.name }}?
             </div>
             <q-btn
@@ -68,6 +68,7 @@
         </q-card-section>
         <q-card-actions>
           <q-btn
+            :disable="doc.delayedUntil && date === previousDate"
             type="submit"
             label="Done"
             color="primary"
@@ -84,13 +85,14 @@
 
 <script setup lang="ts">
 import { QDialog, useDialogPluginComponent } from 'quasar';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { DateTime } from 'luxon';
 import { dbDocRefs } from 'src/utils/db';
-import { FormDoc } from 'src/utils/types';
 import { updateDoc, Timestamp } from 'firebase/firestore';
+import { ApplicantDocument } from 'src/utils/new-types';
 
 const date = ref('');
+const previousDate = ref('');
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const isLoading = ref(false);
 const dateIsGreaterThanToday = (date: string) => {
@@ -99,30 +101,36 @@ const dateIsGreaterThanToday = (date: string) => {
 };
 
 const props = defineProps<{
-  doc: FormDoc & { docId: string };
+  doc: ApplicantDocument & { id: string };
   formId: string;
 }>();
 
+onMounted(() => {
+  if (props.doc.delayedUntil) {
+    const setDate = DateTime.fromMillis(
+      props.doc.delayedUntil.toMillis()
+    ).toFormat('yyyy/MM/dd');
+    previousDate.value = setDate;
+    date.value = setDate;
+  }
+});
+
 const onSubmit = async () => {
   isLoading.value = true;
-  const formRef = dbDocRefs.getFormRef(props.formId);
-  console.log('doc', props.doc);
-  const DOC_COMPUTED_KEY = `docs.${props.doc.docId}`;
-  console.log(DOC_COMPUTED_KEY);
+  await updateDocStatusAndDelayedUntil();
+  onDialogOK();
+  isLoading.value = false;
+};
+
+const updateDocStatusAndDelayedUntil = async () => {
+  const docRef = dbDocRefs.getDocumentRef(props.doc.companyId, props.doc.id);
   const DATE_TO_TIMESTAMP = Timestamp.fromMillis(
     DateTime.fromFormat(date.value, 'yyyy/MM/dd').toMillis()
   );
-  const updatedData = {
-    [`${DOC_COMPUTED_KEY}.delayed`]: {
-      date: DATE_TO_TIMESTAMP,
-      isDelayed: true,
-    },
-  };
-  await updateDoc(formRef, {
-    ...updatedData,
+  await updateDoc(docRef, {
+    status: 'delayed',
+    delayedUntil: DATE_TO_TIMESTAMP,
   });
-  onDialogOK();
-  isLoading.value = false;
 };
 
 defineEmits([
