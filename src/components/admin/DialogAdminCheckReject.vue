@@ -120,8 +120,8 @@ const rejections: {
   code: RejectionCode;
   title: string;
 }[] = [
-  { code: 'rejectFullSubmission', title: 'Reject Full Submission' },
-  { code: 'rejectPages', title: 'Reject Page' },
+  { code: 'full-submission', title: 'Reject Full Submission' },
+  { code: 'pages', title: 'Reject Page' },
 ];
 
 const reasonsForRejection: { code: RejectionReason; title: string }[] = [

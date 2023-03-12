@@ -104,6 +104,7 @@
 </template>
 
 <script setup lang="ts">
+import * as amplitude from '@amplitude/analytics-browser'
 import { useQuasar, QSpinnerPie } from 'quasar';
 import { onMounted, ref, computed } from 'vue';
 import DialogFormSubmitDoc from 'src/components/forms/dialogs/DialogFormSubmitDoc.vue';
@@ -205,6 +206,11 @@ onMounted(async () => {
 });
 
 const onDocumentClick = (index: number) => {
+  const doc = props.documents[index];
+  amplitude.track('Select Document', {
+    documentName: doc.name,
+    orderOnList: doc.docNumber,
+  })
   const docStatus = props.documents[index].status;
   const rejection = props.documents[index].rejection;
   if (docStatus === 'not-submitted') {

@@ -19,6 +19,7 @@ import {
   Unsubscribe,
   where,
 } from '@firebase/firestore';
+import * as amplitude from '@amplitude/analytics-browser';
 import { getDownloadURL } from '@firebase/storage';
 import { useQuasar } from 'quasar';
 import ApplicantFormMain from 'src/components/forms/ApplicantFormMain.vue';
@@ -45,11 +46,16 @@ const isReady = ref(false);
 const logoURL = ref('');
 
 onMounted(async () => {
-  await setApplicantAuth();
-  await setForm();
-  await setDocuments();
-  showReminder();
-  isReady.value = true;
+  try {
+    await setApplicantAuth();
+    await setForm();
+    await setDocuments();
+    amplitude.setUserId(form.value?.id);
+    showReminder();
+    isReady.value = true;
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 onUnmounted(() => {

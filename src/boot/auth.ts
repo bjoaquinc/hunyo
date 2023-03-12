@@ -2,6 +2,7 @@ import { boot } from 'quasar/wrappers';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useUserStore } from 'src/stores/user-store';
 import { Loading, QSpinnerPie } from 'quasar';
+import * as amplitude from '@amplitude/analytics-browser';
 
 // "async" is optional;
 // more info on params: https://v2.quasar.dev/quasar-cli/boot-files
@@ -21,6 +22,7 @@ export default boot(async (/* { app, router, ... } */) => {
       return;
       console.log('No company Id');
     }
+    amplitude.setUserId(user.uid);
     // console.log(companyId);
     await addUserDetails(user.uid, companyId);
     Loading.hide();

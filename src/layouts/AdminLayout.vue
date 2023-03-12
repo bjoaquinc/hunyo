@@ -209,6 +209,7 @@
 </template>
 
 <script lang="ts" setup>
+import * as amplitude from '@amplitude/analytics-browser';
 import { ref, onMounted, watch, computed } from 'vue';
 import { dbColRefs, dbDocRefs } from 'src/utils/db';
 import {
@@ -410,8 +411,34 @@ const updatePageStatus = (
   pageId: string,
   status: 'accepted' | 'rejected' | 'replaced'
 ) => {
+  sendAmplitudeAssessPageEvent(status);
   const pageIndex = sortedPages.value.findIndex((page) => page.id === pageId);
   sortedPages.value[pageIndex].updatedStatus = status;
+};
+
+const sendAmplitudeAssessPageEvent = (status: string) => {
+  if (originalMetadata.value && fixedMetadata.value) {
+    const originalImageProperties = {
+      ...originalMetadata.value.customMetadata,
+    } as unknown as ImageProperties;
+    const fixedImageProperties = {
+      ...fixedMetadata.value.customMetadata,
+    } as unknown as ImageProperties;
+    amplitude.track('Admin Assess Page', {
+      decision: status,
+      originalBrightness: originalImageProperties.brightness,
+      originalSharpness: originalImageProperties.sharpness,
+      originalContrast: originalImageProperties.contrast,
+      fixedBrightness: fixedImageProperties.brightness,
+      fixedSharpness: fixedImageProperties.sharpness,
+      fixedContrast: fixedImageProperties.contrast,
+      docName: selectedDoc.value?.name,
+      docId: selectedDoc.value?.id,
+      pageNumber: selectedPage.value?.pageNumber,
+      pageId: selectedPage.value?.id,
+      totalNumberOfPages: sortedPages.value.length,
+    });
+  }
 };
 
 const addPageRejection = (
@@ -559,7 +586,6 @@ const displayData = computed(() => {
       ...fixedMetadata.value.customMetadata,
     } as unknown as ImageProperties;
     const data = {
-      'System Check Status': selectedPage.value.systemCheckStatus,
       'Original Sharpness': originalImageProperties.sharpness,
       'Fixed Sharpness': fixedImageProperties.sharpness,
       'Original Brightness': originalImageProperties.brightness,

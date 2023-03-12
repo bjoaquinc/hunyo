@@ -160,14 +160,14 @@ const openDialogAdminCheckReject = () => {
       message?: string;
     }) => {
       const { type, reason, message } = payload;
-      if (type === 'rejectPages') {
-        console.log('rejectPages');
+      if (type === 'pages') {
+        console.log('pages');
         if (props.selectedPageIndex === null) return;
         const currentPage = props.pages[props.selectedPageIndex];
         addPageRejection(currentPage.id, reason, message);
         updatePageStatus('rejected');
       }
-      if (type === 'rejectFullSubmission') {
+      if (type === 'full-submission') {
         for (const page of props.pages) {
           addPageRejection(page.id, reason, message);
           emit('updatePageStatus', page.id, 'rejected');

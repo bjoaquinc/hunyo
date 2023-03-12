@@ -61,6 +61,7 @@
 </template>
 
 <script setup lang="ts">
+import * as amplitude from '@amplitude/analytics-browser';
 import { updateDoc } from '@firebase/firestore';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { dbDocRefs } from 'src/utils/db';
@@ -86,6 +87,7 @@ const onSubmit = async () => {
     await updateDoc(formRef, {
       'applicant.name': name.value,
     });
+    amplitude.track('Applicant Confirm Name');
     dialogRef.value?.hide();
   } catch (error) {
     console.log(error);

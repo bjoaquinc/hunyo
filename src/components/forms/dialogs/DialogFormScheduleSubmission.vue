@@ -84,6 +84,7 @@
 </template>
 
 <script setup lang="ts">
+import * as amplitude from '@amplitude/analytics-browser';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { ref, onMounted } from 'vue';
 import { DateTime } from 'luxon';
@@ -118,6 +119,9 @@ onMounted(() => {
 const onSubmit = async () => {
   isLoading.value = true;
   await updateDocStatusAndDelayedUntil();
+  amplitude.track('Document Unavailable', {
+    documentName: props.doc.name,
+  });
   onDialogOK();
   isLoading.value = false;
 };

@@ -26,7 +26,7 @@
           <q-separator class="q-my-md" />
 
           <q-btn
-            @click="onDialogOK('available')"
+            @click="onButtonClick('available')"
             size="lg"
             class="q-mt-lg full-width"
             outline
@@ -35,7 +35,7 @@
             :label="`I have my ${doc.name}`"
           />
           <q-btn
-            @click="onDialogOK('not-available')"
+            @click="onButtonClick('not-available')"
             size="lg"
             class="q-mt-lg full-width"
             outline
@@ -45,7 +45,7 @@
           />
           <q-btn
             v-if="!doc.isRequired"
-            @click="changeStatusToNotApplicable"
+            @click="onButtonClick('not-applicable')"
             size="lg"
             class="q-mt-lg full-width"
             outline
@@ -63,6 +63,7 @@
 </template>
 
 <script setup lang="ts">
+import * as amplitude from '@amplitude/analytics-browser';
 import { updateDoc } from '@firebase/firestore';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { dbDocRefs } from 'src/utils/db';
@@ -76,6 +77,20 @@ const props = defineProps<{
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const isLoading = ref(false);
+
+const onButtonClick = (
+  type: 'available' | 'not-available' | 'not-applicable'
+) => {
+  amplitude.track('Select Document Availability', {
+    status: type,
+    isRequired: props.doc.isRequired,
+  });
+  if (type === 'available' || type === 'not-available') {
+    onDialogOK(type);
+  } else {
+    changeStatusToNotApplicable();
+  }
+};
 
 defineEmits([
   // REQUIRED; need to specify some events that your

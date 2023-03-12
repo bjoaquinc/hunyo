@@ -27,9 +27,15 @@
                 <q-btn
                   v-if="sample"
                   @click="
-                    sample
-                      ? openBaseDialogViewImage(sample.url, sample.contentType)
-                      : null
+                    () => {
+                      if (sample) {
+                        amplitude.track('View Sample', {
+                          docName: doc.name,
+                          docId: doc.id,
+                        });
+                        openBaseDialogViewImage(sample.url, sample.contentType);
+                      }
+                    }
                   "
                   :class="doc.instructions ? 'q-mt-md' : ''"
                   label="See Sample"
@@ -171,6 +177,7 @@
 </template>
 
 <script setup lang="ts">
+import * as amplitude from '@amplitude/analytics-browser';
 import { getDownloadURL, getMetadata } from '@firebase/storage';
 import { QDialog, QFile, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
@@ -265,6 +272,10 @@ const files = ref<FileList | null>(null);
 const isLoading = ref(false);
 
 const openDialogFormTips = () => {
+  amplitude.track('View Tips', {
+    docName: props.doc.name,
+    docId: props.doc.id,
+  });
   $q.dialog({
     component: DialogFormTips,
   });
@@ -282,6 +293,15 @@ watch(files, (newFiles) => {
         downloadURL,
         status: 'New',
       });
+      const CONVERT_TO_KB = 0.001;
+      amplitude.track('Add Pages/Document', {
+        docName: props.doc.name,
+        formatSubmitted: file.type,
+        fileSize: file.size * CONVERT_TO_KB,
+        pageNumber: uploadedFiles.value.length,
+        numberOfPages: newFiles.length,
+        source: 'applicant',
+      });
     }
     files.value = null;
     isLoading.value = false;
@@ -294,6 +314,11 @@ const removeFile = (element: UploadedFile) => {
 };
 
 const onSubmit = async () => {
+  amplitude.track('Confirm Document', {
+    docName: props.doc.name,
+    numberOfPages: uploadedFiles.value.length,
+    source: 'applicant',
+  });
   await openDialogFormSubmitDocPreview();
   onDialogOK();
 };
