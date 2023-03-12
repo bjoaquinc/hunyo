@@ -11,6 +11,19 @@
       style="max-width: 100% !important; max-height: 100vh"
       class="bg-black transparent"
     >
+      <q-img
+        v-if="contentType.includes('image')"
+        class="image-width absolute-center"
+        fit="contain"
+        :src="props.imgURL"
+      />
+      <embed
+        v-else
+        class="image-width absolute-center"
+        :src="props.imgURL"
+        type="application/pdf"
+        header="none"
+      />
       <q-card-section style="height: 100vh" @click="dialogRef?.hide()">
         <div class="flex full-width">
           <q-btn
@@ -32,25 +45,16 @@
           />
         </div>
       </q-card-section>
-      <q-img
-        v-if="contentType === 'image/jpeg'"
-        class="image-width absolute-center"
-        fit="contain"
-        :src="props.imgURL"
-      />
-      <embed
-        v-else
-        class="image-width absolute-center"
-        :src="props.imgURL"
-        type="application/pdf"
-        header="none"
-      />
     </q-card>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
 import { QDialog, useDialogPluginComponent } from 'quasar';
+import { onMounted } from 'vue';
+onMounted(() => {
+  console.log(props);
+});
 
 const props = defineProps<{
   imgURL: string;
