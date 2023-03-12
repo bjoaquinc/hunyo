@@ -35,14 +35,14 @@
                 ]"
               />
             </div>
-            <div class="col">
+            <div class="q-gutter-md row q-mt-xs">
               <q-file
+                class="col"
                 v-model="sample"
                 filled
                 :label="`${
                   editDocDetails && editDocDetails.sample ? 'Replace' : 'Upload'
-                } Sample PDF or Image (Optional)`"
-                class="q-mt-xs"
+                } Sample (Optional)`"
                 accept="image/*,application/pdf"
                 outlined
               >
@@ -53,6 +53,20 @@
                   <q-icon name="fas fa-plus" />
                 </template>
               </q-file>
+              <q-select
+                v-model="required"
+                :options="requiredOptions"
+                option-value="value"
+                option-label="label"
+                filled
+                class="col"
+                label="Select One"
+                outlined
+                :rules="[
+                  (val) =>
+                    !!val || 'Please choose if mandatory or if available',
+                ]"
+              />
             </div>
             <div class="col q-mt-md">
               <q-input
@@ -100,6 +114,7 @@ const props = defineProps<{
       file: string;
       contentType: string;
     };
+    isRequired: boolean;
     instructions: string;
     docNumber: number;
   };
@@ -111,6 +126,20 @@ const companyId = user?.company.id as string;
 const name = ref('');
 const format = ref<'jpeg' | 'pdf'>('pdf');
 const options = ['jpeg', 'pdf'];
+const required = ref<{
+  label: string;
+  value: boolean;
+} | null>(null);
+const requiredOptions = [
+  {
+    label: 'If Available',
+    value: false,
+  },
+  {
+    label: 'Mandatory',
+    value: true,
+  },
+];
 const sample = ref<File | null>(null);
 const instructions = ref('');
 const isLoading = ref(false);
@@ -121,10 +150,13 @@ onMounted(() => {
       name: docName,
       format: docFormat,
       instructions: docInstructions,
+      isRequired,
     } = props.editDocDetails;
     name.value = docName;
     format.value = docFormat;
     instructions.value = docInstructions;
+    required.value =
+      isRequired === true ? requiredOptions[1] : requiredOptions[0];
   }
 });
 
@@ -134,6 +166,12 @@ const onSubmit = async () => {
     const newDoc: DashboardDoc = {
       format: format.value as 'pdf' | 'jpeg',
       docNumber: props.lastDocNumber + 1,
+      isRequired: (
+        required.value as {
+          label: string;
+          value: boolean;
+        }
+      ).value,
     };
     const newSampleData = await uploadSampleToStorage();
     if (newSampleData) {

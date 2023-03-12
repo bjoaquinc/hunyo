@@ -58,6 +58,7 @@ export interface ApplicantDocument {
   companyId: string;
   name: string;
   requestedFormat: 'pdf' | 'jpeg';
+  isRequired: boolean;
   sample?: {
     contentType: string;
     file: string;

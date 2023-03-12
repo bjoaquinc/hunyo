@@ -55,7 +55,7 @@
                     color="primary"
                   >
                     <div class="text-left ellipsis">
-                      {{ page.name }}
+                      {{ page.uploadedFile.name }}
                     </div>
                   </q-btn>
                 </q-item-label>
@@ -71,15 +71,21 @@
             </q-item>
           </q-list>
         </q-card-section>
-        <q-card-actions align="between">
+        <q-card-actions class="flex column">
+          <q-btn
+            label="Submit Now"
+            class="full-width"
+            type="submit"
+            color="primary"
+          />
           <q-btn
             v-close-popup
             outline
+            class="full-width q-mt-md"
             label="Cancel"
             type="reset"
             color="primary"
           />
-          <q-btn label="Submit Now" type="submit" color="primary" />
         </q-card-actions>
       </q-form>
       <div v-else class="bg-white q-pa-md">

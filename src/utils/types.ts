@@ -251,6 +251,7 @@ export interface RejectedPage {
 
 export interface DashboardDoc {
   format: Formats;
+  isRequired: boolean;
   sample?: {
     file: string;
     contentType: string;

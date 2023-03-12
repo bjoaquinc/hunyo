@@ -128,6 +128,7 @@
           <!-- Applicant -->
           <q-td key="applicant" :props="props">
             <q-btn
+              @click="openDialogApplicantDocuments(props.row.id)"
               :label="
                 props.row.name
                   ? `${props.row.name.first} ${props.row.name.last}`
@@ -287,6 +288,22 @@ const openDialogAction = (applicantId: string) => {
       applicantName: props.applicants.find(
         (applicant) => applicant.id === applicantId
       )?.name,
+    },
+  });
+};
+
+const openDialogApplicantDocuments = (applicantId: string) => {
+  const applicant = props.applicants.find(
+    (applicant) => applicant.id === applicantId
+  );
+  q.dialog({
+    component: defineAsyncComponent(
+      () =>
+        import('src/components/dashboards/dialogs/DialogApplicantDocuments.vue')
+    ),
+    componentProps: {
+      companyId,
+      applicant,
     },
   });
 };

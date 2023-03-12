@@ -44,6 +44,7 @@
             :label="`I'm waiting to receive my ${doc.name}`"
           />
           <q-btn
+            v-if="!doc.isRequired"
             @click="changeStatusToNotApplicable"
             size="lg"
             class="q-mt-lg full-width"

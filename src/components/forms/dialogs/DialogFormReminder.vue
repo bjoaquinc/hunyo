@@ -66,7 +66,7 @@ const { dialogRef, onDialogHide } = useDialogPluginComponent();
 
 const acceptedFormats = [
   'Pictures of documents taken with your phone',
-  'Documents in PDF or Word format',
+  'Documents in PDF only',
 ];
 const importantReminders = [
   'Do not edit your photos. We will fix them for you',

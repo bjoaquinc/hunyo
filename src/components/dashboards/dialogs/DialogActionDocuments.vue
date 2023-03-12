@@ -126,17 +126,6 @@ onMounted(async () => {
           });
         }
       });
-      // applicantDocuments.value = snapshot.docs.map((doc) => {
-      //   let isUpdating = false;
-      //   if (doc.data().acceptedPages === doc.data().totalPages) {
-      //     isUpdating = true;
-      //   }
-      //   return {
-      //     id: doc.id,
-      //     isUpdating,
-      //     ...doc.data(),
-      //   };
-      // });
       runOnce();
     });
   });

@@ -341,6 +341,7 @@ const props = defineProps<{
 
 onMounted(async () => {
   console.log(props.applicantDocument.companyId);
+  console.log(props.applicantDocument.id);
   const pagesRef = dbColRefs.getPagesRef(props.applicantDocument.companyId);
   const q = query(
     pagesRef,
@@ -353,6 +354,7 @@ onMounted(async () => {
       runOnce = () => {
         return;
       };
+      console.log('resolved');
       resolve();
     };
     unsubDocumentPages.value = onSnapshot(
@@ -360,6 +362,7 @@ onMounted(async () => {
       async (snapshot) => {
         documentPages.value = await Promise.all(
           snapshot.docs.map(async (doc) => {
+            console.log('starting in map functions');
             const {
               name,
               companyId,
@@ -399,6 +402,7 @@ onMounted(async () => {
         runOnce();
       },
       (err) => {
+        console.log(err);
         reject(err);
       }
     );

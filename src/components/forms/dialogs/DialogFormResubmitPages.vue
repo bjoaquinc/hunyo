@@ -94,13 +94,14 @@
                         page.uploadedFile
                       )
                     "
+                    style="max-width: 100% !important"
                     no-caps
                     flat
                     dense
                     class="lt-sm text-body1"
                     color="primary"
                   >
-                    <div class="text-left">
+                    <div class="text-left ellipsis">
                       {{
                         page.uploadedFile ? page.uploadedFile.name : page.name
                       }}
