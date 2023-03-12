@@ -72,6 +72,7 @@
                         page.uploadedFile
                       )
                     "
+                    style="max-width: 100% !important"
                     no-caps
                     flat
                     dense
@@ -79,7 +80,7 @@
                     color="primary"
                     size="md"
                   >
-                    <div class="text-left">
+                    <div class="text-left ellipsis">
                       {{
                         page.uploadedFile ? page.uploadedFile.name : page.name
                       }}

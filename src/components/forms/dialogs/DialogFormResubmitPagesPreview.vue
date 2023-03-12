@@ -8,7 +8,7 @@
     transition-hide="slide-down"
   >
     <q-card class="card-container text-grey-8">
-      <q-form @submit.prevent="onSubmit" greedy>
+      <q-form @submit.prevent="onSubmit" v-if="!isLoading" greedy>
         <q-card-section>
           <div class="flex justify-between q-mt-sm no-wrap">
             <div class="text-h5 gt-xs">
@@ -33,13 +33,14 @@
                     target="_blank"
                     no-caps
                     @click="openBaseDialogViewImage(page.uploadedFile)"
+                    style="max-width: 100% !important"
                     flat
                     dense
                     class="gt-xs text-body1"
                     color="primary"
                     size="md"
                   >
-                    <div class="text-left">
+                    <div class="text-left ellipsis">
                       {{ page.uploadedFile.name }}
                     </div>
                   </q-btn>
@@ -47,12 +48,13 @@
                     target="_blank"
                     no-caps
                     @click="openBaseDialogViewImage(page.uploadedFile)"
+                    style="max-width: 100% !important"
                     flat
                     dense
                     class="lt-sm text-body1"
                     color="primary"
                   >
-                    <div class="text-left">
+                    <div class="text-left ellipsis">
                       {{ page.name }}
                     </div>
                   </q-btn>
@@ -79,19 +81,28 @@
           />
           <q-btn label="Submit Now" type="submit" color="primary" />
         </q-card-actions>
-        <q-inner-loading :showing="isLoading">
-          <q-spinner-pie size="80px" color="primary" />
-        </q-inner-loading>
       </q-form>
+      <div v-else class="bg-white q-pa-md">
+        <div class="text-h5 q-mt-md">Uploading Documents</div>
+        <q-linear-progress
+          class="q-mt-md"
+          :value="averageProgress / 100"
+          size="25px"
+          color="purple-7"
+        />
+        <div class="text-body1 q-mt-md text-negative">
+          Can take up to 5 minutes. Don't close this page.
+        </div>
+      </div>
     </q-card>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
-import { uploadBytes } from '@firebase/storage';
+import { uploadBytesResumable } from '@firebase/storage';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Form } from 'src/utils/types';
 import { dbDocRefs } from 'src/utils/db';
 import {
@@ -113,6 +124,12 @@ const props = defineProps<{
 }>();
 
 const isLoading = ref(false);
+const progressTotal = ref<{ [key: string]: number }>({});
+const averageProgress = computed(() => {
+  const total = Object.values(progressTotal.value).reduce((a, b) => a + b, 0);
+  const count = Object.values(progressTotal.value).length;
+  return total / count;
+});
 
 const onSubmit = async () => {
   try {
@@ -150,7 +167,7 @@ const uploadFileToStorage = async (
   const storageRef = storageRefs.getTemporaryDocsRef(page.name);
   const contentType = page.uploadedFile.type;
 
-  await uploadBytes(storageRef, page.uploadedFile, {
+  const uploadTask = uploadBytesResumable(storageRef, page.uploadedFile, {
     contentType,
     customMetadata: {
       companyId,
@@ -160,6 +177,32 @@ const uploadFileToStorage = async (
       docId,
       format,
     },
+  });
+
+  await new Promise<void>((resolve) => {
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        progressTotal.value[page.id] = progress;
+
+        switch (snapshot.state) {
+          case 'paused':
+            console.log('Upload is paused');
+            break;
+          case 'running':
+            console.log('Upload is running');
+            break;
+        }
+      },
+      (error) => {
+        console.log(error);
+      },
+      () => {
+        resolve();
+      }
+    );
   });
 };
 

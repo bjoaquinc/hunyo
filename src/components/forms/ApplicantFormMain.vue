@@ -255,8 +255,7 @@ const onNotSubmitted = (index: number) => {
         },
       }).onOk(() => {
         $q.notify({
-          message:
-            'Noted on this, we will follow up with you on this date. Thank you.',
+          message: 'Submission scheduled successfully',
           type: 'positive',
         });
       });
@@ -363,6 +362,12 @@ const onDelayed = (index: number) => {
           doc: props.documents[index],
           formId: props.form.id,
         },
+      });
+      dialog.onOk(() => {
+        $q.notify({
+          message: 'Successfully rescheduled.',
+          type: 'positive',
+        });
       });
     }
   });

@@ -8,7 +8,7 @@
     transition-hide="slide-down"
   >
     <q-card class="card-container text-grey-8">
-      <q-form @submit.prevent="onSubmit" greedy>
+      <q-form @submit.prevent="onSubmit" greedy v-if="!isLoading">
         <q-card-section>
           <div class="flex justify-between q-mt-sm no-wrap">
             <div class="text-h5 gt-xs">
@@ -44,11 +44,12 @@
                     "
                     flat
                     dense
+                    style="max-width: 100% !important"
                     class="gt-xs text-body1"
                     color="primary"
                     size="md"
                   >
-                    <div class="text-left">
+                    <div class="text-left ellipsis">
                       {{ uploadedFile.file.name }}
                     </div>
                   </q-btn>
@@ -63,10 +64,11 @@
                     "
                     flat
                     dense
+                    style="max-width: 100% !important"
                     class="lt-sm text-body1"
                     color="primary"
                   >
-                    <div class="text-left">
+                    <div class="text-left ellipsis">
                       {{ uploadedFile.file.name }}
                     </div>
                   </q-btn>
@@ -88,29 +90,53 @@
             </q-item>
           </q-list>
         </q-card-section>
-        <q-card-actions align="between">
+        <q-card-actions class="flex column">
+          <q-btn
+            label="Submit Now"
+            class="full-width"
+            type="submit"
+            color="primary"
+          />
           <q-btn
             v-close-popup
             outline
+            class="full-width q-mt-md"
             label="Cancel"
             type="reset"
             color="primary"
           />
-          <q-btn label="Submit Now" type="submit" color="primary" />
         </q-card-actions>
-        <q-inner-loading :showing="isLoading">
+        <!-- <q-inner-loading :showing="isLoading">
           <q-spinner-pie size="80px" color="primary" />
-        </q-inner-loading>
+          <div
+            class="text-body1 q-mt-md q-px-lg text-weight-bold text-white bg-grey-8"
+          >
+            Uploading Documents. Can take up to 5 minutes. Don't close this
+            page.
+          </div>
+        </q-inner-loading> -->
       </q-form>
+      <div v-else class="bg-white q-pa-md">
+        <div class="text-h5 q-mt-md">Uploading Documents</div>
+        <q-linear-progress
+          class="q-mt-md"
+          :value="averageProgress / 100"
+          size="25px"
+          color="purple-7"
+        />
+        <div class="text-body1 q-mt-md text-negative">
+          Can take up to 5 minutes. Don't close this page.
+        </div>
+      </div>
     </q-card>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
-import { uploadBytes } from '@firebase/storage';
+import { uploadBytesResumable } from '@firebase/storage';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Form } from 'src/utils/types';
 import { dbColRefs, dbDocRefs } from 'src/utils/db';
 import {
@@ -145,6 +171,14 @@ interface UploadedFile {
 }
 
 const isLoading = ref(false);
+const progressTotal = ref<{ [key: string]: number }>({});
+const averageProgress = computed(() => {
+  if (Object.values(progressTotal.value).length === 0) return 0;
+  const total = Object.values(progressTotal.value).reduce((a, b) => a + b, 0);
+  console.log('total', total);
+  const average = total / Object.values(progressTotal.value).length;
+  return average;
+});
 
 const onSubmit = async () => {
   try {
@@ -204,7 +238,7 @@ const uploadFileToStorage = async (
   const CONVERT_TO_KILOBYTES = 0.001;
   const FIRST_TIME_SUBMITTED = 1;
 
-  await uploadBytes(storageRef, file.file, {
+  const uploadTask = uploadBytesResumable(storageRef, file.file, {
     contentType,
     customMetadata: {
       companyId,
@@ -216,6 +250,35 @@ const uploadFileToStorage = async (
       format,
       submissionCount: FIRST_TIME_SUBMITTED.toString(),
     },
+  });
+
+  await new Promise<void>((resolve) => {
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log(progress);
+        progressTotal.value[fileName] = progress;
+        console.log(progressTotal.value);
+        console.log('average', averageProgress.value);
+
+        switch (snapshot.state) {
+          case 'paused':
+            console.log('Upload is paused');
+            break;
+          case 'running':
+            console.log('Upload is running');
+            break;
+        }
+      },
+      (error) => {
+        console.log(error);
+      },
+      () => {
+        resolve();
+      }
+    );
   });
   return {
     name: fileName,

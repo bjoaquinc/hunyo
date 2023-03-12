@@ -110,13 +110,14 @@
                           element.file.type
                         )
                       "
+                      style="max-width: 100% !important"
                       flat
                       dense
                       class="gt-xs text-body1"
                       :color="uploadedFileItemStyles[(element as UploadedFile).status].textColor"
                       size="md"
                     >
-                      <div class="text-left">
+                      <div class="text-left ellipsis">
                         {{ element.file.name }}
                       </div>
                     </q-btn>
@@ -128,12 +129,13 @@
                           element.file.type
                         )
                       "
+                      style="max-width: 100% !important"
                       flat
                       dense
                       class="lt-sm text-body1"
                       :color="uploadedFileItemStyles[(element as UploadedFile).status].textColor"
                     >
-                      <div class="text-left">
+                      <div class="text-left ellipsis">
                         {{ element.file.name }}
                       </div>
                     </q-btn>
