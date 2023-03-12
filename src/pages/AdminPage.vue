@@ -176,28 +176,6 @@ const openDialogAdminCheckReject = () => {
     }
   );
 };
-
-// const onAccept = async () => {
-//   acceptIsLoading.value = true;
-//   if (props.selectedApplicant && props.selectedDoc && props.selectedPage) {
-//     const page = { ...props.selectedPage };
-//     emit('clearSelectedPage');
-//     const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
-//     // Update page status to admin-checked
-//     await updateDoc(pageRef, {
-//       status: 'admin-checked',
-//     });
-//     // Update Applicant Document
-//     const documentRef = dbDocRefs.getDocumentRef(
-//       props.selectedDoc.companyId,
-//       props.selectedDoc.id
-//     );
-//     await updateDoc(documentRef, {
-//       adminAcceptedPages: increment(1),
-//     });
-//     acceptIsLoading.value = false;
-//   }
-// };
 </script>
 
 <style scoped></style>

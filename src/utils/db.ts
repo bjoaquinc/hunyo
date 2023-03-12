@@ -9,6 +9,7 @@ import {
   DraftDashboard,
   PublishedDashboard,
   AcceptedPage,
+  RejectedPage,
 } from './types';
 
 import { ApplicantDocument, ApplicantPage } from './new-types';
@@ -26,6 +27,9 @@ export const dbColRefs = {
   forms: collection(db, 'forms').withConverter(converter<Form>()),
   acceptedPagesRef: collection(db, 'acceptedPages').withConverter(
     converter<AcceptedPage>()
+  ),
+  rejectedPagesRef: collection(db, 'rejectedPages').withConverter(
+    converter<RejectedPage>()
   ),
   getUsersRef: (companyId: string) =>
     collection(db, 'companies', companyId, 'users').withConverter(
@@ -90,7 +94,7 @@ export const dbDocRefs = {
     dashboardId: string,
     applicantId: string
   ) =>
-    collection(
+    doc(
       db,
       'companies',
       companyId,

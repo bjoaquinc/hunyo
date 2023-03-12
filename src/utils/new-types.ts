@@ -93,6 +93,7 @@ export interface ApplicantPage {
   submissionCount: number;
   rejection?: {
     reason: string;
+    other?: string;
     message?: string;
   };
 }

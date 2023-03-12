@@ -227,6 +227,7 @@ export interface AcceptedPage {
   formId: string;
   docId: string;
   pageId: string;
+  name: string;
   acceptedBy: string;
   docName: string;
   contentType: string;
@@ -240,8 +241,10 @@ export interface RejectedPage {
   formId: string;
   docId: string;
   pageId: string;
+  name: string;
   rejectedBy: string;
   reasonForRejection: RejectionReason;
+  otherReason?: string;
   docName: string;
   contentType: string;
 }

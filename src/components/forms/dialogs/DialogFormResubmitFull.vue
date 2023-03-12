@@ -186,8 +186,7 @@ const drag = ref(false);
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
 const props = defineProps<{
-  doc: ApplicantDocument & { docId: string };
-  index: number;
+  doc: ApplicantDocument & { id: string };
   form: Form & { id: string };
 }>();
 const uploadFileRef = ref<QFile | null>(null);

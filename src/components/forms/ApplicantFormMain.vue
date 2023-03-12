@@ -114,6 +114,7 @@ import { DateTime } from 'luxon';
 import DialogFormDocumentAvailability from './dialogs/DialogFormDocumentAvailability.vue';
 import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
 import DialogFormResubmitPages from './dialogs/DialogFormResubmitPages.vue';
+import DialogFormResubmitFull from './dialogs/DialogFormResubmitFull.vue';
 import { dbDocRefs } from 'src/utils/db';
 import { Timestamp, updateDoc } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
@@ -269,12 +270,17 @@ const onRejected = (
   }
 ) => {
   if (rejection.type === 'full-submission') {
-    // TODO: Add a dialog to replace the document
+    $q.dialog({
+      component: DialogFormResubmitFull,
+      componentProps: {
+        doc: props.documents[index],
+        form: props.form,
+      },
+    });
     console.log('Full Submission');
   }
 
   if (rejection.type === 'pages') {
-    // TODO: Add a dialog to replace the pages
     $q.dialog({
       component: DialogFormResubmitPages,
       componentProps: {
