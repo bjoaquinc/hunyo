@@ -183,6 +183,7 @@ export interface Form {
     status: ApplicantStatus;
     name?: {
       first: string;
+      middle: string;
       last: string;
     };
     email: string;

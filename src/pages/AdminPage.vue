@@ -82,7 +82,8 @@
           size="lg"
         />
         <q-btn
-          @click="updatePageStatus('replaced')"
+          :loading="replaceIsLoading"
+          @click="updateImageProperty()"
           :outline="pages[selectedPageIndex].updatedStatus !== 'replaced'"
           label="Replace"
           color="primary"
@@ -100,6 +101,9 @@ import { Form, RejectionCode, RejectionReason } from 'src/utils/types';
 import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
 import { useQuasar } from 'quasar';
 import DialogAdminCheckReject from 'src/components/admin/DialogAdminCheckReject.vue';
+import { storageRefs } from 'src/utils/storage';
+import { updateMetadata } from '@firebase/storage';
+const replaceIsLoading = ref(false);
 
 const props = defineProps<{
   selectedDoc: (ApplicantDocument & { id: string }) | null;
@@ -138,6 +142,32 @@ const updatePageStatus = (status: 'accepted' | 'rejected' | 'replaced') => {
     const page = pages[selectedPageIndex];
     emit('updatePageStatus', page.id, status);
   }
+};
+
+const updateImageProperty = async () => {
+  replaceIsLoading.value = true;
+  console.log(props);
+  if (props.selectedPageIndex === null) return;
+  if (!props.selectedDoc) return;
+  const page = props.pages[props.selectedPageIndex];
+  const fileName = `${page.name}.jpeg`;
+  const storageRef = storageRefs.getOriginalDocRef(
+    page.companyId,
+    page.dashboardId,
+    page.applicantId,
+    fileName
+  );
+  console.log('updating image metadata');
+  await updateMetadata(storageRef, {
+    customMetadata: {
+      property: 'removeBrightness',
+      format: props.selectedDoc.requestedFormat,
+      companyId: page.companyId,
+      dashboardId: page.dashboardId,
+      applicantId: page.applicantId,
+    },
+  });
+  replaceIsLoading.value = false;
 };
 
 const addPageRejection = (

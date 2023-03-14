@@ -32,6 +32,7 @@
                         amplitude.track('View Sample', {
                           docName: doc.name,
                           docId: doc.id,
+                          status: 'submit',
                         });
                         openBaseDialogViewImage(sample.url, sample.contentType);
                       }
@@ -275,6 +276,7 @@ const openDialogFormTips = () => {
   amplitude.track('View Tips', {
     docName: props.doc.name,
     docId: props.doc.id,
+    status: 'submit',
   });
   $q.dialog({
     component: DialogFormTips,
@@ -316,8 +318,10 @@ const removeFile = (element: UploadedFile) => {
 const onSubmit = async () => {
   amplitude.track('Confirm Document', {
     docName: props.doc.name,
+    docId: props.doc.id,
     numberOfPages: uploadedFiles.value.length,
     source: 'applicant',
+    status: 'submit',
   });
   await openDialogFormSubmitDocPreview();
   onDialogOK();

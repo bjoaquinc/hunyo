@@ -1,15 +1,19 @@
 <template>
-  <q-dialog ref="dialogRef" @hide="onDialogHide" persistent>
-    <q-card class="full-width">
+  <q-dialog ref="dialogRef" @hide="onDialogHide" full-width persistent>
+    <q-card style="max-width: 900px !important">
       <q-card-section>
         <div class="full-width">
           <q-card-section>
             <div class="flex justify-between">
               <div class="flex column">
                 <div class="text-h5">
-                  {{ `${applicant.name?.first} ${applicant.name?.last}` }}
+                  {{
+                    applicant.name
+                      ? `${applicant.name?.first} ${applicant.name?.last}`
+                      : applicant.email
+                  }}
                 </div>
-                <div class="text-subtitle1 text-grey-8">
+                <div class="text-subtitle1 text-grey-8" v-if="applicant.name">
                   {{ applicant.email }}
                 </div>
               </div>

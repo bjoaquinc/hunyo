@@ -64,6 +64,21 @@ export const storageRefs = {
       applicantId,
       docName
     ),
+  getFinalDocRef: (
+    companyId: string,
+    dashboardId: string,
+    applicantId: string,
+    updatedName: string
+  ) =>
+    getRef(
+      'companies',
+      companyId,
+      'dashboards',
+      dashboardId,
+      'final',
+      applicantId,
+      updatedName
+    ),
   getReplacedDocRef: (
     companyId: string,
     dashboardId: string,

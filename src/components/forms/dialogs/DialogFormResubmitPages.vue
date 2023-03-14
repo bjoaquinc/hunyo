@@ -32,9 +32,16 @@
                 <q-btn
                   v-if="sample"
                   @click="
-                    sample
-                      ? openBaseDialogViewImage(sample.url, sample.contentType)
-                      : null
+                    () => {
+                      if (sample) {
+                        amplitude.track('View Sample', {
+                          docName: doc.name,
+                          docId: doc.id,
+                          status: 'resubmit pages',
+                        });
+                        openBaseDialogViewImage(sample.url, sample.contentType);
+                      }
+                    }
                   "
                   :class="doc.instructions ? 'q-mt-md' : ''"
                   label="See Sample"
@@ -66,11 +73,19 @@
                 <q-item-label>
                   <q-btn
                     @click="
-                      openBaseDialogViewImage(
-                        page.url,
-                        page.contentType,
-                        page.uploadedFile
-                      )
+                      () => {
+                        amplitude.track('View Page', {
+                          docName: doc.name,
+                          docId: doc.id,
+                          pageId: page.id,
+                          viewOriginal: page.uploadedFile ? false : true,
+                        });
+                        openBaseDialogViewImage(
+                          page.url,
+                          page.contentType,
+                          page.uploadedFile
+                        );
+                      }
                     "
                     style="max-width: 100% !important"
                     no-caps
@@ -88,11 +103,19 @@
                   </q-btn>
                   <q-btn
                     @click="
-                      openBaseDialogViewImage(
-                        page.url,
-                        page.contentType,
-                        page.uploadedFile
-                      )
+                      () => {
+                        amplitude.track('View Page', {
+                          docName: doc.name,
+                          docId: doc.id,
+                          pageId: page.id,
+                          viewOriginal: page.uploadedFile ? false : true,
+                        });
+                        openBaseDialogViewImage(
+                          page.url,
+                          page.contentType,
+                          page.uploadedFile
+                        );
+                      }
                     "
                     style="max-width: 100% !important"
                     no-caps
@@ -148,6 +171,7 @@
 </template>
 
 <script setup lang="ts">
+import * as amplitude from '@amplitude/analytics-browser';
 import { getDownloadURL, getMetadata } from '@firebase/storage';
 import { QDialog, QFile, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
@@ -307,7 +331,13 @@ const onResubmit = () => {
       return;
     }
   }
-  // TODO: open confirm resubmitted pages
+  amplitude.track('Confirm Document', {
+    docName: props.doc.name,
+    docId: props.doc.id,
+    numberOfPages: rejectedPages.value.length,
+    source: 'applicant',
+    status: 'resubmit pages',
+  });
   openDialogFormResubmitPagesPreview();
 };
 
@@ -331,6 +361,11 @@ const sample = ref<{
 const isLoading = ref(false);
 
 const openDialogFormTips = () => {
+  amplitude.track('View Tips', {
+    docName: props.doc.name,
+    docId: props.doc.id,
+    status: 'resubmit pages',
+  });
   $q.dialog({
     component: DialogFormTips,
   });

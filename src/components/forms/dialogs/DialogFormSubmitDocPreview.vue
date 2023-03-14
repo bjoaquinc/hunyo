@@ -184,8 +184,10 @@ const averageProgress = computed(() => {
 const onSubmit = async () => {
   amplitude.track('Click Document Complete', {
     docName: props.doc.name,
+    docId: props.doc.id,
     numberOfPages: props.uploadedFiles.length,
     source: 'applicant',
+    status: 'submit',
   });
   try {
     isLoading.value = true;
@@ -200,6 +202,7 @@ const onSubmit = async () => {
       docId: props.doc.id,
       numberOfPages: props.uploadedFiles.length,
       source: 'applicant',
+      status: 'submit',
       formatsSubmitted: props.uploadedFiles.map((file) => file.file.type),
       formatRequired: props.doc.requestedFormat,
       orderOnList: props.doc.docNumber,

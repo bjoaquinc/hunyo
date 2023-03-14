@@ -105,6 +105,7 @@
 </template>
 
 <script setup lang="ts">
+import * as amplitude from '@amplitude/analytics-browser';
 import { uploadBytesResumable } from '@firebase/storage';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
@@ -138,6 +139,13 @@ const averageProgress = computed(() => {
 });
 
 const onSubmit = async () => {
+  amplitude.track('Click Document Complete', {
+    docName: props.doc.name,
+    docId: props.doc.id,
+    numberOfPages: props.pages.length,
+    source: 'applicant',
+    status: 'resubmit pages',
+  });
   try {
     isLoading.value = true;
     await uploadFilesToStorage();
@@ -145,6 +153,20 @@ const onSubmit = async () => {
     await updateApplicantDocument();
     await updateForm();
     isLoading.value = false;
+    const CONVERT_TO_KB = 0.001;
+    amplitude.track('Document Successfully Submitted', {
+      docName: props.doc.name,
+      docId: props.doc.id,
+      numberOfPages: props.pages.length,
+      source: 'applicant',
+      status: 'resubmit pages',
+      formatsSubmitted: props.pages.map((page) => page.uploadedFile.type),
+      formatRequired: props.doc.requestedFormat,
+      orderOnList: props.doc.docNumber,
+      totalFileSizeKB:
+        props.pages.reduce((a, b) => a + b.uploadedFile.size, 0) *
+        CONVERT_TO_KB,
+    });
     onDialogOK();
   } catch (error) {
     console.log(error);

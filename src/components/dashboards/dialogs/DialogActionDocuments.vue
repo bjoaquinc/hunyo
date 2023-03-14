@@ -4,7 +4,7 @@
       <q-card-section>
         <div class="full-width">
           <q-card-section>
-            <div class="flex justify-between">
+            <div class="flex justify-between no-wrap">
               <div class="text-h5">
                 Check
                 {{ `${applicantName?.first} ${applicantName?.last}` }}'s

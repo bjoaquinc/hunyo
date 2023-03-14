@@ -501,6 +501,39 @@ const updateDocAndPagesStatus = async () => {
       adminAcceptedPages: increment(numOfAcceptedPages),
     });
     promises.push(promise);
+
+    // UPDATE NAME FOR RRJM, REMOVE FOR OTHER CLIENTS!
+    const capitalizeFirstLetter = (string: string) => {
+      const stringToLowerCase = string.toLowerCase();
+      return (
+        stringToLowerCase.charAt(0).toUpperCase() + stringToLowerCase.slice(1)
+      );
+    };
+
+    const form = applicants.value[selectedApplicantIndex.value as number];
+    const name = form.applicant.name as {
+      first: string;
+      middle: string;
+      last: string;
+    };
+    const fixedDocName = selectedDoc.value.name
+      .replace(' (If Available)', '')
+      .replace(' - ', '-');
+    const fixedFirstName = name.first
+      .split(' ')
+      .map(capitalizeFirstLetter)
+      .join('_');
+    const fixedMiddleName = name.middle
+      .split(' ')
+      .map(capitalizeFirstLetter)
+      .join('_');
+    const fixedLastName = name.last
+      .split(' ')
+      .map(capitalizeFirstLetter)
+      .join('_');
+    const updatedDocName = `${fixedDocName}_${fixedFirstName}_${fixedMiddleName}_${fixedLastName}.${selectedDoc.value.requestedFormat}`;
+    promises.push(updateDoc(docRef, { updatedName: updatedDocName }));
+    console.log(selectedDoc.value.id);
   }
 
   if (
@@ -653,11 +686,6 @@ watch(selectedPage, async (newValue) => {
   }
 });
 
-// const clearSelectedIndexData = () => {
-//   selectedPageIndex.value = null;
-//   selectedDocIndex.value = null;
-//   selectedApplicantIndex.value = null;
-// };
 const clearSelectedPage = () => {
   selectedPageIndex.value = null;
 };

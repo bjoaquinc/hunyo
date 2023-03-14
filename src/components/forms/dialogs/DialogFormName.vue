@@ -11,8 +11,13 @@
       <q-form @submit.prevent="onSubmit" greedy>
         <q-card-section>
           <q-img :src="logo" class="q-mb-md" width="200px" loading="eager" />
-          <div class="text-h5 gt-xs">Please confirm your name:</div>
-          <div class="text-h6 lt-sm">Please confirm your name:</div>
+          <div class="flex column">
+            <div class="text-h5 gt-xs">Please confirm your name:</div>
+            <div class="text-h6 lt-sm">Please confirm your name:</div>
+            <div class="text-body1 text-italic text-negative">
+              (Exactly how it appears in your passport)
+            </div>
+          </div>
 
           <q-separator class="q-my-md" />
 

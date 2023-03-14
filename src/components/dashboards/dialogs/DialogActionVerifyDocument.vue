@@ -12,7 +12,32 @@
             dense
             class="q-ml-sm"
           />
-          <div class="text-h4 q-ml-auto">{{ applicantDocument.name }}</div>
+          <div class="text-h5 q-ml-auto" style="cursor: pointer">
+            {{ updatedName }}
+            <q-popup-edit
+              ref="popUpEditRef"
+              v-model="updatedName"
+              auto-save
+              v-slot="scope"
+            >
+              <q-input
+                v-model="scope.value"
+                class="text-h5"
+                dense
+                autofocus
+                counter
+                @keyup.enter="scope.set"
+              />
+            </q-popup-edit>
+          </div>
+          <q-btn
+            @click="popUpEditRef?.show()"
+            icon="fas fa-edit"
+            label="Edit Name"
+            outline
+            color="primary"
+            class="q-ml-md"
+          />
 
           <q-btn
             size="lg"
@@ -291,7 +316,7 @@
 </template>
 
 <script setup lang="ts">
-import { QDialog, QInput, useDialogPluginComponent } from 'quasar';
+import { QDialog, QInput, QPopupEdit, useDialogPluginComponent } from 'quasar';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
 import { dbColRefs, dbDocRefs } from 'src/utils/db';
@@ -315,6 +340,8 @@ import { RejectionReason } from 'src/utils/types';
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const { user } = useUserStore();
 const drawerRight = ref(true);
+const updatedName = ref('');
+const popUpEditRef = ref<null | QPopupEdit>(null);
 const slide = ref(1);
 const selectedPageIndex = computed(() => slide.value - 1);
 const showOptions = ref(false);
@@ -340,9 +367,10 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
-  console.log(props.applicantDocument.companyId);
-  console.log(props.applicantDocument.id);
   const pagesRef = dbColRefs.getPagesRef(props.applicantDocument.companyId);
+  updatedName.value = props.applicantDocument.updatedName
+    ? props.applicantDocument.updatedName
+    : props.applicantDocument.name;
   const q = query(
     pagesRef,
     where('docId', '==', props.applicantDocument.id),
@@ -489,8 +517,10 @@ const onSubmit = async () => {
 
   if (!isRejected) {
     // Accept Document
+
     const promise = updateDoc(docRef, {
       acceptedPages: INCREMENT_ACCEPTED_PAGES,
+      updatedName: updatedName.value,
     });
     promises.push(promise);
   }

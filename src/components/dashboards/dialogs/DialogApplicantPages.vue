@@ -12,7 +12,13 @@
             dense
             class="q-ml-sm"
           />
-          <div class="text-h4 q-ml-auto">{{ applicantDocument.name }}</div>
+          <div class="text-h5 q-ml-auto">
+            {{
+              applicantDocument.updatedName
+                ? applicantDocument.updatedName
+                : applicantDocument.name
+            }}
+          </div>
 
           <q-btn
             size="lg"
@@ -32,39 +38,21 @@
             Page {{ slide }} of {{ documentPages.length }}
           </div>
           <q-separator />
-          <!-- <q-item
-            @click="downloadPage"
+          <q-item
+            :href="finalDocumentURL"
             clickable
             v-ripple
             class="download-border text-primary"
           >
             <q-item-section>
               <q-item-label class="text-subtitle1 text-weight-bold"
-                >Download Page {{ slide }}</q-item-label
+                >Download ({{ documentPages.length }} pages)</q-item-label
               >
             </q-item-section>
             <q-item-section avatar side>
               <q-icon name="fas fa-arrow-down" />
             </q-item-section>
-          </q-item> -->
-          <!-- <q-item
-            @click="showOptions = !showOptions"
-            clickable
-            v-ripple
-            class="q-mt-md"
-          >
-            <q-item-section>
-              <q-item-label class="text-subtitle1 text-grey-8 text-weight-bold"
-                >More Options</q-item-label
-              >
-            </q-item-section>
-            <q-item-section avatar side>
-              <q-icon
-                :name="`fas fa-chevron-${showOptions ? 'up' : 'down'}`"
-                color="grey-8"
-              />
-            </q-item-section>
-          </q-item> -->
+          </q-item>
           <q-separator />
         </q-list>
       </q-drawer>
@@ -164,6 +152,7 @@ const documentPages = ref<
     url: string;
   })[]
 >([]);
+const finalDocumentURL = ref('');
 const unsubDocumentPages = ref<Unsubscribe | null>(null);
 const isLoading = ref(false);
 
@@ -228,21 +217,41 @@ onMounted(async () => {
       }
     );
   });
+  await getFinalDocumentURL();
 });
 
-const downloadPage = () => {
-  const PAGE_INDEX = slide.value - 1;
-  const page = documentPages.value[PAGE_INDEX];
-  const link = document.createElement('a');
-  link.href = page.url;
-  const PAGE_SUFFIX = props.applicantDocument.requestedFormat;
-  const pageName = `${page.name}.${PAGE_SUFFIX}`;
-  link.setAttribute('download', pageName);
-  link.setAttribute('target', '_blank');
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+const getFinalDocumentURL = async () => {
+  const {
+    companyId,
+    dashboardId,
+    applicantId,
+    updatedName,
+    name,
+    requestedFormat,
+  } = props.applicantDocument;
+  const docName = updatedName ? updatedName : `${name}.${requestedFormat}`;
+  const finalDocStorageRef = storageRefs.getFinalDocRef(
+    companyId,
+    dashboardId,
+    applicantId,
+    docName
+  );
+  finalDocumentURL.value = await getDownloadURL(finalDocStorageRef);
 };
+
+// const downloadPage = () => {
+//   const PAGE_INDEX = slide.value - 1;
+//   const page = documentPages.value[PAGE_INDEX];
+//   const link = document.createElement('a');
+//   link.href = page.url;
+//   const PAGE_SUFFIX = props.applicantDocument.requestedFormat;
+//   const pageName = `${page.name}.${PAGE_SUFFIX}`;
+//   link.setAttribute('download', pageName);
+//   link.setAttribute('target', '_blank');
+//   document.body.appendChild(link);
+//   link.click();
+//   document.body.removeChild(link);
+// };
 
 onUnmounted(() => {
   unsubDocumentPages.value?.();
