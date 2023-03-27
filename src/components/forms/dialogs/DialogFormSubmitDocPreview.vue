@@ -234,15 +234,7 @@ const uploadFilesToStorage = async () => {
   return await Promise.all(promises);
 };
 
-const uploadFileToStorage = async (
-  file: {
-    file: File;
-    name: string;
-    downloadURL: string;
-    status: PageStatus | 'New';
-  },
-  pageNumber: number
-) => {
+const uploadFileToStorage = async (file: UploadedFile, pageNumber: number) => {
   const applicantName = `${props.form.applicant.name?.first} ${props.form.applicant.name?.last}`;
   let fileName = applicantName + '-' + props.doc.name + '-' + pageNumber;
   if (props.uploadedFiles.length <= 1) {
@@ -261,18 +253,24 @@ const uploadFileToStorage = async (
   const CONVERT_TO_KILOBYTES = 0.001;
   const FIRST_TIME_SUBMITTED = 1;
 
+  const customMetadata: { [key: string]: string } = {
+    companyId,
+    dashboardId,
+    applicantId,
+    formId,
+    docId,
+    pageId,
+    format,
+    submissionCount: FIRST_TIME_SUBMITTED.toString(),
+  };
+
+  if (file.angle) {
+    customMetadata['angle'] = file.angle.toString();
+  }
+
   const uploadTask = uploadBytesResumable(storageRef, file.file, {
     contentType,
-    customMetadata: {
-      companyId,
-      dashboardId,
-      applicantId,
-      formId,
-      docId,
-      pageId,
-      format,
-      submissionCount: FIRST_TIME_SUBMITTED.toString(),
-    },
+    customMetadata,
   });
 
   await new Promise<void>((resolve) => {
