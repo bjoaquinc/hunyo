@@ -14,6 +14,11 @@
       <q-img
         v-if="contentType.includes('image')"
         class="image-width absolute-center"
+        :style="
+          angle
+            ? { transform: `translate(-50%, -50%) rotate(${angle}deg)` }
+            : {}
+        "
         fit="contain"
         :src="props.imgURL"
       />
@@ -59,6 +64,7 @@ onMounted(() => {
 const props = defineProps<{
   imgURL: string;
   contentType: string;
+  angle?: '0' | '90' | '180' | '270';
 }>();
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();

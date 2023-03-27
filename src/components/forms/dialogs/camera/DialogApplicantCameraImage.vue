@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { QDialog, useDialogPluginComponent, QCard, useQuasar } from 'quasar';
+import { QDialog, useDialogPluginComponent, QCard } from 'quasar';
 
 const props = defineProps<{
   image: {
@@ -152,6 +152,7 @@ const returnToCamera = () => {
 const onComplete = () => {
   onDialogOK({
     image: props.image,
+    angle: angles[angleIndex.value],
   });
 };
 

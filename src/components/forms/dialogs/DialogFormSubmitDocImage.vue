@@ -56,7 +56,8 @@
                       @click="
                         openBaseDialogViewImage(
                           element.downloadURL,
-                          element.file.type
+                          element.file.type,
+                          element.angle
                         )
                       "
                       style="max-width: 100% !important"
@@ -77,7 +78,8 @@
                       @click="
                         openBaseDialogViewImage(
                           element.downloadURL,
-                          element.file.type
+                          element.file.type,
+                          element.angle
                         )
                       "
                       style="max-width: 100% !important"
@@ -159,7 +161,7 @@ const openDialogApplicantCamera = async () => {
       image: { image: Blob; name: string; type: string; size: number };
       angle: '0' | '270' | '180' | '270';
     }) => {
-      const { image } = payload;
+      const { image, angle } = payload;
       const file = new File([image.image], image.name, { type: image.type });
       const IMAGE_URL = URL.createObjectURL(file);
       const uploadedFile = {
@@ -167,6 +169,7 @@ const openDialogApplicantCamera = async () => {
         file,
         status: 'New' as PageStatus,
         downloadURL: IMAGE_URL,
+        angle,
         isDragging: false,
       };
       uploadedFiles.value.push(uploadedFile);
@@ -259,21 +262,11 @@ interface UploadedFile {
   status: PageStatus | 'New';
   downloadURL: string;
   isDragging: boolean;
+  angle?: '0' | '90' | '180' | '270';
 }
 const uploadedFiles = ref<UploadedFile[]>([]);
 const files = ref<FileList | null>(null);
 const isLoading = ref(false);
-
-// const openDialogFormTips = () => {
-//   amplitude.track('View Tips', {
-//     docName: props.doc.name,
-//     docId: props.doc.id,
-//     status: 'submit',
-//   });
-//   $q.dialog({
-//     component: DialogFormTips,
-//   });
-// };
 
 watch(files, (newFiles) => {
   if (newFiles) {
@@ -333,10 +326,15 @@ const openDialogFormSubmitDocPreview = async () => {
   });
 };
 
-const openBaseDialogViewImage = (imgURL: string, contentType: string) => {
+const openBaseDialogViewImage = (
+  imgURL: string,
+  contentType: string,
+  angle: '0' | '90' | '180' | '270'
+) => {
   $q.dialog({
     component: BaseDialogViewImage,
     componentProps: {
+      angle,
       imgURL,
       contentType,
     },
