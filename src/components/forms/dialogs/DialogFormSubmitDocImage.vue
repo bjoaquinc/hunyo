@@ -159,7 +159,7 @@ const openDialogApplicantCamera = async () => {
   dialog.onOk(
     (payload: {
       image: { image: Blob; name: string; type: string; size: number };
-      angle: '0' | '270' | '180' | '270';
+      angle: 0 | 90 | 180 | 270;
     }) => {
       const { image, angle } = payload;
       const file = new File([image.image], image.name, { type: image.type });
@@ -262,7 +262,7 @@ interface UploadedFile {
   status: PageStatus | 'New';
   downloadURL: string;
   isDragging: boolean;
-  angle?: '0' | '90' | '180' | '270';
+  angle?: 0 | 90 | 180 | 270;
 }
 const uploadedFiles = ref<UploadedFile[]>([]);
 const files = ref<FileList | null>(null);
@@ -329,7 +329,7 @@ const openDialogFormSubmitDocPreview = async () => {
 const openBaseDialogViewImage = (
   imgURL: string,
   contentType: string,
-  angle: '0' | '90' | '180' | '270'
+  angle: 0 | 90 | 180 | 270
 ) => {
   $q.dialog({
     component: BaseDialogViewImage,

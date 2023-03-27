@@ -169,6 +169,7 @@ interface UploadedFile {
   file: File;
   status: PageStatus;
   downloadURL: string;
+  angle?: 0 | 90 | 180 | 270;
 }
 
 const isLoading = ref(false);

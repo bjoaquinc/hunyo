@@ -64,7 +64,7 @@ onMounted(() => {
 const props = defineProps<{
   imgURL: string;
   contentType: string;
-  angle?: '0' | '90' | '180' | '270';
+  angle?: 0 | 90 | 180 | 270;
 }>();
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
