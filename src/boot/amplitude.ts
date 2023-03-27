@@ -13,7 +13,7 @@ export default boot(async (/* { app, router, ... } */) => {
         formInteractions: true,
         fileDownloads: true,
       },
-      logLevel: amplitude.Types.LogLevel.Debug,
+      // logLevel: amplitude.Types.LogLevel.Debug,
     });
   } else {
     amplitude.init(process.env.AMPLITUDE_API_KEY_PROD as string, undefined, {

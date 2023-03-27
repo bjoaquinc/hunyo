@@ -239,20 +239,6 @@ const getFinalDocumentURL = async () => {
   finalDocumentURL.value = await getDownloadURL(finalDocStorageRef);
 };
 
-// const downloadPage = () => {
-//   const PAGE_INDEX = slide.value - 1;
-//   const page = documentPages.value[PAGE_INDEX];
-//   const link = document.createElement('a');
-//   link.href = page.url;
-//   const PAGE_SUFFIX = props.applicantDocument.requestedFormat;
-//   const pageName = `${page.name}.${PAGE_SUFFIX}`;
-//   link.setAttribute('download', pageName);
-//   link.setAttribute('target', '_blank');
-//   document.body.appendChild(link);
-//   link.click();
-//   document.body.removeChild(link);
-// };
-
 onUnmounted(() => {
   unsubDocumentPages.value?.();
 });

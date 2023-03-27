@@ -234,6 +234,8 @@ interface ImageProperties {
   contrast: number;
 }
 
+const acceptedStatus = ['submitted', 'admin-checked', 'accepted', 'rejected'];
+
 onMounted(async () => {
   const formsRef = dbColRefs.forms;
   const q = query(formsRef, where('adminCheckDocs', '>', 0));
@@ -279,7 +281,7 @@ watch(selectedApplicant, async (newVal) => {
     const applicantDocsRef = dbColRefs.getDocumentsRef(newVal.company.id);
     const q = query(
       applicantDocsRef,
-      where('status', '==', 'submitted'),
+      where('status', 'in', acceptedStatus),
       where('formId', '==', newVal.id),
       orderBy('docNumber')
     );
@@ -336,7 +338,7 @@ watch(selectedDoc, async (newVal) => {
     const q = query(
       applicantDocsRef,
       where('docId', '==', newVal.id),
-      where('status', '==', 'submitted'),
+      where('status', 'in', acceptedStatus),
       orderBy('pageNumber')
     );
     await new Promise((resolve, reject) => {
@@ -502,7 +504,7 @@ const updateDocAndPagesStatus = async () => {
     });
     promises.push(promise);
 
-    // UPDATE NAME FOR RRJM, REMOVE FOR OTHER CLIENTS!
+    // TODO: UPDATE NAME FOR RRJM, REMOVE FOR OTHER CLIENTS!
     const capitalizeFirstLetter = (string: string) => {
       const stringToLowerCase = string.toLowerCase();
       return (

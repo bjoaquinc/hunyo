@@ -104,10 +104,11 @@
 </template>
 
 <script setup lang="ts">
-import * as amplitude from '@amplitude/analytics-browser'
+import * as amplitude from '@amplitude/analytics-browser';
 import { useQuasar, QSpinnerPie } from 'quasar';
 import { onMounted, ref, computed } from 'vue';
 import DialogFormSubmitDoc from 'src/components/forms/dialogs/DialogFormSubmitDoc.vue';
+import DialogFormSubmitDocImage from './dialogs/DialogFormSubmitDocImage.vue';
 import { Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
@@ -210,7 +211,7 @@ const onDocumentClick = (index: number) => {
   amplitude.track('Select Document', {
     documentName: doc.name,
     orderOnList: doc.docNumber,
-  })
+  });
   const docStatus = props.documents[index].status;
   const rejection = props.documents[index].rejection;
   if (docStatus === 'not-submitted') {
@@ -237,7 +238,7 @@ const onNotSubmitted = (index: number) => {
   }).onOk((documentAvailability) => {
     if (documentAvailability === 'available') {
       $q.dialog({
-        component: DialogFormSubmitDoc,
+        component: DialogFormSubmitDocImage,
         componentProps: {
           doc: props.documents[index],
           form: props.form,

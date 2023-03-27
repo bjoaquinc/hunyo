@@ -103,19 +103,23 @@
           </div>
           <div
             v-if="uploadedFiles.length > 0"
-            class="text-h6 text-grey-8 q-mt-sm"
+            class="text-h6 text-grey-8 q-mt-md"
           >
             Your uploads (drag and drop to reorder the pages)
           </div>
           <draggable
             v-model="uploadedFiles"
             group="people"
-            @start="drag = true"
-            @end="drag = false"
+            @start="dragStart"
+            @end="dragEnd"
             item-key="file.name"
           >
             <template #item="{ element }">
-              <q-item class="q-mt-sm" clickable>
+              <q-item
+                class="q-mt-sm"
+                :class="element.isDragging ? 'bg-blue-2' : ''"
+                clickable
+              >
                 <q-item-section>
                   <q-item-label>
                     <q-btn
@@ -135,7 +139,9 @@
                       size="md"
                     >
                       <div class="text-left ellipsis">
-                        {{ element.file.name }}
+                        {{
+                          element.isDragging ? 'DROP HERE' : element.file.name
+                        }}
                       </div>
                     </q-btn>
                     <q-btn
@@ -150,15 +156,23 @@
                       flat
                       dense
                       class="lt-sm text-body1"
+                      :size="element.isDragging ? 'lg' : 'md'"
+                      :class="
+                        element.isDragging
+                          ? 'text-weight-bold full-width text-center'
+                          : ''
+                      "
                       :color="uploadedFileItemStyles[(element as UploadedFile).status].textColor"
                     >
                       <div class="text-left ellipsis">
-                        {{ element.file.name }}
+                        {{
+                          element.isDragging ? 'DROP HERE' : element.file.name
+                        }}
                       </div>
                     </q-btn>
                   </q-item-label>
                 </q-item-section>
-                <q-item-section avatar side>
+                <q-item-section v-if="!element.isDragging" avatar side>
                   <q-btn
                     @click="removeFile(element)"
                     :outline="uploadedFileItemStyles[(element as UploadedFile).status].outline"
@@ -190,7 +204,7 @@
 <script setup lang="ts">
 import * as amplitude from '@amplitude/analytics-browser';
 import { getDownloadURL, getMetadata } from '@firebase/storage';
-import { QDialog, QFile, useDialogPluginComponent } from 'quasar';
+import { QDialog, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
 import { ref, watch, computed, onMounted } from 'vue';
 import { Form, PageStatus } from 'src/utils/types';
@@ -205,9 +219,31 @@ import { ApplicantDocument } from 'src/utils/new-types';
 const drag = ref(false);
 
 const openDialogApplicantCamera = async () => {
-  $q.dialog({
+  const dialog = $q.dialog({
     component: DialogApplicantCamera,
+    componentProps: {
+      doc: props.doc,
+    },
   });
+
+  dialog.onOk(
+    (payload: {
+      image: { image: Blob; name: string; type: string; size: number };
+      angle: '0' | '270' | '180' | '270';
+    }) => {
+      const { image } = payload;
+      const file = new File([image.image], image.name, { type: image.type });
+      const IMAGE_URL = URL.createObjectURL(file);
+      const uploadedFile = {
+        name: image.name,
+        file,
+        status: 'New' as PageStatus,
+        downloadURL: IMAGE_URL,
+        isDragging: false,
+      };
+      uploadedFiles.value.push(uploadedFile);
+    }
+  );
 };
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
@@ -217,7 +253,6 @@ const props = defineProps<{
   index: number;
   form: Form & { id: string };
 }>();
-const uploadFileRef = ref<QFile | null>(null);
 const uploadedFileItemStyles = {
   New: {
     label: 'Delete',
@@ -253,6 +288,20 @@ onMounted(async () => {
   await setSample();
 });
 
+const dragStart = (e: { oldIndex: any }) => {
+  console.log(e);
+  const index = e.oldIndex;
+  uploadedFiles.value[index].isDragging = true;
+  drag.value = true;
+};
+
+const dragEnd = (e: { newIndex: any }) => {
+  console.log(e);
+  drag.value = false;
+  const index = e.newIndex;
+  uploadedFiles.value[index].isDragging = false;
+};
+
 const setSample = async () => {
   if (props.doc.sample) {
     const sampleRef = storageRefs.getSampleRef(
@@ -281,11 +330,9 @@ interface UploadedFile {
   file: File;
   status: PageStatus | 'New';
   downloadURL: string;
+  isDragging: boolean;
 }
 const uploadedFiles = ref<UploadedFile[]>([]);
-const newUploadedFilesCount = computed(() => {
-  return uploadedFiles.value.filter((file) => file.status === 'New').length;
-});
 const files = ref<FileList | null>(null);
 const isLoading = ref(false);
 
@@ -311,6 +358,7 @@ watch(files, (newFiles) => {
         file,
         downloadURL,
         status: 'New',
+        isDragging: false,
       });
       const CONVERT_TO_KB = 0.001;
       amplitude.track('Add Pages/Document', {
