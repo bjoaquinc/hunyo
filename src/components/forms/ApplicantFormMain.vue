@@ -121,7 +121,6 @@ import DialogFormDelayedUpdate from './dialogs/DialogFormDelayedUpdate.vue';
 import { dbDocRefs } from 'src/utils/db';
 import { Timestamp, updateDoc } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
-import { useUserStore } from 'src/stores/user-store';
 
 const props = defineProps<{
   form: Form & { id: string };

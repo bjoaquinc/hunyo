@@ -48,6 +48,7 @@
         class="capture-btn"
         color="white"
         dense
+        style="z-index: 1000"
       />
     </q-card>
   </q-dialog>
@@ -100,13 +101,14 @@ const onDialogShow = async () => {
 
 const setUpCamera = async () => {
   if (videoRef.value && containerRef.value) {
-    // const BACK_CAMERA = 'environment';
+    const BACK_CAMERA = 'environment';
     // eslint-disable-next-line no-undef
     const constraints: MediaStreamConstraints = {
       video: {
-        // facingMode: { exact: BACK_CAMERA },
+        facingMode: { exact: BACK_CAMERA },
         width: { min: 1280, ideal: 1920, max: 2560 },
         height: { min: 720, ideal: 1080, max: 1440 },
+        aspectRatio: 5 / 4,
       },
     };
     const { mediaDevices } = navigator;
@@ -115,6 +117,12 @@ const setUpCamera = async () => {
     videoDevice.value = mediaStream.getVideoTracks()[0];
     imageCapture.value = new ImageCapture(videoDevice.value);
     videoRef.value.srcObject = mediaStream;
+
+    // Add these three attributes to avoid the video freezing in the first frame
+    videoRef.value.setAttribute('autoplay', '');
+    videoRef.value.setAttribute('muted', '');
+    videoRef.value.setAttribute('playsinline', '');
+
     videoRef.value.play();
   }
 };
@@ -216,7 +224,7 @@ defineEmits([
 
 .capture-btn
   position: absolute
-  bottom: 50px
+  bottom: 30px
   left: calc(50% - 28.75px)
 
 #shutter
