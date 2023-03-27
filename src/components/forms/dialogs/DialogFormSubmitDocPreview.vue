@@ -264,7 +264,7 @@ const uploadFileToStorage = async (file: UploadedFile, pageNumber: number) => {
     submissionCount: FIRST_TIME_SUBMITTED.toString(),
   };
 
-  if (file.angle) {
+  if (file.angle !== undefined) {
     customMetadata['angle'] = file.angle.toString();
   }
 
