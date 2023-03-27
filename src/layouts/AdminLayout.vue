@@ -234,7 +234,7 @@ interface ImageProperties {
   contrast: number;
 }
 
-const acceptedStatus = ['submitted', 'admin-checked', 'accepted', 'rejected'];
+const acceptedStatus = ['submitted'];
 
 onMounted(async () => {
   const formsRef = dbColRefs.forms;
