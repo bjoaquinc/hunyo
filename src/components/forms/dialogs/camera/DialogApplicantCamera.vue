@@ -4,7 +4,7 @@
     @show="onDialogShow"
     @hide="onDialogHide"
     maximized
-    :transition-show="enterRight ? 'slide-right' : 'slide-left'"
+    transition-show="slide-left"
     transition-hide="slide-right"
   >
     <div v-show="showShutter" id="shutter" ref="shutterRef" />
@@ -69,7 +69,6 @@ import DialogApplicantCameraImage from './DialogApplicantCameraImage.vue';
 
 const props = defineProps<{
   doc: ApplicantDocument & { id: string };
-  enterRight?: boolean;
 }>();
 
 const $q = useQuasar();
@@ -84,7 +83,6 @@ const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const isStreaming = ref(false);
 const imageCapture = ref<ImageCapture | null>(null);
 const videoDevice = ref<MediaStreamTrack | null>(null);
-const imageURL = ref('');
 const image = ref<{
   image: Blob;
   name: string;
@@ -162,7 +160,6 @@ const takePhoto = async () => {
     type: imageBlob.type,
     size: imageBlob.size,
   };
-  imageURL.value = URL.createObjectURL(imageBlob);
   const imageBitMap = await createImageBitmap(imageBlob);
   isStreaming.value = false;
   stopCamera();
@@ -173,7 +170,6 @@ const openDialogApplicantCameraImage = (imageBitmap: ImageBitmap) => {
   $q.dialog({
     component: DialogApplicantCameraImage,
     componentProps: {
-      doc: props.doc,
       image: image.value,
       imageBitmap,
     },
@@ -188,12 +184,12 @@ const openDialogApplicantCameraImage = (imageBitmap: ImageBitmap) => {
         };
         angle: '0' | '270' | '180' | '270';
       }) => {
-        onDialogOK(payload.image);
+        onDialogOK(payload);
         dialogRef.value?.hide();
       }
     )
-    .onCancel(() => {
-      dialogRef.value?.hide();
+    .onCancel(async () => {
+      await setUpCamera();
     });
 };
 

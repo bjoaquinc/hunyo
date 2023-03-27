@@ -66,8 +66,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { QDialog, useDialogPluginComponent, QCard, useQuasar } from 'quasar';
-import DialogApplicantCamera from './DialogApplicantCamera.vue';
-import { ApplicantDocument } from 'src/utils/new-types';
 
 const props = defineProps<{
   image: {
@@ -77,10 +75,8 @@ const props = defineProps<{
     size: number;
   };
   imageBitmap: ImageBitmap;
-  doc: ApplicantDocument & { id: string };
 }>();
 
-const $q = useQuasar();
 const containerRef = ref<HTMLDivElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const context = ref<CanvasRenderingContext2D | null>(null);
@@ -150,13 +146,6 @@ const rotateLeft = () => {
 };
 
 const returnToCamera = () => {
-  $q.dialog({
-    component: DialogApplicantCamera,
-    componentProps: {
-      doc: props.doc,
-      enterRight: true,
-    },
-  });
   onDialogCancel();
 };
 

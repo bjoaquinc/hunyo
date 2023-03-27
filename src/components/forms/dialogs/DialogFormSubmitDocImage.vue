@@ -15,46 +15,6 @@
             <div class="text-h6 lt-sm">Upload {{ doc.name }}</div>
             <q-btn v-close-popup icon="fas fa-times" flat dense />
           </div>
-          <!-- <q-item class="text-body1 q-mt-md">
-            <q-item-section avatar class="gt-xs" top side>
-              <q-icon name="fas fa-exclamation" color="negative" size="xs" />
-            </q-item-section>
-            <q-item-section>
-              <div class="flex column">
-                <div v-if="doc.instructions" style="white-space: pre-line">
-                  {{ doc.instructions }}
-                </div>
-                <q-btn
-                  v-if="sample"
-                  @click="
-                    () => {
-                      if (sample) {
-                        amplitude.track('View Sample', {
-                          docName: doc.name,
-                          docId: doc.id,
-                          status: 'submit',
-                        });
-                        openBaseDialogViewImage(sample.url, sample.contentType);
-                      }
-                    }
-                  "
-                  :class="doc.instructions ? 'q-mt-md' : ''"
-                  label="See Sample"
-                  no-caps
-                  outline
-                />
-                <q-btn
-                  @click="openDialogFormTips"
-                  :class="doc.instructions || sample ? 'q-mt-md' : ''"
-                  label="View tips for taking better document photos"
-                  no-caps
-                  outline
-                />
-              </div>
-            </q-item-section>
-          </q-item> -->
-
-          <!-- <q-separator class="q-my-md" /> -->
           <div class="row q-mt-xs">
             <div class="col">
               <q-btn
@@ -67,38 +27,6 @@
                 label="Add a Page"
                 color="primary"
               />
-              <!-- <q-file
-                ref="uploadFileRef"
-                v-model="files"
-                accept=".jpg, image/*, .pdf"
-                multiple
-                :reactive-rules="true"
-                :rules="[
-                  (val) =>
-                    newUploadedFilesCount > 0 ||
-                    'Upload at least one file to submit.',
-                ]"
-                standout
-                label="ADD IMAGE OR PDF FILE"
-                filled
-                outlined
-                class="rounded-borders"
-              >
-                <template v-slot:prepend>
-                  <q-icon
-                    style="cursor: pointer"
-                    @click="uploadFileRef?.pickFiles()"
-                    name="fas fa-file-arrow-up"
-                  />
-                </template>
-                <template v-slot:append>
-                  <q-icon
-                    style="cursor: pointer"
-                    @click="uploadFileRef?.pickFiles()"
-                    name="fas fa-plus"
-                  />
-                </template>
-              </q-file> -->
             </div>
           </div>
           <div
@@ -206,11 +134,11 @@ import * as amplitude from '@amplitude/analytics-browser';
 import { getDownloadURL, getMetadata } from '@firebase/storage';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { Form, PageStatus } from 'src/utils/types';
 import { useQuasar } from 'quasar';
 import draggable from 'vuedraggable';
-import DialogFormTips from './DialogFormTips.vue';
+// import DialogFormTips from './DialogFormTips.vue';
 import DialogFormSubmitDocPreview from './DialogFormSubmitDocPreview.vue';
 import DialogApplicantCamera from './camera/DialogApplicantCamera.vue';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
@@ -288,14 +216,14 @@ onMounted(async () => {
   await setSample();
 });
 
-const dragStart = (e: { oldIndex: any }) => {
+const dragStart = (e: { oldIndex: number }) => {
   console.log(e);
   const index = e.oldIndex;
   uploadedFiles.value[index].isDragging = true;
   drag.value = true;
 };
 
-const dragEnd = (e: { newIndex: any }) => {
+const dragEnd = (e: { newIndex: number }) => {
   console.log(e);
   drag.value = false;
   const index = e.newIndex;
@@ -336,16 +264,16 @@ const uploadedFiles = ref<UploadedFile[]>([]);
 const files = ref<FileList | null>(null);
 const isLoading = ref(false);
 
-const openDialogFormTips = () => {
-  amplitude.track('View Tips', {
-    docName: props.doc.name,
-    docId: props.doc.id,
-    status: 'submit',
-  });
-  $q.dialog({
-    component: DialogFormTips,
-  });
-};
+// const openDialogFormTips = () => {
+//   amplitude.track('View Tips', {
+//     docName: props.doc.name,
+//     docId: props.doc.id,
+//     status: 'submit',
+//   });
+//   $q.dialog({
+//     component: DialogFormTips,
+//   });
+// };
 
 watch(files, (newFiles) => {
   if (newFiles) {
