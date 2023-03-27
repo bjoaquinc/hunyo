@@ -121,6 +121,7 @@ import DialogFormDelayedUpdate from './dialogs/DialogFormDelayedUpdate.vue';
 import { dbDocRefs } from 'src/utils/db';
 import { Timestamp, updateDoc } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
+import { useUserStore } from 'src/stores/user-store';
 
 const props = defineProps<{
   form: Form & { id: string };
@@ -237,20 +238,37 @@ const onNotSubmitted = (index: number) => {
     },
   }).onOk((documentAvailability) => {
     if (documentAvailability === 'available') {
-      $q.dialog({
-        component: DialogFormSubmitDocImage,
-        componentProps: {
-          doc: props.documents[index],
-          form: props.form,
-          index,
-        },
-      }).onOk(() => {
-        const docName = props.documents[index].name;
-        $q.notify({
-          message: `${docName} submitted. Thank you.`,
-          type: 'positive',
+      if (props.form.company.id === 'InibLSJAf2QUlBg1bhJV') {
+        $q.dialog({
+          component: DialogFormSubmitDocImage,
+          componentProps: {
+            doc: props.documents[index],
+            form: props.form,
+            index,
+          },
+        }).onOk(() => {
+          const docName = props.documents[index].name;
+          $q.notify({
+            message: `${docName} submitted. Thank you.`,
+            type: 'positive',
+          });
         });
-      });
+      } else {
+        $q.dialog({
+          component: DialogFormSubmitDoc,
+          componentProps: {
+            doc: props.documents[index],
+            form: props.form,
+            index,
+          },
+        }).onOk(() => {
+          const docName = props.documents[index].name;
+          $q.notify({
+            message: `${docName} submitted. Thank you.`,
+            type: 'positive',
+          });
+        });
+      }
     }
 
     if (documentAvailability === 'not-available') {

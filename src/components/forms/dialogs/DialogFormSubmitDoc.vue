@@ -15,7 +15,7 @@
             <div class="text-h6 lt-sm">Upload {{ doc.name }}</div>
             <q-btn v-close-popup icon="fas fa-times" flat dense />
           </div>
-          <!-- <q-item class="text-body1 q-mt-md">
+          <q-item class="text-body1 q-mt-md">
             <q-item-section avatar class="gt-xs" top side>
               <q-icon name="fas fa-exclamation" color="negative" size="xs" />
             </q-item-section>
@@ -52,22 +52,12 @@
                 />
               </div>
             </q-item-section>
-          </q-item> -->
+          </q-item>
 
-          <!-- <q-separator class="q-my-md" /> -->
+          <q-separator class="q-my-md" />
           <div class="row q-mt-xs">
             <div class="col">
-              <q-btn
-                stack
-                outline
-                class="full-width q-mt-md q-py-xl"
-                size="xl"
-                @click="openDialogApplicantCamera"
-                icon="fas fa-camera"
-                label="Add a Page"
-                color="primary"
-              />
-              <!-- <q-file
+              <q-file
                 ref="uploadFileRef"
                 v-model="files"
                 accept=".jpg, image/*, .pdf"
@@ -98,7 +88,7 @@
                     name="fas fa-plus"
                   />
                 </template>
-              </q-file> -->
+              </q-file>
             </div>
           </div>
           <div
@@ -198,17 +188,10 @@ import { useQuasar } from 'quasar';
 import draggable from 'vuedraggable';
 import DialogFormTips from './DialogFormTips.vue';
 import DialogFormSubmitDocPreview from './DialogFormSubmitDocPreview.vue';
-import DialogApplicantCamera from './camera/DialogApplicantCamera.vue';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
 import { ApplicantDocument } from 'src/utils/new-types';
 
 const drag = ref(false);
-
-const openDialogApplicantCamera = async () => {
-  $q.dialog({
-    component: DialogApplicantCamera,
-  });
-};
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
