@@ -29,7 +29,10 @@
               />
             </div>
           </div>
-          <div v-if="uploadedFiles.length > 0" class="flex q-mt-md">
+          <div
+            v-if="uploadedFiles.length > 0"
+            class="flex q-mt-md items-center"
+          >
             <div class="text-h6 font-weight-normal text-grey-8">
               {{ isDraggable ? 'REORDER' : 'ADDED' }} PAGES
             </div>
@@ -53,7 +56,6 @@
               <q-item
                 class="q-mt-sm q-px-none"
                 :class="element.isDragging ? 'bg-blue-2' : ''"
-                clickable
               >
                 <q-item-section>
                   <q-item-label>
@@ -109,21 +111,15 @@
                     </q-btn>
                   </q-item-label>
                 </q-item-section>
-                <q-item-section v-if="!element.isDragging" avatar side>
+                <q-item-section v-show="!element.isDragging" avatar side>
                   <q-btn
-                    @click="
-                      () => {
-                        if (!isDraggable) {
-                          removeFile(element);
-                        }
-                      }
-                    "
-                    :icon="isDraggable ? 'fas fa-grip-vertical' : undefined"
+                    v-if="!isDraggable"
+                    @click="removeFile(element)"
                     outline
-                    :flat="isDraggable ? true : false"
                     color="grey-8"
-                    :label="isDraggable ? undefined : 'Delete'"
+                    label="Delete"
                   />
+                  <q-icon v-else name="fas fa-grip-vertical" color="grey-8" />
                 </q-item-section>
               </q-item>
             </template>
