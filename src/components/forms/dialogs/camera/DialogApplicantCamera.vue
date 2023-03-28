@@ -16,7 +16,6 @@
         icon="fas fa-times"
         color="white"
         flat
-        dense
       />
       <div class="flex" style="height: 70%">
         <div ref="containerRef" class="full-width q-my-auto">
@@ -97,11 +96,11 @@ const onDialogShow = async () => {
 
 const setUpCamera = async () => {
   if (videoRef.value && containerRef.value) {
-    const BACK_CAMERA = 'environment';
+    // const BACK_CAMERA = 'environment';
     // eslint-disable-next-line no-undef
     const constraints: MediaStreamConstraints = {
       video: {
-        facingMode: { exact: BACK_CAMERA },
+        // facingMode: { exact: BACK_CAMERA },
         width: { min: 1280, ideal: 1920, max: 2560 },
         aspectRatio: { ideal: 5 / 4 },
       },
@@ -222,8 +221,7 @@ defineEmits([
   top: 10px
   right: 10px
   z-index: 1000
-  background-color: black
-  opacity: 0.5
+  background-color: rgba(0, 0, 0, 0.5)
 
 .capture-btn
   position: absolute

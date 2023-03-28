@@ -237,7 +237,7 @@ const onNotSubmitted = (index: number) => {
     },
   }).onOk((documentAvailability) => {
     if (documentAvailability === 'available') {
-      if (props.form.company.id === 'InibLSJAf2QUlBg1bhJV') {
+      if (props.form.company.id === 'InibLSJAf2QUlBg1bhJV' || process.env.DEV) {
         $q.dialog({
           component: DialogFormSubmitDocImage,
           componentProps: {

@@ -29,14 +29,21 @@
               />
             </div>
           </div>
-          <div
-            v-if="uploadedFiles.length > 0"
-            class="text-h6 text-grey-8 q-mt-md"
-          >
-            Your uploads (drag and drop to reorder the pages)
+          <div v-if="uploadedFiles.length > 0" class="flex q-mt-md">
+            <div class="text-h6 font-weight-normal text-grey-8">
+              {{ isDraggable ? 'REORDER' : 'ADDED' }} PAGES
+            </div>
+            <q-btn
+              class="q-ml-md"
+              :label="isDraggable ? 'Done' : 'Reorder'"
+              color="primary"
+              :outline="!isDraggable"
+              @click="isDraggable = !isDraggable"
+            />
           </div>
           <draggable
             v-model="uploadedFiles"
+            :disabled="!isDraggable"
             group="people"
             @start="dragStart"
             @end="dragEnd"
@@ -44,7 +51,7 @@
           >
             <template #item="{ element }">
               <q-item
-                class="q-mt-sm"
+                class="q-mt-sm q-px-none"
                 :class="element.isDragging ? 'bg-blue-2' : ''"
                 clickable
               >
@@ -104,18 +111,25 @@
                 </q-item-section>
                 <q-item-section v-if="!element.isDragging" avatar side>
                   <q-btn
-                    @click="removeFile(element)"
-                    :outline="uploadedFileItemStyles[(element as UploadedFile).status].outline"
-                    :color="uploadedFileItemStyles[(element as UploadedFile).status].color"
-                    :label="uploadedFileItemStyles[(element as UploadedFile).status].label"
-                    :flat="uploadedFileItemStyles[(element as UploadedFile).status].flat"
+                    @click="
+                      () => {
+                        if (!isDraggable) {
+                          removeFile(element);
+                        }
+                      }
+                    "
+                    :icon="isDraggable ? 'fas fa-grip-vertical' : undefined"
+                    outline
+                    :flat="isDraggable ? true : false"
+                    color="grey-8"
+                    :label="isDraggable ? undefined : 'Delete'"
                   />
                 </q-item-section>
               </q-item>
             </template>
           </draggable>
         </q-card-section>
-        <q-card-actions v-if="uploadedFiles.length > 0">
+        <q-card-actions v-if="uploadedFiles.length > 0 && !isDraggable">
           <q-btn
             label="Confirm Document(s)"
             type="submit"
@@ -147,6 +161,7 @@ import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
 import { ApplicantDocument } from 'src/utils/new-types';
 
 const drag = ref(false);
+const isDraggable = ref(false);
 
 const openDialogApplicantCamera = async () => {
   const dialog = $q.dialog({

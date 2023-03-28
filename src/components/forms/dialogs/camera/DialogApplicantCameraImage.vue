@@ -8,19 +8,15 @@
     transition-hide="slide-right"
   >
     <q-card tag="div" class="card-container text-white bg-black">
-      <q-card-section>
-        <div class="flex">
-          <q-btn
-            @click="returnToCamera"
-            round
-            icon="fas fa-chevron-left"
-            color="white"
-            no-caps
-            flat
-            dense
-          />
-        </div>
-      </q-card-section>
+      <q-btn
+        @click="returnToCamera"
+        class="back-btn"
+        round
+        icon="fas fa-chevron-left"
+        color="white"
+        no-caps
+        flat
+      />
       <div ref="containerRef" class="flex" style="height: 70%">
         <canvas
           class="full-width q-my-auto"
@@ -174,4 +170,11 @@ defineEmits([
   @media only screen and (width > $breakpoint-xs)
     max-width: 600px !important
     height: auto !important
+
+.back-btn
+  position: absolute
+  top: 10px
+  left: 10px
+  z-index: 2
+  background-color: rgba(0, 0, 0, 0.5)
 </style>
