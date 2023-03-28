@@ -9,19 +9,15 @@
   >
     <div v-show="showShutter" id="shutter" ref="shutterRef" />
     <q-card tag="div" class="card-container text-white bg-black">
-      <q-card-section>
-        <div class="flex">
-          <q-btn
-            v-close-popup
-            round
-            class="q-ml-auto"
-            icon="fas fa-times"
-            color="white"
-            flat
-            dense
-          />
-        </div>
-      </q-card-section>
+      <q-btn
+        v-close-popup
+        round
+        class="q-ml-auto exit-btn"
+        icon="fas fa-times"
+        color="white"
+        flat
+        dense
+      />
       <div class="flex" style="height: 70%">
         <div ref="containerRef" class="full-width q-my-auto">
           <div ref="maskRef" class="mask" />
@@ -107,8 +103,7 @@ const setUpCamera = async () => {
       video: {
         facingMode: { exact: BACK_CAMERA },
         width: { min: 1280, ideal: 1920, max: 2560 },
-        height: { min: 720, ideal: 1080, max: 1440 },
-        aspectRatio: 5 / 4,
+        aspectRatio: { ideal: 5 / 4 },
       },
     };
     const { mediaDevices } = navigator;
@@ -221,6 +216,14 @@ defineEmits([
   @media only screen and (width > $breakpoint-xs)
     max-width: 600px !important
     height: auto !important
+
+.exit-btn
+  position: absolute
+  top: 10px
+  right: 10px
+  z-index: 1000
+  background-color: black
+  opacity: 0.5
 
 .capture-btn
   position: absolute
