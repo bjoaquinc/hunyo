@@ -22,10 +22,18 @@
                 outline
                 class="full-width q-mt-md q-py-xl"
                 size="xl"
-                @click="openDialogApplicantCamera"
+                @click="clickInputImage"
                 icon="fas fa-camera"
                 label="Add a Page"
                 color="primary"
+              />
+              <input
+                @change="onFileChange"
+                style="display: none"
+                ref="imageInputRef"
+                type="file"
+                accept="image/*"
+                capture="environment"
               />
             </div>
           </div>
@@ -73,7 +81,7 @@
                       flat
                       dense
                       class="gt-xs text-body1"
-                      :color="uploadedFileItemStyles[(element as UploadedFile).status].textColor"
+                      color="grey-8"
                       size="md"
                     >
                       <div class="text-left ellipsis">
@@ -101,7 +109,7 @@
                           ? 'text-weight-bold full-width text-center'
                           : ''
                       "
-                      :color="uploadedFileItemStyles[(element as UploadedFile).status].textColor"
+                      color="grey-8"
                     >
                       <div class="text-left ellipsis">
                         {{
@@ -133,10 +141,11 @@
             color="primary"
           />
         </q-card-actions>
-        <q-inner-loading :showing="isLoading">
-          <q-spinner-pie size="80px" color="primary" />
-        </q-inner-loading>
       </q-form>
+      <q-inner-loading :showing="isLoading" style="width: 100vw; height: 100vh">
+        <q-spinner-pie size="80px" color="primary" />
+        <div class="text-body1 q-mt-md">Adding Image...</div>
+      </q-inner-loading>
     </q-card>
   </q-dialog>
 </template>
@@ -150,43 +159,10 @@ import { ref, watch, onMounted } from 'vue';
 import { Form, PageStatus } from 'src/utils/types';
 import { useQuasar } from 'quasar';
 import draggable from 'vuedraggable';
-// import DialogFormTips from './DialogFormTips.vue';
 import DialogFormSubmitDocPreview from './DialogFormSubmitDocPreview.vue';
-import DialogApplicantCamera from './camera/DialogApplicantCamera.vue';
+import DialogApplicantCameraImageVue from './camera/DialogApplicantCameraImage.vue';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
 import { ApplicantDocument } from 'src/utils/new-types';
-
-const drag = ref(false);
-const isDraggable = ref(false);
-
-const openDialogApplicantCamera = async () => {
-  const dialog = $q.dialog({
-    component: DialogApplicantCamera,
-    componentProps: {
-      doc: props.doc,
-    },
-  });
-
-  dialog.onOk(
-    (payload: {
-      image: { image: Blob; name: string; type: string; size: number };
-      angle: 0 | 90 | 180 | 270;
-    }) => {
-      const { image, angle } = payload;
-      const file = new File([image.image], image.name, { type: image.type });
-      const IMAGE_URL = URL.createObjectURL(file);
-      const uploadedFile = {
-        name: image.name,
-        file,
-        status: 'New' as PageStatus,
-        downloadURL: IMAGE_URL,
-        angle,
-        isDragging: false,
-      };
-      uploadedFiles.value.push(uploadedFile);
-    }
-  );
-};
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
@@ -195,35 +171,66 @@ const props = defineProps<{
   index: number;
   form: Form & { id: string };
 }>();
-const uploadedFileItemStyles = {
-  New: {
-    label: 'Delete',
-    flat: false,
-    outline: true,
-    color: 'grey-8',
-    textColor: 'primary',
-  },
-  Submitted: {
-    label: 'Submitted',
-    flat: true,
-    outline: false,
-    color: 'grey-8',
-    textColor: 'grey-8',
-  },
-  Rejected: {
-    label: 'Resubmit',
-    flat: false,
-    outline: true,
-    color: 'negative',
-    textColor: 'negative',
-  },
-  Accepted: {
-    label: 'Accepted',
-    flat: true,
-    outline: false,
-    color: 'positive',
-    textColor: 'positive',
-  },
+const drag = ref(false);
+const isDraggable = ref(false);
+const imageInputRef = ref<HTMLInputElement | null>(null);
+const sample = ref<{
+  url: string;
+  contentType: string;
+} | null>(null);
+interface UploadedFile {
+  name: string;
+  file: File;
+  status: PageStatus | 'New';
+  downloadURL: string;
+  isDragging: boolean;
+  angle?: 0 | 90 | 180 | 270;
+}
+const uploadedFiles = ref<UploadedFile[]>([]);
+const latestIndex = ref(0);
+const files = ref<FileList | null>(null);
+const isLoading = ref(false);
+
+const clickInputImage = () => {
+  if (imageInputRef.value) {
+    imageInputRef.value.click();
+  }
+};
+
+const onFileChange = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  if (!target.files) return;
+  const file = target.files[0];
+  const IMAGE_URL = URL.createObjectURL(file);
+  $q.dialog({
+    component: DialogApplicantCameraImageVue,
+    componentProps: {
+      doc: props.doc,
+      latestIndex: latestIndex.value,
+      file,
+      IMAGE_URL,
+    },
+  })
+    .onCancel(() => {
+      if (imageInputRef.value) {
+        imageInputRef.value.value = '';
+      }
+    })
+    .onOk((payload: { image: File; angle: 0 | 90 | 180 | 270 }) => {
+      isLoading.value = true;
+      const { image, angle } = payload;
+      const uploadedFile = {
+        name: image.name,
+        file: image,
+        status: 'New' as PageStatus,
+        downloadURL: IMAGE_URL,
+        angle,
+        isDragging: false,
+      };
+      uploadedFiles.value.push(uploadedFile);
+      latestIndex.value++;
+      isLoading.value = false;
+    });
 };
 
 onMounted(async () => {
@@ -231,14 +238,12 @@ onMounted(async () => {
 });
 
 const dragStart = (e: { oldIndex: number }) => {
-  console.log(e);
   const index = e.oldIndex;
   uploadedFiles.value[index].isDragging = true;
   drag.value = true;
 };
 
 const dragEnd = (e: { newIndex: number }) => {
-  console.log(e);
   drag.value = false;
   const index = e.newIndex;
   uploadedFiles.value[index].isDragging = false;
@@ -262,22 +267,6 @@ const setSample = async () => {
     }
   }
 };
-
-const sample = ref<{
-  url: string;
-  contentType: string;
-} | null>(null);
-interface UploadedFile {
-  name: string;
-  file: File;
-  status: PageStatus | 'New';
-  downloadURL: string;
-  isDragging: boolean;
-  angle?: 0 | 90 | 180 | 270;
-}
-const uploadedFiles = ref<UploadedFile[]>([]);
-const files = ref<FileList | null>(null);
-const isLoading = ref(false);
 
 watch(files, (newFiles) => {
   if (newFiles) {

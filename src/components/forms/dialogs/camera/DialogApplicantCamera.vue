@@ -96,11 +96,11 @@ const onDialogShow = async () => {
 
 const setUpCamera = async () => {
   if (videoRef.value && containerRef.value) {
-    // const BACK_CAMERA = 'environment';
+    const BACK_CAMERA = 'environment';
     // eslint-disable-next-line no-undef
     const constraints: MediaStreamConstraints = {
       video: {
-        // facingMode: { exact: BACK_CAMERA },
+        facingMode: { exact: BACK_CAMERA },
         width: { min: 1280, ideal: 1920, max: 2560 },
         aspectRatio: { ideal: 5 / 4 },
       },

@@ -9,7 +9,7 @@
   >
     <q-card tag="div" class="card-container text-white bg-black">
       <q-btn
-        @click="returnToCamera"
+        @click="exitPage"
         class="back-btn"
         round
         icon="fas fa-chevron-left"
@@ -17,20 +17,35 @@
         no-caps
         flat
       />
-      <div ref="containerRef" class="flex" style="height: 70%">
-        <canvas
-          class="full-width q-my-auto"
-          :style="{ transform: `rotate(${angles[angleIndex]}deg)` }"
-          ref="canvasRef"
-        ></canvas>
+      <div ref="containerRef" class="flex full-height">
+        <img
+          ref="imageRef"
+          :src="IMAGE_URL"
+          class="image-container"
+          style="margin: auto"
+          :style="
+            isTilted && !isLandscape
+              ? {
+                  width: 'auto',
+                  height: '100vw',
+                  aspectRatio: aspectRatio,
+                  transform: `rotate(${angles[angleIndex]}deg)`,
+                }
+              : {
+                  transform: `rotate(${angles[angleIndex]}deg)`,
+                  width: '100%',
+                  height: 'auto',
+                }
+          "
+        />
       </div>
       <div
-        class="row q-col-gutter-md q-mt-auto q-px-md absolute-bottom"
-        style="bottom: 20px"
+        class="row q-col-gutter-md q-pb-md q-px-md absolute-bottom"
+        style="background-color: rgba(0, 0, 0, 0.5)"
       >
         <div class="col">
           <q-btn
-            @click="rotateLeft"
+            @click="rotateImage('left')"
             class="full-width"
             icon="fas fa-rotate-left"
             color="white"
@@ -39,7 +54,7 @@
         </div>
         <div class="col">
           <q-btn
-            @click="rotateRight"
+            @click="rotateImage('right')"
             class="full-width"
             icon="fas fa-rotate-right"
             color="white"
@@ -62,101 +77,75 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { QDialog, useDialogPluginComponent, QCard } from 'quasar';
+import { ApplicantDocument } from 'src/utils/new-types';
 
 const props = defineProps<{
-  image: {
-    image: Blob;
-    name: string;
-    type: string;
-    size: number;
-  };
-  imageBitmap: ImageBitmap;
+  file: File;
+  IMAGE_URL: string;
+  doc: ApplicantDocument & { id: string };
+  latestIndex: number;
 }>();
 
 const containerRef = ref<HTMLDivElement | null>(null);
-const canvasRef = ref<HTMLCanvasElement | null>(null);
-const context = ref<CanvasRenderingContext2D | null>(null);
 const angleIndex = ref(0);
 const angles = [0, 90, 180, 270];
+const imageRef = ref<HTMLImageElement | null>(null);
+const aspectRatio = ref(0);
+const isTilted = ref(false);
+const isLandscape = ref(false);
 
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } =
   useDialogPluginComponent();
 
 const onDialogShow = async () => {
-  if (props.imageBitmap && canvasRef.value) {
-    drawCanvas(props.imageBitmap);
+  if (imageRef.value && containerRef.value) {
+    const { width, height } = imageRef.value;
+    containerRef.value.setAttribute('style', `height: ${height}px`);
+    aspectRatio.value = width / height;
+    if (width > height) {
+      isLandscape.value = true;
+    }
   }
 };
 
-const drawCanvas = (imageBitmap: ImageBitmap) => {
-  if (!canvasRef.value) return;
-  canvasRef.value.width = parseInt(
-    getComputedStyle(canvasRef.value).width.split('px')[0]
-  );
-  const imageRatio = imageBitmap.width / imageBitmap.height;
-  canvasRef.value.height = canvasRef.value.width / imageRatio;
-  let ratio = Math.max(
-    canvasRef.value.width / imageBitmap.width,
-    canvasRef.value.height / imageBitmap.height
-  );
-  const x = (canvasRef.value.width - imageBitmap.width * ratio) / 2;
-  const y = (canvasRef.value.height - imageBitmap.height * ratio) / 2;
-  context.value = canvasRef.value.getContext('2d');
-  if (context.value) {
-    console.log(context.value);
-    context.value.clearRect(
-      0,
-      0,
-      canvasRef.value.width,
-      canvasRef.value.height
-    );
-    context.value.drawImage(
-      imageBitmap,
-      0,
-      0,
-      imageBitmap.width,
-      imageBitmap.height,
-      x,
-      y,
-      imageBitmap.width * ratio,
-      imageBitmap.height * ratio
-    );
-  }
-};
-
-const rotateRight = () => {
-  if (angleIndex.value === angles.length - 1) {
-    angleIndex.value = 0;
+const rotateImage = (direction: 'left' | 'right') => {
+  if (!imageRef.value) return;
+  if (direction === 'left') {
+    if (angleIndex.value === 0) {
+      angleIndex.value = angles.length - 1;
+    } else {
+      angleIndex.value--;
+    }
   } else {
-    angleIndex.value++;
+    if (angleIndex.value === angles.length - 1) {
+      angleIndex.value = 0;
+    } else {
+      angleIndex.value++;
+    }
   }
-};
-
-const rotateLeft = () => {
-  console.log(angleIndex.value);
-  if (angleIndex.value === 0) {
-    angleIndex.value = angles.length - 1;
+  const TILTED_ANGLE_INDEXES = [1, 3];
+  if (TILTED_ANGLE_INDEXES.includes(angleIndex.value)) {
+    isTilted.value = true;
   } else {
-    angleIndex.value--;
+    isTilted.value = false;
   }
 };
 
-const returnToCamera = () => {
+const exitPage = () => {
   onDialogCancel();
 };
 
 const onComplete = () => {
+  const docName = props.doc.name.replace(' ', '_').toLowerCase();
+  const newFileName = `${docName}_image_${props.latestIndex + 1}.jpg`;
+  const updatedFile = new File([props.file], newFileName, {
+    type: 'image/jpeg',
+  });
   onDialogOK({
-    image: props.image,
+    image: updatedFile,
     angle: angles[angleIndex.value],
   });
 };
-
-// const clearCanvas = () => {
-//   canvasRef.value
-//     ?.getContext('2d')
-//     ?.clearRect(0, 0, window.innerWidth, window.innerHeight);
-// };
 
 defineEmits([
   // REQUIRED; need to specify some events that your
@@ -170,6 +159,7 @@ defineEmits([
   @media only screen and (width > $breakpoint-xs)
     max-width: 600px !important
     height: auto !important
+
 
 .back-btn
   position: absolute
