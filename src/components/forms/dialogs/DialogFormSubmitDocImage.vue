@@ -3,7 +3,7 @@
     ref="dialogRef"
     @hide="onDialogHide"
     maximized
-    :persistent="isLoading"
+    :persistent="isLoading || hasUploadedFiles"
     transition-show="slide-up"
     transition-hide="slide-down"
   >
@@ -13,7 +13,12 @@
           <div class="flex justify-between q-mt-sm no-wrap">
             <div class="text-h5 gt-xs">Upload {{ doc.name }}</div>
             <div class="text-h6 lt-sm">Upload {{ doc.name }}</div>
-            <q-btn v-close-popup icon="fas fa-times" flat dense />
+            <q-btn
+              @click="onExitWithUploadedFiles"
+              icon="fas fa-times"
+              flat
+              dense
+            />
           </div>
           <div class="row q-mt-xs">
             <div class="col">
@@ -155,7 +160,7 @@ import * as amplitude from '@amplitude/analytics-browser';
 import { getDownloadURL, getMetadata } from '@firebase/storage';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
-import { ref, watch, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { Form, PageStatus } from 'src/utils/types';
 import { useQuasar } from 'quasar';
 import draggable from 'vuedraggable';
@@ -187,8 +192,9 @@ interface UploadedFile {
   angle?: 0 | 90 | 180 | 270;
 }
 const uploadedFiles = ref<UploadedFile[]>([]);
+const hasUploadedFiles = computed(() => uploadedFiles.value.length > 0);
 const latestIndex = ref(0);
-const files = ref<FileList | null>(null);
+// const files = ref<FileList | null>(null);
 const isLoading = ref(false);
 
 const clickInputImage = () => {
@@ -268,34 +274,6 @@ const setSample = async () => {
   }
 };
 
-watch(files, (newFiles) => {
-  if (newFiles) {
-    isLoading.value = true;
-    for (const file of newFiles) {
-      const fileBlob = new Blob([file], { type: file.type });
-      const downloadURL = URL.createObjectURL(fileBlob);
-      uploadedFiles.value.push({
-        name: file.name,
-        file,
-        downloadURL,
-        status: 'New',
-        isDragging: false,
-      });
-      const CONVERT_TO_KB = 0.001;
-      amplitude.track('Add Pages/Document', {
-        docName: props.doc.name,
-        formatSubmitted: file.type,
-        fileSize: file.size * CONVERT_TO_KB,
-        pageNumber: uploadedFiles.value.length,
-        numberOfPages: newFiles.length,
-        source: 'applicant',
-      });
-    }
-    files.value = null;
-    isLoading.value = false;
-  }
-});
-
 const removeFile = (element: UploadedFile) => {
   const index = uploadedFiles.value.indexOf(element);
   uploadedFiles.value.splice(index, 1);
@@ -311,6 +289,28 @@ const onSubmit = async () => {
   });
   await openDialogFormSubmitDocPreview();
   onDialogOK();
+};
+
+const onExitWithUploadedFiles = () => {
+  if (hasUploadedFiles.value) {
+    $q.dialog({
+      title: 'Are you sure you want to leave this page?',
+      message:
+        'You have not finished submitting this document. If you leave this page now, your images will be lost. Do you want to leave this page anyway?',
+      ok: {
+        label: 'Yes',
+        outline: true,
+      },
+      cancel: {
+        label: 'No',
+        color: 'primary',
+      },
+    }).onOk(() => {
+      dialogRef.value?.hide();
+    });
+  } else {
+    dialogRef.value?.hide();
+  }
 };
 
 const openDialogFormSubmitDocPreview = async () => {

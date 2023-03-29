@@ -39,7 +39,8 @@
                     @click="
                       openBaseDialogViewImage(
                         uploadedFile.downloadURL,
-                        uploadedFile.file.type
+                        uploadedFile.file.type,
+                        uploadedFile.angle
                       )
                     "
                     flat
@@ -59,7 +60,8 @@
                     @click="
                       openBaseDialogViewImage(
                         uploadedFile.downloadURL,
-                        uploadedFile.file.type
+                        uploadedFile.file.type,
+                        uploadedFile.angle
                       )
                     "
                     flat
@@ -79,7 +81,8 @@
                   @click="
                     openBaseDialogViewImage(
                       uploadedFile.downloadURL,
-                      uploadedFile.file.type
+                      uploadedFile.file.type,
+                      uploadedFile.angle
                     )
                   "
                   outline
@@ -357,12 +360,17 @@ const updateForm = async () => {
   });
 };
 
-const openBaseDialogViewImage = (imgURL: string, contentType: string) => {
+const openBaseDialogViewImage = (
+  imgURL: string,
+  contentType: string,
+  angle?: 0 | 90 | 180 | 270
+) => {
   $q.dialog({
     component: BaseDialogViewImage,
     componentProps: {
       imgURL,
       contentType,
+      angle,
     },
   });
 };

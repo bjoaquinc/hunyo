@@ -2,6 +2,7 @@
   <q-dialog
     ref="dialogRef"
     @hide="onDialogHide"
+    @show="onDialogShow"
     maximized
     persistent
     transition-show="slide-up"
@@ -12,11 +13,19 @@
       class="bg-black transparent"
     >
       <q-img
+        ref="imageRef"
         v-if="contentType.includes('image')"
         class="image-width absolute-center"
         :style="
           angle
-            ? { transform: `translate(-50%, -50%) rotate(${angle}deg)` }
+            ? isTilted
+              ? {
+                  transform: `translate(-50%, -50%) rotate(${angle}deg)`,
+                  width: 'auto',
+                  height: '100vw',
+                  aspectRatio: aspectRatio,
+                }
+              : { transform: `translate(-50%, -50%) rotate(${angle}deg)` }
             : {}
         "
         fit="contain"
@@ -55,11 +64,8 @@
 </template>
 
 <script setup lang="ts">
-import { QDialog, useDialogPluginComponent } from 'quasar';
-import { onMounted } from 'vue';
-onMounted(() => {
-  console.log(props);
-});
+import { QDialog, useDialogPluginComponent, QImg } from 'quasar';
+import { ref } from 'vue';
 
 const props = defineProps<{
   imgURL: string;
@@ -68,6 +74,21 @@ const props = defineProps<{
 }>();
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
+const isTilted = ref(false);
+const aspectRatio = ref(0);
+const imageRef = ref<QImg | null>(null);
+const onDialogShow = () => {
+  if (imageRef.value) {
+    const width = imageRef.value.$el.clientWidth;
+    const height = imageRef.value.$el.clientHeight;
+    const TILTED_ANGLES = [90, 270];
+    const PORTRAIT_IMAGE = height > width;
+    if (PORTRAIT_IMAGE && TILTED_ANGLES.includes(props.angle || 0)) {
+      aspectRatio.value = width / height;
+      isTilted.value = true;
+    }
+  }
+};
 
 defineEmits([
   // REQUIRED; need to specify some events that your
