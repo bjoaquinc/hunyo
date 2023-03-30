@@ -26,7 +26,7 @@
             name="firstName"
             autocomplete="given-name"
             :rules="[(val) => !!val || 'This field is required']"
-            label="First Name(s)"
+            label="Given Name(s)"
             filled
             v-model="name.first"
           />
@@ -68,9 +68,9 @@
 <script setup lang="ts">
 import * as amplitude from '@amplitude/analytics-browser';
 import { updateDoc } from '@firebase/firestore';
-import { QDialog, useDialogPluginComponent } from 'quasar';
+import { QDialog, useDialogPluginComponent, useQuasar } from 'quasar';
 import { dbDocRefs } from 'src/utils/db';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps<{
   formId: string;
@@ -78,16 +78,26 @@ const props = defineProps<{
 }>();
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
+const $q = useQuasar();
 const isLoading = ref(false);
 const name = ref({
   first: '',
   middle: '',
   last: '',
 });
+const warningShownOnce = ref(false);
+const forgotSecondName = computed(() => {
+  return name.value.first.split(' ').length < 2;
+});
 
 const onSubmit = async () => {
-  isLoading.value = true;
+  if (forgotSecondName.value && !warningShownOnce.value) {
+    showWarning();
+    console.log('triggered area');
+    return;
+  }
   try {
+    isLoading.value = true;
     const formRef = dbDocRefs.getFormRef(props.formId);
     await updateDoc(formRef, {
       'applicant.name': name.value,
@@ -98,6 +108,18 @@ const onSubmit = async () => {
     console.log(error);
   }
   isLoading.value = false;
+};
+
+const showWarning = async () => {
+  $q.dialog({
+    title: 'You only added one given name',
+    message:
+      'If this was intentional, please disregard this message. If you have a second given name stated on your passport, please add it now.',
+    ok: 'Ok',
+    persistent: true,
+  }).onOk(() => {
+    warningShownOnce.value = true;
+  });
 };
 
 defineEmits([

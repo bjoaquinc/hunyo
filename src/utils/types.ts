@@ -290,6 +290,7 @@ export interface SendApplicantDocumentRequestTemplate {
   data: {
     formLink: string;
     companyName: string;
+    companyDeadline: string;
   };
 }
 
