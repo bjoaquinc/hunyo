@@ -1,5 +1,5 @@
 <template>
-  <q-page>
+  <q-page v-if="$q.platform.is.mobile">
     <ApplicantFormMain
       v-if="isReady && form"
       :form="form"
@@ -8,6 +8,26 @@
     <div v-else class="absolute-center">
       <q-spinner-pie size="80px" color="primary" />
     </div>
+  </q-page>
+  <q-page v-else>
+    <q-card
+      class="card-container absolute-center bg-primary q-pa-xl"
+      style="width: 600px"
+    >
+      <q-card-section class="flex">
+        <q-icon
+          name="fas fa-mobile-screen-button"
+          class="q-mx-auto"
+          size="7rem"
+          color="white"
+        />
+      </q-card-section>
+      <q-card-section>
+        <div class="text-h4 text-white text-center">
+          Please use your mobile phone to view requirements
+        </div>
+      </q-card-section>
+    </q-card>
   </q-page>
 </template>
 
