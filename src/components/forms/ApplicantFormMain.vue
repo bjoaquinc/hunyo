@@ -107,7 +107,7 @@
 import * as amplitude from '@amplitude/analytics-browser';
 import { useQuasar, QSpinnerPie } from 'quasar';
 import { onMounted, ref, computed } from 'vue';
-import DialogFormSubmitDoc from 'src/components/forms/dialogs/DialogFormSubmitDoc.vue';
+// import DialogFormSubmitDoc from 'src/components/forms/dialogs/DialogFormSubmitDoc.vue';
 import DialogFormSubmitDocImage from './dialogs/DialogFormSubmitDocImage.vue';
 import { Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
@@ -118,6 +118,7 @@ import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission
 import DialogFormResubmitPages from './dialogs/DialogFormResubmitPages.vue';
 import DialogFormResubmitFull from './dialogs/DialogFormResubmitFull.vue';
 import DialogFormDelayedUpdate from './dialogs/DialogFormDelayedUpdate.vue';
+import DialogFormSample from './dialogs/DialogFormSample.vue';
 import { dbDocRefs } from 'src/utils/db';
 import { Timestamp, updateDoc } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
@@ -235,39 +236,42 @@ const onNotSubmitted = (index: number) => {
       formId: props.form.id,
       doc: props.documents[index],
     },
-  }).onOk((documentAvailability) => {
+  }).onOk(async (documentAvailability) => {
     if (documentAvailability === 'available') {
-      if (props.form.company.id === 'InibLSJAf2QUlBg1bhJV' || process.env.DEV) {
-        $q.dialog({
-          component: DialogFormSubmitDocImage,
-          componentProps: {
-            doc: props.documents[index],
-            form: props.form,
-            index,
-          },
-        }).onOk(() => {
-          const docName = props.documents[index].name;
-          $q.notify({
-            message: `${docName} submitted. Thank you.`,
-            type: 'positive',
-          });
+      // if (props.form.company.id === 'InibLSJAf2QUlBg1bhJV' || process.env.DEV) {
+      await new Promise<void>((resolve) => {
+        showSample(props.documents[index], resolve);
+      });
+      $q.dialog({
+        component: DialogFormSubmitDocImage,
+        componentProps: {
+          doc: props.documents[index],
+          form: props.form,
+          index,
+        },
+      }).onOk(() => {
+        const docName = props.documents[index].name;
+        $q.notify({
+          message: `${docName} submitted. Thank you.`,
+          type: 'positive',
         });
-      } else {
-        $q.dialog({
-          component: DialogFormSubmitDoc,
-          componentProps: {
-            doc: props.documents[index],
-            form: props.form,
-            index,
-          },
-        }).onOk(() => {
-          const docName = props.documents[index].name;
-          $q.notify({
-            message: `${docName} submitted. Thank you.`,
-            type: 'positive',
-          });
-        });
-      }
+      });
+      // } else {
+      //   $q.dialog({
+      //     component: DialogFormSubmitDoc,
+      //     componentProps: {
+      //       doc: props.documents[index],
+      //       form: props.form,
+      //       index,
+      //     },
+      //   }).onOk(() => {
+      //     const docName = props.documents[index].name;
+      //     $q.notify({
+      //       message: `${docName} submitted. Thank you.`,
+      //       type: 'positive',
+      //     });
+      //   });
+      // }
     }
 
     if (documentAvailability === 'not-available') {
@@ -290,6 +294,33 @@ const onNotSubmitted = (index: number) => {
         message: 'Document changed to Not Applicable.',
         type: 'grey-8',
       });
+    }
+  });
+};
+
+const showSample = async (
+  doc: ApplicantDocument & { id: string },
+  resolve?: () => void
+) => {
+  if (!doc.sample || doc.sample.contentType === 'application/pdf') {
+    resolve?.();
+    return;
+  }
+  const storageRef = storageRefs.getSampleRef(
+    doc.companyId,
+    doc.dashboardId,
+    doc.sample.file
+  );
+  const url = await getDownloadURL(storageRef);
+
+  $q.dialog({
+    component: DialogFormSample,
+    componentProps: {
+      sampleURL: url,
+    },
+  }).onOk(() => {
+    if (resolve) {
+      resolve();
     }
   });
 };
@@ -364,7 +395,7 @@ const onDelayed = (index: number) => {
   dialog.onOk((payload: 'submit-now' | 'reschedule') => {
     if (payload === 'submit-now') {
       const dialog = $q.dialog({
-        component: DialogFormSubmitDoc,
+        component: DialogFormSubmitDocImage,
         componentProps: {
           doc: props.documents[index],
           form: props.form,

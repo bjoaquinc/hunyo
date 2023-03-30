@@ -24,7 +24,7 @@ import { getDownloadURL } from '@firebase/storage';
 import { useQuasar } from 'quasar';
 import ApplicantFormMain from 'src/components/forms/ApplicantFormMain.vue';
 import DialogFormName from 'src/components/forms/dialogs/DialogFormName.vue';
-import DialogFormReminder from 'src/components/forms/dialogs/DialogFormReminder.vue';
+// import DialogFormReminder from 'src/components/forms/dialogs/DialogFormReminder.vue';
 import { dbDocRefs, dbColRefs } from 'src/utils/db';
 import { storageRefs } from 'src/utils/storage';
 import { Form } from 'src/utils/types';
@@ -51,7 +51,7 @@ onMounted(async () => {
     await setForm();
     await setDocuments();
     amplitude.setUserId(form.value?.id);
-    showReminder();
+    // showReminder();
     isReady.value = true;
   } catch (error) {
     console.error(error);
@@ -138,11 +138,11 @@ const setApplicantAuth = async () => {
   }
 };
 
-const showReminder = () => {
-  $q.dialog({
-    component: DialogFormReminder,
-  });
-};
+// const showReminder = () => {
+//   $q.dialog({
+//     component: DialogFormReminder,
+//   });
+// };
 
 const getLogoURL = async (logoName: string) => {
   const logoRef = storageRefs.getLogoRef(logoName);

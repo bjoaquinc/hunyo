@@ -4,6 +4,7 @@
     <q-table
       class="q-mt-xl"
       :rows="filteredApplicants"
+      :rows-per-page-options="[0]"
       :columns="columns"
       :row-key="(row) => row.id"
       selection="multiple"
