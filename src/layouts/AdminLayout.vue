@@ -66,12 +66,12 @@
           icon="create_new_folder"
           :done="step > 2"
         >
-          <div
-            v-if="selectedApplicant"
-            class="text-h6 q-mb-md flex items-center"
-          >
-            <span
-              ><q-btn
+          <div v-show="!isEditingName">
+            <div
+              class="text-h6 q-mb-md flex items-center"
+              v-if="selectedApplicant && selectedApplicant.applicant.name"
+            >
+              <q-btn
                 @click="
                   () => {
                     selectedApplicantIndex = null;
@@ -82,97 +82,172 @@
                 icon="fas fa-chevron-left"
                 flat
                 color="primary"
-                dense /></span
-            >{{ selectedApplicant.applicant.name?.first }}'s Documents
-          </div>
-          <q-list separator v-if="selectedApplicant">
-            <q-separator />
-            <q-item
-              :clickable="!selectedDoc || selectedDoc.name !== doc.name"
-              v-for="(doc, index) in sortedDocs"
-              :key="index"
-            >
-              <q-item-section
-                @click="
-                  () => {
-                    if (
-                      selectedPage &&
-                      (!selectedDoc || selectedDoc.name !== doc.name)
-                    ) {
-                      selectedPageIndex = null;
-                    }
-                    selectedDocIndex = index;
-                  }
-                "
-                ><div class="text-primary text-h6">{{ doc.name }}</div>
-                <q-slide-transition>
-                  <q-list
-                    v-if="
-                      selectedDoc &&
-                      selectedDoc.name === doc.name &&
-                      sortedPages.length > 0
-                    "
-                    separator
-                  >
-                    <q-item
-                      v-for="(page, index) in sortedPages"
-                      :key="index"
-                      @click="selectedPageIndex = index"
-                      :active="
-                        selectedPage !== null && selectedPage.name === page.name
-                      "
-                      active-class="bg-grey-4"
-                      clickable
-                      v-ripple
-                    >
-                      <q-item-section>{{ page.name }}</q-item-section>
-                    </q-item>
-                    <q-btn
-                      @click="updateDocAndPagesStatus"
-                      label="Done"
-                      color="primary"
-                      class="full-width q-mt-md"
-                    />
-                    <div
-                      class="text-body1 q-mt-md text-negative q-px-sm"
-                      v-if="showWarningMessage"
-                    >
-                      <div class="q-mt-md text-center">
-                        <q-icon size="lg" name="fas fa-exclamation-triangle" />
-                      </div>
-                      <div class="q-mt-md text-center">
-                        <span>Warning!</span>
-                      </div>
-                      <div class="q-mt-md text-center">
-                        You missed some pages. Please review and accept or
-                        reject them.
-                      </div>
-                    </div>
-                  </q-list>
-                </q-slide-transition>
-              </q-item-section>
-              <q-item-section
-                avatar
-                side
-                v-if="selectedDoc && selectedDoc.name === doc.name"
+                dense
+              />
+              <q-btn
+                @click="showEditApplicantName"
+                class="text-body1"
+                :label="`${selectedApplicant.applicant.name.first} ${selectedApplicant.applicant.name.middle} ${selectedApplicant.applicant.name.last}`"
+                flat
+                dense
+                color="primary"
+                no-caps
+              />
+            </div>
+            <q-list separator v-if="selectedApplicant">
+              <q-separator />
+              <q-item
+                :clickable="!selectedDoc || selectedDoc.name !== doc.name"
+                v-for="(doc, index) in sortedDocs"
+                :key="index"
               >
+                <q-item-section
+                  @click="
+                    () => {
+                      if (
+                        selectedPage &&
+                        (!selectedDoc || selectedDoc.name !== doc.name)
+                      ) {
+                        selectedPageIndex = null;
+                      }
+                      selectedDocIndex = index;
+                    }
+                  "
+                  ><div class="text-primary text-h6">{{ doc.name }}</div>
+                  <q-slide-transition>
+                    <q-list
+                      v-if="
+                        selectedDoc &&
+                        selectedDoc.name === doc.name &&
+                        sortedPages.length > 0
+                      "
+                      separator
+                    >
+                      <q-item
+                        v-for="(page, index) in sortedPages"
+                        :key="index"
+                        @click="selectedPageIndex = index"
+                        :active="
+                          selectedPage !== null &&
+                          selectedPage.name === page.name
+                        "
+                        active-class="bg-grey-4"
+                        clickable
+                        v-ripple
+                      >
+                        <q-item-section>{{ page.name }}</q-item-section>
+                      </q-item>
+                      <q-btn
+                        @click="updateDocAndPagesStatus"
+                        label="Done"
+                        color="primary"
+                        class="full-width q-mt-md"
+                      />
+                      <div
+                        class="text-body1 q-mt-md text-negative q-px-sm"
+                        v-if="showWarningMessage"
+                      >
+                        <div class="q-mt-md text-center">
+                          <q-icon
+                            size="lg"
+                            name="fas fa-exclamation-triangle"
+                          />
+                        </div>
+                        <div class="q-mt-md text-center">
+                          <span>Warning!</span>
+                        </div>
+                        <div class="q-mt-md text-center">
+                          You missed some pages. Please review and accept or
+                          reject them.
+                        </div>
+                      </div>
+                    </q-list>
+                  </q-slide-transition>
+                </q-item-section>
+                <q-item-section
+                  avatar
+                  side
+                  v-if="selectedDoc && selectedDoc.name === doc.name"
+                >
+                  <q-btn
+                    @click="
+                      () => {
+                        selectedDocIndex = null;
+                        selectedPageIndex = null;
+                      }
+                    "
+                    icon="fas fa-times"
+                    class="q-mb-auto"
+                    flat
+                    dense
+                    color="primary"
+                  />
+                </q-item-section>
+              </q-item>
+              <q-separator />
+            </q-list>
+          </div>
+          <div v-show="isEditingName">
+            <q-form @submit.prevent="updateName" greedy>
+              <div class="flex items-center justify-between">
+                <div class="text-h6">Edit Name</div>
                 <q-btn
                   @click="
                     () => {
-                      selectedDocIndex = null;
-                      selectedPageIndex = null;
+                      isEditingName = false;
+                      updatedName = {
+                        first: '',
+                        middle: '',
+                        last: '',
+                      };
                     }
                   "
                   icon="fas fa-times"
-                  class="q-mb-auto"
                   flat
                   dense
-                  color="primary"
+                  color="grey-8"
                 />
-              </q-item-section>
-            </q-item>
-            <q-separator />
-          </q-list>
+              </div>
+              <div class="row q-gutter-sm q-mr-sm q-mt-sm">
+                <div class="col-12">
+                  <q-input
+                    :rules="[(val) => !!val || 'This field is required']"
+                    v-model="updatedName.first"
+                    label="First Name"
+                    filled
+                    dense
+                  />
+                </div>
+                <div class="col-12">
+                  <q-input
+                    :rules="[(val) => !!val || 'This field is required']"
+                    v-model="updatedName.middle"
+                    label="Middle Name"
+                    filled
+                    dense
+                  />
+                </div>
+                <div class="col-12">
+                  <q-input
+                    :rules="[(val) => !!val || 'This field is required']"
+                    v-model="updatedName.last"
+                    label="Last Name"
+                    filled
+                    dense
+                  />
+                </div>
+                <div class="col-12">
+                  <q-btn
+                    :loading="isUpdatingName"
+                    type="submit"
+                    label="Update Name"
+                    color="primary"
+                    class="full-width"
+                  />
+                </div>
+              </div>
+            </q-form>
+          </div>
         </q-step>
       </q-stepper>
     </q-drawer>
@@ -262,6 +337,13 @@ onMounted(async () => {
   });
 });
 const showWarningMessage = ref(false);
+const isEditingName = ref(false);
+const updatedName = ref({
+  first: '',
+  middle: '',
+  last: '',
+});
+const isUpdatingName = ref(false);
 
 const applicants = ref<(Form & { id: string })[]>([]);
 const unsubApplicants = ref<Unsubscribe | null>(null);
@@ -273,6 +355,30 @@ const selectedApplicant = computed<null | (Form & { id: string })>(() => {
     return null;
   }
 });
+
+const showEditApplicantName = () => {
+  if (selectedApplicant.value && selectedApplicant.value.applicant.name) {
+    updatedName.value = selectedApplicant.value.applicant.name;
+    isEditingName.value = true;
+  }
+};
+
+const updateName = async () => {
+  isUpdatingName.value = true;
+  if (selectedApplicant.value) {
+    const applicantRef = dbDocRefs.getFormRef(selectedApplicant.value.id);
+    await updateDoc(applicantRef, {
+      'applicant.name': updatedName.value,
+    });
+    updatedName.value = {
+      first: '',
+      middle: '',
+      last: '',
+    };
+    isEditingName.value = false;
+  }
+  isUpdatingName.value = false;
+};
 
 const sortedDocs = ref<(ApplicantDocument & { id: string })[]>([]);
 // Get applicant documents form firestore
