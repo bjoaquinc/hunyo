@@ -47,5 +47,10 @@ export const useUserStore = defineStore('user', () => {
     });
   };
 
-  return { user, addUserDetails, getUserCompany, unsubUser };
+  const clearUser = () => {
+    unsubUser.value?.();
+    user.value = null;
+  };
+
+  return { user, addUserDetails, getUserCompany, unsubUser, clearUser };
 });

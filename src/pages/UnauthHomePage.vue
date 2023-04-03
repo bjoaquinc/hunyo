@@ -49,6 +49,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useUserStore } from 'src/stores/user-store';
 import { storeToRefs } from 'pinia';
 
 const email = ref('');
@@ -59,6 +60,7 @@ const isPassword = ref(true);
 const isLoading = ref(false);
 const authStore = useAuthStore();
 const { userAuth } = storeToRefs(authStore);
+const { getUserCompany, addUserDetails } = useUserStore();
 
 const login = async () => {
   try {
@@ -69,7 +71,10 @@ const login = async () => {
       email.value,
       password.value
     );
-    userAuth.value = userCred.user;
+    const user = userCred.user;
+    userAuth.value = user;
+    const companyId = await getUserCompany(user.uid);
+    await addUserDetails(user.uid, companyId);
     router.push({ name: 'DashboardsPage' });
   } catch (error: { code: string; message: string }) {
     console.log(error);

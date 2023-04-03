@@ -14,6 +14,7 @@
         <q-toolbar-title>
           {{ user ? user.company.name : 'Create an Account' }}
         </q-toolbar-title>
+        <q-btn @click="signOut" label="Sign out" color="white" flat />
         <!-- <q-input
           v-model="searchText"
           outlined
@@ -139,6 +140,8 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import EssentialLink from 'components/EssentialLink.vue';
 import { useUserStore } from 'src/stores/user-store';
+import { useAuthStore } from 'src/stores/auth-store';
+import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import DialogCreateNewDashboard from 'src/components/create-dashboard/DialogCreateNewDashboard.vue';
 import { useQuasar } from 'quasar';
@@ -154,7 +157,9 @@ import {
 
 const store = useUserStore();
 const { user } = storeToRefs(store);
+const { logOut } = useAuthStore();
 const q = useQuasar();
+const router = useRouter();
 
 // const searchText = ref('');
 
@@ -213,6 +218,11 @@ const openDialogCreateNewDashboard = () => {
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 }
+
+const signOut = async () => {
+  await logOut();
+  router.push({ name: 'LandingPage' });
+};
 
 onUnmounted(() => {
   unsubDraftDashboards.value?.();

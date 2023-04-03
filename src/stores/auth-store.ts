@@ -1,4 +1,4 @@
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut, getAuth } from 'firebase/auth';
 import { defineStore, storeToRefs } from 'pinia';
 import { useUserStore } from './user-store';
 import { auth } from 'src/boot/firebase';
@@ -10,12 +10,25 @@ export const useAuthStore = defineStore('auth', () => {
 
   const getValidatedUser = async (): Promise<User | null> => {
     return await new Promise((resolve, reject) => {
+      let runOnce = (user: User | null) => {
+        runOnce = () => {
+          return;
+        };
+        resolve(user);
+      };
       onAuthStateChanged(
         auth,
         (user) => {
-          resolve(user);
+          if (user) {
+            runOnce(user);
+          } else {
+            const { clearUser } = userStore;
+            clearUser();
+            userAuth.value = null;
+            runOnce(null);
+          }
         },
-        reject
+        (error) => reject(error)
       );
     });
   };
@@ -25,6 +38,15 @@ export const useAuthStore = defineStore('auth', () => {
       userAuth.value = user;
     } else {
       userAuth.value = null;
+    }
+  };
+
+  const logOut = async () => {
+    try {
+      const auth = getAuth();
+      await signOut(auth);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -52,5 +74,5 @@ export const useAuthStore = defineStore('auth', () => {
     });
   };
 
-  return { userAuth, authObserver, getValidatedUser, updateAuth };
+  return { userAuth, authObserver, getValidatedUser, updateAuth, logOut };
 });
