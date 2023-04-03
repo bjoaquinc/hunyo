@@ -100,6 +100,17 @@ export interface ApplicantPage {
     other?: string;
     message?: string;
   };
+  updatingFixedImage?: boolean;
+  imageProperties?: ApplicantPageImageProperties;
+}
+
+export interface ApplicantPageImageProperties {
+  brightness?: string;
+  contrast?: string;
+  sharpness?: string;
+  rotateRight: '0' | '90' | '180' | '270';
+  normalise: boolean;
+  clahe: boolean;
 }
 
 export interface Accept {
