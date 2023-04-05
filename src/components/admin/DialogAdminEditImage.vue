@@ -63,6 +63,7 @@
             </div>
             <div class="col-6">
               <q-btn
+                @click="setOriginalImageProperties"
                 label="Original Image"
                 class="full-width"
                 color="primary"
@@ -71,7 +72,8 @@
             </div>
             <div class="col-6">
               <q-btn
-                label="Undo Changes"
+                @click="setQuickFixImageProperties"
+                label="Quick Fix"
                 class="full-width"
                 color="primary"
                 outline
@@ -112,6 +114,15 @@ const props = defineProps<{
 const $q = useQuasar();
 const isLoading = ref(false);
 
+// interface ImageProperties {
+//   brightness: string;
+//   contrast: string;
+//   sharpness: string;
+//   rotateRight: { label: string; value: number };
+//   normalise: boolean;
+//   clahe: boolean;
+// }
+
 const imageProperties = ref({
   brightness: '1.2',
   contrast: '1',
@@ -127,6 +138,32 @@ const rotateOptions = [
   { label: '180°', value: 180 },
   { label: '270°', value: 270 },
 ];
+
+const originalImageProperties = {
+  brightness: '1',
+  contrast: '1',
+  sharpness: '',
+  rotateRight: { label: '0°', value: 0 },
+  normalise: false,
+  clahe: false,
+};
+
+const quickFixImageProperties = {
+  brightness: '1.3',
+  contrast: '1.2',
+  sharpness: '1',
+  rotateRight: { label: '0°', value: 0 },
+  normalise: false,
+  clahe: false,
+};
+
+const setOriginalImageProperties = () => {
+  imageProperties.value = originalImageProperties;
+};
+
+const setQuickFixImageProperties = () => {
+  imageProperties.value = quickFixImageProperties;
+};
 
 const onDialogShow = () => {
   if (props.page.imageProperties) {

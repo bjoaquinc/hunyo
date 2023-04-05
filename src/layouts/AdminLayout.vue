@@ -624,22 +624,22 @@ const updateDocAndPagesStatus = async () => {
       middle: string;
       last: string;
     };
+
+    const fixName = (name: string) => {
+      return name.trim().split(' ').map(capitalizeFirstLetter).join('_');
+    };
     const fixedDocName = selectedDoc.value.name
       .replace(' (If Available)', '')
       .replace(' - ', '-');
-    const fixedFirstName = name.first
-      .split(' ')
-      .map(capitalizeFirstLetter)
-      .join('_');
-    const fixedMiddleName = name.middle
-      .split(' ')
-      .map(capitalizeFirstLetter)
-      .join('_');
-    const fixedLastName = name.last
-      .split(' ')
-      .map(capitalizeFirstLetter)
-      .join('_');
-    const updatedDocName = `${fixedDocName}_${fixedFirstName}_${fixedMiddleName}_${fixedLastName}.${selectedDoc.value.requestedFormat}`;
+    const fixedName = [
+      fixName(name.first),
+      fixName(name.middle),
+      fixName(name.last),
+    ];
+    const DOCUMENT_SUFFIX = selectedDoc.value.requestedFormat;
+    const updatedDocName = `${fixedDocName}_${fixedName.join(
+      '_'
+    )}.${DOCUMENT_SUFFIX}`;
     promises.push(updateDoc(docRef, { updatedName: updatedDocName }));
     console.log(selectedDoc.value.id);
   }
