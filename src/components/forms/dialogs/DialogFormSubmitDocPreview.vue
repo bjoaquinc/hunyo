@@ -225,7 +225,6 @@ const uploadFilesToStorage = async () => {
     name: string;
     submittedFormat: string;
     submittedSize: number;
-    submissionCount: number;
     pageNumber: number;
   }>[] = [];
 
@@ -254,7 +253,6 @@ const uploadFileToStorage = async (file: UploadedFile, pageNumber: number) => {
   const contentType = file.file.type;
   const contentSize = file.file.size;
   const CONVERT_TO_KILOBYTES = 0.001;
-  const FIRST_TIME_SUBMITTED = 1;
 
   const customMetadata: { [key: string]: string } = {
     companyId,
@@ -264,7 +262,6 @@ const uploadFileToStorage = async (file: UploadedFile, pageNumber: number) => {
     docId,
     pageId,
     format,
-    submissionCount: FIRST_TIME_SUBMITTED.toString(),
   };
 
   if (file.angle !== undefined) {
@@ -308,7 +305,6 @@ const uploadFileToStorage = async (file: UploadedFile, pageNumber: number) => {
     name: fileName,
     submittedFormat: contentType,
     submittedSize: contentSize * CONVERT_TO_KILOBYTES,
-    submissionCount: FIRST_TIME_SUBMITTED,
     pageNumber,
   };
 };
@@ -318,12 +314,12 @@ const createApplicantPages = async (
     name: string;
     submittedFormat: string;
     submittedSize: number;
-    submissionCount: number;
     pageNumber: number;
   }[]
 ) => {
   const pagesRef = dbColRefs.getPagesRef(props.doc.companyId);
   const promises: Promise<DocumentReference>[] = [];
+  const PAGE_SUBMISSION_COUNT = props.doc.submissionCount + 1;
   pages.forEach((page) => {
     const applicantPage: ApplicantPage = {
       createdAt: serverTimestamp() as Timestamp,
@@ -333,6 +329,7 @@ const createApplicantPages = async (
       dashboardId: props.doc.dashboardId,
       applicantId: props.doc.applicantId,
       status: 'submitted',
+      submissionCount: PAGE_SUBMISSION_COUNT,
       ...page,
     };
     const promise = addDoc(pagesRef, applicantPage);
