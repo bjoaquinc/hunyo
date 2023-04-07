@@ -20,7 +20,7 @@
               dense
             />
           </div>
-          <q-item class="text-body1 q-mt-md">
+          <!-- <q-item class="text-body1 q-mt-md">
             <q-item-section avatar class="gt-xs" top side>
               <q-icon name="fas fa-exclamation" color="negative" size="xs" />
             </q-item-section>
@@ -57,7 +57,7 @@
                 />
               </div>
             </q-item-section>
-          </q-item>
+          </q-item> -->
 
           <q-separator class="q-my-md" />
           <q-list>
@@ -67,7 +67,7 @@
             <q-item
               v-for="(page, index) in rejectedPages"
               :key="page.id"
-              class="q-mt-sm"
+              class="q-mt-sm q-px-none"
             >
               <q-item-section>
                 <q-item-label>
@@ -80,53 +80,29 @@
                           pageId: page.id,
                           viewOriginal: page.uploadedFile ? false : true,
                         });
-                        openBaseDialogViewImage(
-                          page.url,
-                          page.contentType,
-                          page.uploadedFile
-                        );
+                        if (page.acceptedFile) {
+                          openBaseDialogViewImage(
+                            page.acceptedFile.downloadURL,
+                            page.acceptedFile.file.type,
+                            page.acceptedFile.angle
+                          );
+                        } else {
+                          openBaseDialogViewImage(page.url, page.contentType);
+                        }
                       }
                     "
                     style="max-width: 100% !important"
                     no-caps
                     flat
                     dense
-                    class="gt-xs text-body1"
-                    color="primary"
-                    size="md"
-                  >
-                    <div class="text-left ellipsis">
-                      {{
-                        page.uploadedFile ? page.uploadedFile.name : page.name
-                      }}
-                    </div>
-                  </q-btn>
-                  <q-btn
-                    @click="
-                      () => {
-                        amplitude.track('View Page', {
-                          docName: doc.name,
-                          docId: doc.id,
-                          pageId: page.id,
-                          viewOriginal: page.uploadedFile ? false : true,
-                        });
-                        openBaseDialogViewImage(
-                          page.url,
-                          page.contentType,
-                          page.uploadedFile
-                        );
-                      }
-                    "
-                    style="max-width: 100% !important"
-                    no-caps
-                    flat
-                    dense
-                    class="lt-sm text-body1"
+                    class="text-body1"
                     color="primary"
                   >
                     <div class="text-left ellipsis">
                       {{
-                        page.uploadedFile ? page.uploadedFile.name : page.name
+                        page.acceptedFile
+                          ? page.acceptedFile.file.name
+                          : page.name
                       }}
                     </div>
                   </q-btn>
@@ -139,14 +115,21 @@
                   :color="
                     !page.uploadedFile && page.error ? 'negative' : 'primary'
                   "
-                  :label="!page.uploadedFile ? 'Update' : 'Updated. Change?'"
+                  :label="!page.acceptedFile ? 'Update' : 'Remove'"
                 />
                 <q-file
                   :ref="(el: QFile) => {
-                  if (filePickerRefs.length < rejectedPages.length) {
-                    filePickerRefs.push(el);
-                  }
-                }"
+                    if (filePickerRefs.length < rejectedPages.length) {
+                      filePickerRefs.push(el);
+                    }
+                  }"
+                  @update:model-value="(value: File) => {
+                    if (value) {
+                      onFilePicked(value, index);
+                    }
+                  }"
+                  accept="image/*"
+                  capture="environment"
                   v-model="page.uploadedFile"
                   style="display: none"
                 />
@@ -154,7 +137,7 @@
             </q-item>
           </q-list>
         </q-card-section>
-        <q-card-actions>
+        <q-card-actions v-if="!missingUploadedPages">
           <q-btn
             label="Resubmit Document(s)"
             type="submit"
@@ -178,7 +161,6 @@ import { storageRefs } from 'src/utils/storage';
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { Form } from 'src/utils/types';
 import { useQuasar } from 'quasar';
-import DialogFormTips from './DialogFormTips.vue';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
 import DialogFormResubmitPagesPreview from './DialogFormResubmitPagesPreview.vue';
 import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
@@ -190,6 +172,7 @@ import {
   Unsubscribe,
   onSnapshot,
 } from '@firebase/firestore';
+import DialogApplicantCameraImage from './camera/DialogApplicantCameraImage.vue';
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
@@ -203,6 +186,11 @@ const rejectedPages = ref<
   (ApplicantPage & {
     id: string;
     uploadedFile: null | File;
+    acceptedFile: {
+      file: File;
+      downloadURL: string;
+      angle?: 0 | 90 | 180 | 270;
+    } | null;
     url: string;
     contentType: string;
     error: boolean;
@@ -211,10 +199,13 @@ const rejectedPages = ref<
 const hasUploadedPages = computed(() =>
   rejectedPages.value.some((p) => p.uploadedFile)
 );
+const missingUploadedPages = computed(() =>
+  rejectedPages.value.some((p) => !p.acceptedFile)
+);
 const unsubRejectedPages = ref<Unsubscribe | null>(null);
 onMounted(async () => {
   await setRejectedPages();
-  await setSample();
+  // await setSample();
 });
 
 onBeforeUnmount(() => {
@@ -258,6 +249,7 @@ const setRejectedPages = async () => {
               error: false,
               id: pageSnap.id,
               uploadedFile: null,
+              acceptedFile: null,
               url,
               contentType: metadata.contentType as string,
             };
@@ -270,36 +262,70 @@ const setRejectedPages = async () => {
   });
 };
 
-const setSample = async () => {
-  if (props.doc.sample) {
-    const sampleRef = storageRefs.getSampleRef(
-      props.form.company.id,
-      props.form.dashboard.id,
-      props.doc.sample.file
-    );
-    const metadata = await getMetadata(sampleRef);
-    const contentType = metadata.contentType;
-    const url = await getDownloadURL(sampleRef);
-    if (url && contentType) {
-      sample.value = {
-        url,
-        contentType,
-      };
-    }
-  }
-};
+// const setSample = async () => {
+//   if (props.doc.sample) {
+//     const sampleRef = storageRefs.getSampleRef(
+//       props.form.company.id,
+//       props.form.dashboard.id,
+//       props.doc.sample.file
+//     );
+//     const metadata = await getMetadata(sampleRef);
+//     const contentType = metadata.contentType;
+//     const url = await getDownloadURL(sampleRef);
+//     if (url && contentType) {
+//       sample.value = {
+//         url,
+//         contentType,
+//       };
+//     }
+//   }
+// };
 
 const onClickResubmit = (index: number) => {
   if (!rejectedPages.value[index].uploadedFile) {
     filePickerRefs.value[index].pickFiles();
   } else {
     $q.dialog({
-      title: 'Do you want to change this page?',
-      cancel: true,
+      title: 'Do you want to remove this uploaded image?',
+      ok: 'Yes',
+      cancel: 'No',
     }).onOk(() => {
-      filePickerRefs.value[index].pickFiles();
+      // filePickerRefs.value[index].pickFiles();
+      const page = rejectedPages.value[index];
+      page.uploadedFile = null;
+      page.acceptedFile = null;
     });
   }
+};
+
+const onFilePicked = (value: File, index: number) => {
+  const page = rejectedPages.value[index];
+  const file = value;
+  const IMAGE_URL = URL.createObjectURL(file);
+  console.log('value url', IMAGE_URL);
+  const doc = props.doc;
+  const latestIndex = 0;
+  $q.dialog({
+    component: DialogApplicantCameraImage,
+    componentProps: {
+      IMAGE_URL,
+      doc,
+      latestIndex,
+      index,
+    },
+  })
+    .onOk((payload: { image: File; angle: 0 | 90 | 180 | 270 }) => {
+      const { image, angle } = payload;
+      page.acceptedFile = {
+        file: image,
+        downloadURL: IMAGE_URL,
+        angle,
+      };
+      console.log(page);
+    })
+    .onCancel(() => {
+      page.uploadedFile = null;
+    });
 };
 
 const onExitWithUploadedFiles = () => {
@@ -354,47 +380,36 @@ const openDialogFormResubmitPagesPreview = () => {
   });
 };
 
-const sample = ref<{
-  url: string;
-  contentType: string;
-} | null>(null);
+// const sample = ref<{
+//   url: string;
+//   contentType: string;
+// } | null>(null);
 const isLoading = ref(false);
 
-const openDialogFormTips = () => {
-  amplitude.track('View Tips', {
-    docName: props.doc.name,
-    docId: props.doc.id,
-    status: 'resubmit pages',
-  });
-  $q.dialog({
-    component: DialogFormTips,
-  });
-};
+// const openDialogFormTips = () => {
+//   amplitude.track('View Tips', {
+//     docName: props.doc.name,
+//     docId: props.doc.id,
+//     status: 'resubmit pages',
+//   });
+//   $q.dialog({
+//     component: DialogFormTips,
+//   });
+// };
 
 const openBaseDialogViewImage = (
   imgURL: string,
   contentType: string,
-  file?: File | null
+  angle?: 0 | 90 | 180 | 270
 ) => {
-  if (file) {
-    const fileBlob = new Blob([file], { type: file.type });
-    const downloadURL = URL.createObjectURL(fileBlob);
-    $q.dialog({
-      component: BaseDialogViewImage,
-      componentProps: {
-        imgURL: downloadURL,
-        contentType: file.type,
-      },
-    });
-  } else {
-    $q.dialog({
-      component: BaseDialogViewImage,
-      componentProps: {
-        imgURL,
-        contentType,
-      },
-    });
-  }
+  $q.dialog({
+    component: BaseDialogViewImage,
+    componentProps: {
+      imgURL,
+      contentType,
+      angle,
+    },
+  });
 };
 
 defineEmits([

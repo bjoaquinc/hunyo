@@ -16,6 +16,7 @@
         ref="imageRef"
         v-if="contentType.includes('image')"
         class="image-width absolute-center"
+        @error="showError"
         :style="
           angle
             ? isTilted
@@ -77,7 +78,9 @@ const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const isTilted = ref(false);
 const aspectRatio = ref(0);
 const imageRef = ref<QImg | null>(null);
+
 const onDialogShow = () => {
+  console.log(props);
   if (imageRef.value) {
     const width = imageRef.value.$el.clientWidth;
     const height = imageRef.value.$el.clientHeight;
@@ -88,6 +91,10 @@ const onDialogShow = () => {
       isTilted.value = true;
     }
   }
+};
+
+const showError = (error) => {
+  console.log(error);
 };
 
 defineEmits([

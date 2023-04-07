@@ -16,6 +16,12 @@ export type PageStatus =
   | 'admin-checked'
   | 'accepted'
   | 'rejected';
+export type RejectionReasons =
+  | 'wrong-document'
+  | 'edges-not-visible'
+  | 'blurry'
+  | 'too-dark'
+  | 'other';
 
 export interface Request {
   createdAt: Timestamp;
@@ -69,15 +75,15 @@ export interface ApplicantDocument {
   deviceSubmitted?: 'desktop' | 'mobile';
   docNumber: number;
   totalPages: number;
-  adminAcceptedPages: number;
-  acceptedPages: number;
+  // adminAcceptedPages: number;
+  // acceptedPages: number;
+  submissionCount: number; // NEW
   delayedUntil?: Timestamp;
   rejection?: {
-    type: 'pages' | 'full-submission';
-    reasons: string[];
+    reasons: RejectionReasons[];
     rejectedBy: string;
     rejectedAt: Timestamp;
-    pageIds?: string[];
+    message?: string;
   };
 }
 
@@ -94,12 +100,12 @@ export interface ApplicantPage {
   status: PageStatus;
   submittedFormat: string;
   submittedSize: number;
-  submissionCount: number;
-  rejection?: {
-    reason: string;
-    other?: string;
-    message?: string;
-  };
+  submissionCount: number; // Mapped to document submission count
+  // rejection?: {
+  //   reason: string;
+  //   other?: string;
+  //   message?: string;
+  // };
   updatingFixedImage?: boolean;
   imageProperties?: ApplicantPageImageProperties;
 }
