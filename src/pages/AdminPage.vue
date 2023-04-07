@@ -5,8 +5,7 @@
       v-if="
         selectedDoc &&
         selectedPageIndex !== null &&
-        pages.length > 0 &&
-        !acceptIsLoading
+        pages.length > 0
       "
     >
       <!-- Original Page Render -->
@@ -64,31 +63,15 @@
             />
           </div>
         </q-img>
-      </div>
-      <div class="col-12 flex justify-around q-py-md">
-        <q-btn
-          @click="updatePageStatus('accepted')"
-          :outline="pages[selectedPageIndex].updatedStatus !== 'accepted'"
-          :loading="acceptIsLoading"
-          label="Accept"
-          color="positive"
-          size="lg"
-        />
-        <q-btn
-          @click="openDialogAdminCheckReject()"
-          :outline="pages[selectedPageIndex].updatedStatus !== 'rejected'"
-          label="Reject"
-          color="negative"
-          size="lg"
-        />
-        <q-btn
-          :loading="replaceIsLoading"
-          @click="openEditImageDialog"
-          :outline="pages[selectedPageIndex].updatedStatus !== 'replaced'"
-          label="Edit"
-          color="primary"
-          size="lg"
-        />
+        <q-inner-loading
+          :showing="
+            pages &&
+            selectedPageIndex !== null &&
+            pages[selectedPageIndex].updatingFixedImage
+          "
+        >
+          <q-spinner-pie size="80px" color="primary" />
+        </q-inner-loading>
       </div>
     </div>
     <div v-else class="absolute-center text-h3">Select a page...</div>
@@ -96,127 +79,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Form, RejectionCode, RejectionReason } from 'src/utils/types';
+import { Form } from 'src/utils/types';
 import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
-import { useQuasar } from 'quasar';
-import DialogAdminCheckReject from 'src/components/admin/DialogAdminCheckReject.vue';
-import DialogAdminEditImage from 'src/components/admin/DialogAdminEditImage.vue';
-const replaceIsLoading = ref(false);
 
-const props = defineProps<{
+defineProps<{
   selectedDoc: (ApplicantDocument & { id: string }) | null;
   selectedApplicant: (Form & { id: string }) | null;
   pages: (ApplicantPage & {
     id: string;
     originalURL: string;
     fixedURL?: string;
-    updatedStatus: 'not-checked' | 'accepted' | 'rejected' | 'replaced';
   })[];
   selectedPageIndex: number | null;
 }>();
 
-const emit = defineEmits<{
-  (e: 'clearSelectedPage'): void;
-  (
-    e: 'updatePageStatus',
-    pageId: string,
-    status: 'accepted' | 'rejected' | 'replaced'
-  ): void;
-  (
-    e: 'addPageRejection',
-    pageId: string,
-    reason: RejectionReason,
-    message?: string
-  ): void;
-}>();
 
-const $q = useQuasar();
-
-const acceptIsLoading = ref(false);
-
-const updatePageStatus = (status: 'accepted' | 'rejected' | 'replaced') => {
-  const { pages, selectedPageIndex } = props;
-  if (pages.length > 0 && selectedPageIndex !== null) {
-    const page = pages[selectedPageIndex];
-    emit('updatePageStatus', page.id, status);
-  }
-};
-
-const openEditImageDialog = () => {
-  console.log('open');
-  if (props.selectedPageIndex === null) return;
-  console.log('testing');
-  $q.dialog({
-    component: DialogAdminEditImage,
-    componentProps: {
-      page: props.pages[props.selectedPageIndex],
-    },
-  });
-};
-
-// const updateImageProperty = async () => {
-//   replaceIsLoading.value = true;
-//   console.log(props);
-//   if (props.selectedPageIndex === null) return;
-//   if (!props.selectedDoc) return;
-//   const page = props.pages[props.selectedPageIndex];
-//   const fileName = `${page.name}.jpeg`;
-//   const storageRef = storageRefs.getOriginalDocRef(
-//     page.companyId,
-//     page.dashboardId,
-//     page.applicantId,
-//     fileName
-//   );
-//   console.log('updating image metadata');
-//   await updateMetadata(storageRef, {
-//     customMetadata: {
-//       property: 'removeBrightness',
-//       format: props.selectedDoc.requestedFormat,
-//       companyId: page.companyId,
-//       dashboardId: page.dashboardId,
-//       applicantId: page.applicantId,
-//     },
-//   });
-//   replaceIsLoading.value = false;
-// };
-
-const addPageRejection = (
-  pageId: string,
-  reason: RejectionReason,
-  message?: string
-) => {
-  console.log('Emitting event');
-  emit('addPageRejection', pageId, reason, message);
-};
-
-const openDialogAdminCheckReject = () => {
-  const dialog = $q.dialog({
-    component: DialogAdminCheckReject,
-  });
-  dialog.onOk(
-    (payload: {
-      type: RejectionCode;
-      reason: RejectionReason;
-      message?: string;
-    }) => {
-      const { type, reason, message } = payload;
-      if (type === 'pages') {
-        console.log('pages');
-        if (props.selectedPageIndex === null) return;
-        const currentPage = props.pages[props.selectedPageIndex];
-        addPageRejection(currentPage.id, reason, message);
-        updatePageStatus('rejected');
-      }
-      if (type === 'full-submission') {
-        for (const page of props.pages) {
-          addPageRejection(page.id, reason, message);
-          emit('updatePageStatus', page.id, 'rejected');
-        }
-      }
-    }
-  );
-};
 </script>
 
 <style scoped></style>

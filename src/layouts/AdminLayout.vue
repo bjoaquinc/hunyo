@@ -66,7 +66,7 @@
           icon="create_new_folder"
           :done="step > 2"
         >
-          <div v-show="!isEditingName">
+          <div v-show="!isEditingName && !isEditingImageProperties">
             <div
               class="text-h6 q-mb-md flex items-center"
               v-if="selectedApplicant && selectedApplicant.applicant.name"
@@ -85,7 +85,7 @@
                 dense
               />
               <q-btn
-                @click="showEditApplicantName"
+                @click="showEditName"
                 class="text-body1"
                 :label="`${selectedApplicant.applicant.name.first} ${selectedApplicant.applicant.name.middle} ${selectedApplicant.applicant.name.last}`"
                 flat
@@ -94,26 +94,48 @@
                 no-caps
               />
             </div>
-            <q-list separator v-if="selectedApplicant">
+            <q-list separator v-if="selectedApplicant" class="q-mt-sm">
               <q-separator />
               <q-item
                 :clickable="!selectedDoc || selectedDoc.name !== doc.name"
                 v-for="(doc, index) in sortedDocs"
                 :key="index"
               >
-                <q-item-section
-                  @click="
-                    () => {
-                      if (
-                        selectedPage &&
-                        (!selectedDoc || selectedDoc.name !== doc.name)
-                      ) {
-                        selectedPageIndex = null;
-                      }
-                      selectedDocIndex = index;
-                    }
-                  "
-                  ><div class="text-primary text-h6">{{ doc.name }}</div>
+                <q-item-section>
+                  <div class="flex justify-between full-width">
+                    <div
+                      @click="
+                        () => {
+                          if (selectedDoc && selectedDoc.name === doc.name) {
+                            return;
+                          } else {
+                            selectedDocIndex = index;
+                          }
+                        }
+                      "
+                      class="text-primary text-h6"
+                      :class="
+                        !selectedDoc || doc.name !== selectedDoc.name
+                          ? 'full-width'
+                          : ''
+                      "
+                    >
+                      {{ doc.name }}
+                    </div>
+                    <q-btn
+                      @click="
+                        () => {
+                          selectedPageIndex = null;
+                          selectedDocIndex = null;
+                        }
+                      "
+                      v-if="selectedDoc && selectedDoc.name === doc.name"
+                      icon="fas fa-times"
+                      flat
+                      dense
+                      color="primary"
+                    />
+                  </div>
                   <q-slide-transition>
                     <q-list
                       v-if="
@@ -121,24 +143,50 @@
                         selectedDoc.name === doc.name &&
                         sortedPages.length > 0
                       "
+                      class="q-mt-sm"
                       separator
                     >
                       <q-item
                         v-for="(page, index) in sortedPages"
                         :key="index"
-                        @click="selectedPageIndex = index"
+                        @click="
+                          () => {
+                            if (
+                              selectedPageIndex !== null &&
+                              selectedPageIndex === index
+                            ) {
+                              isEditingImageProperties = true;
+                            } else {
+                              selectedPageIndex = index;
+                            }
+                          }
+                        "
                         :active="
                           selectedPage !== null &&
                           selectedPage.name === page.name
                         "
                         active-class="bg-grey-4"
+                        class="q-py-sm"
                         clickable
                         v-ripple
                       >
                         <q-item-section>{{ page.name }}</q-item-section>
                       </q-item>
                       <q-btn
-                        @click="updateDocAndPagesStatus"
+                        @click="doc.updatedStatus = 'admin-checked'"
+                        label="Accept"
+                        color="positive"
+                        class="full-width q-mt-sm"
+                        :outline="doc.updatedStatus !== 'admin-checked'"
+                      />
+                      <q-btn
+                        @click="doc.updatedStatus = 'rejected'"
+                        label="Reject"
+                        color="negative"
+                        class="full-width q-mt-sm"
+                        :outline="doc.updatedStatus !== 'rejected'"
+                      />
+                      <q-btn
                         label="Done"
                         color="primary"
                         class="full-width q-mt-md"
@@ -164,90 +212,20 @@
                     </q-list>
                   </q-slide-transition>
                 </q-item-section>
-                <q-item-section
-                  avatar
-                  side
-                  v-if="selectedDoc && selectedDoc.name === doc.name"
-                >
-                  <q-btn
-                    @click="
-                      () => {
-                        selectedDocIndex = null;
-                        selectedPageIndex = null;
-                      }
-                    "
-                    icon="fas fa-times"
-                    class="q-mb-auto"
-                    flat
-                    dense
-                    color="primary"
-                  />
-                </q-item-section>
               </q-item>
               <q-separator />
             </q-list>
           </div>
-          <div v-show="isEditingName">
-            <q-form @submit.prevent="updateName" greedy>
-              <div class="flex items-center justify-between">
-                <div class="text-h6">Edit Name</div>
-                <q-btn
-                  @click="
-                    () => {
-                      isEditingName = false;
-                      updatedName = {
-                        first: '',
-                        middle: '',
-                        last: '',
-                      };
-                    }
-                  "
-                  icon="fas fa-times"
-                  flat
-                  dense
-                  color="grey-8"
-                />
-              </div>
-              <div class="row q-gutter-sm q-mr-sm q-mt-sm">
-                <div class="col-12">
-                  <q-input
-                    :rules="[(val) => !!val || 'This field is required']"
-                    v-model="updatedName.first"
-                    label="First Name"
-                    filled
-                    dense
-                  />
-                </div>
-                <div class="col-12">
-                  <q-input
-                    :rules="[(val) => !!val || 'This field is required']"
-                    v-model="updatedName.middle"
-                    label="Middle Name"
-                    filled
-                    dense
-                  />
-                </div>
-                <div class="col-12">
-                  <q-input
-                    :rules="[(val) => !!val || 'This field is required']"
-                    v-model="updatedName.last"
-                    label="Last Name"
-                    filled
-                    dense
-                  />
-                </div>
-                <div class="col-12">
-                  <q-btn
-                    :loading="isUpdatingName"
-                    type="submit"
-                    label="Update Name"
-                    color="primary"
-                    class="full-width"
-                  />
-                </div>
-              </div>
-            </q-form>
-          </div>
+          <AdminEditName
+            v-if="isEditingName"
+            :selected-applicant="selectedApplicant"
+            @exitUpdateName="hideEditName"
+          />
+          <AdminEditImageProperties
+            v-if="isEditingImageProperties"
+            :selected-page="selectedPage"
+            @exitUpdateImageProperties="hideEditImageProperties"
+          />
         </q-step>
       </q-stepper>
     </q-drawer>
@@ -270,10 +248,6 @@
 
     <q-page-container>
       <router-view
-        ref="adminPageRef"
-        @update-page-status="updatePageStatus"
-        @add-page-rejection="addPageRejection"
-        @clear-selected-page="clearSelectedPage"
         :pages="sortedPages"
         :selected-page-index="selectedPageIndex"
         :selected-doc="selectedDoc"
@@ -284,24 +258,23 @@
 </template>
 
 <script lang="ts" setup>
-import * as amplitude from '@amplitude/analytics-browser';
+// import * as amplitude from '@amplitude/analytics-browser';
 import { ref, onMounted, watch, computed } from 'vue';
-import { dbColRefs, dbDocRefs } from 'src/utils/db';
+import { dbColRefs } from 'src/utils/db';
 import {
-  increment,
   onSnapshot,
   orderBy,
   query,
-  serverTimestamp,
   Unsubscribe,
-  updateDoc,
   where,
 } from '@firebase/firestore';
-import { Form, RejectionReason } from 'src/utils/types';
+import { Form } from 'src/utils/types';
 import { QStepper } from 'quasar';
 import { FullMetadata, getDownloadURL, getMetadata } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
 import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
+import AdminEditName from 'src/components/admin/AdminEditName.vue';
+import AdminEditImageProperties from 'src/components/admin/AdminEditImageProperties.vue';
 
 interface ImageProperties {
   sharpness: number;
@@ -338,12 +311,7 @@ onMounted(async () => {
 });
 const showWarningMessage = ref(false);
 const isEditingName = ref(false);
-const updatedName = ref({
-  first: '',
-  middle: '',
-  last: '',
-});
-const isUpdatingName = ref(false);
+const isEditingImageProperties = ref(false);
 
 const applicants = ref<(Form & { id: string })[]>([]);
 const unsubApplicants = ref<Unsubscribe | null>(null);
@@ -356,31 +324,32 @@ const selectedApplicant = computed<null | (Form & { id: string })>(() => {
   }
 });
 
-const showEditApplicantName = () => {
+const showEditName = () => {
   if (selectedApplicant.value && selectedApplicant.value.applicant.name) {
-    updatedName.value = selectedApplicant.value.applicant.name;
     isEditingName.value = true;
   }
 };
 
-const updateName = async () => {
-  isUpdatingName.value = true;
-  if (selectedApplicant.value) {
-    const applicantRef = dbDocRefs.getFormRef(selectedApplicant.value.id);
-    await updateDoc(applicantRef, {
-      'applicant.name': updatedName.value,
-    });
-    updatedName.value = {
-      first: '',
-      middle: '',
-      last: '',
-    };
-    isEditingName.value = false;
-  }
-  isUpdatingName.value = false;
+const hideEditName = () => {
+  isEditingName.value = false;
 };
 
-const sortedDocs = ref<(ApplicantDocument & { id: string })[]>([]);
+const showEditImageProperties = () => {
+  if (selectedPage.value) {
+    isEditingImageProperties.value = true;
+  }
+};
+
+const hideEditImageProperties = () => {
+  isEditingImageProperties.value = false;
+};
+
+const sortedDocs = ref<
+  (ApplicantDocument & {
+    id: string;
+    updatedStatus: 'admin-checked' | 'rejected' | '';
+  })[]
+>([]);
 // Get applicant documents form firestore
 watch(selectedApplicant, async (newVal) => {
   if (newVal) {
@@ -401,14 +370,14 @@ watch(selectedApplicant, async (newVal) => {
       unsubSortedDocs.value = onSnapshot(
         q,
         (applicantDocsSnap) => {
-          const applicantDocsList: (ApplicantDocument & { id: string })[] = [];
-          applicantDocsSnap.forEach((applicantDocSnap) => {
-            const applicantDocData = applicantDocSnap.data();
-            applicantDocsList.push({
-              id: applicantDocSnap.id,
-              ...applicantDocData,
-            });
-          });
+          const applicantDocsList: (ApplicantDocument & {
+            id: string;
+            updatedStatus: 'admin-checked' | 'rejected' | '';
+          })[] = applicantDocsSnap.docs.map((doc) => ({
+            id: doc.id,
+            updatedStatus: '',
+            ...doc.data(),
+          }));
           sortedDocs.value = applicantDocsList;
           runOnce();
         },
@@ -434,7 +403,6 @@ const sortedPages = ref<
     id: string;
     originalURL: string;
     fixedURL?: string;
-    updatedStatus: 'not-checked' | 'accepted' | 'rejected' | 'replaced';
   })[]
 >([]);
 // Get document pages from firestore
@@ -515,199 +483,30 @@ const selectedPage = computed(() => {
   }
 });
 
-const updatePageStatus = (
-  pageId: string,
-  status: 'accepted' | 'rejected' | 'replaced'
-) => {
-  sendAmplitudeAssessPageEvent(status);
-  const pageIndex = sortedPages.value.findIndex((page) => page.id === pageId);
-  sortedPages.value[pageIndex].updatedStatus = status;
-};
-
-const sendAmplitudeAssessPageEvent = (status: string) => {
-  if (originalMetadata.value && fixedMetadata.value) {
-    const originalImageProperties = {
-      ...originalMetadata.value.customMetadata,
-    } as unknown as ImageProperties;
-    const fixedImageProperties = {
-      ...fixedMetadata.value.customMetadata,
-    } as unknown as ImageProperties;
-    amplitude.track('Admin Assess Page', {
-      decision: status,
-      originalBrightness: originalImageProperties.brightness,
-      originalSharpness: originalImageProperties.sharpness,
-      originalContrast: originalImageProperties.contrast,
-      fixedBrightness: fixedImageProperties.brightness,
-      fixedSharpness: fixedImageProperties.sharpness,
-      fixedContrast: fixedImageProperties.contrast,
-      docName: selectedDoc.value?.name,
-      docId: selectedDoc.value?.id,
-      pageNumber: selectedPage.value?.pageNumber,
-      pageId: selectedPage.value?.id,
-      totalNumberOfPages: sortedPages.value.length,
-    });
-  }
-};
-
-const addPageRejection = (
-  pageId: string,
-  reason: RejectionReason,
-  message?: string
-) => {
-  const pageIndex = sortedPages.value.findIndex((page) => page.id === pageId);
-  sortedPages.value[pageIndex].rejection = {
-    reason,
-    message,
-  };
-  console.log(sortedPages.value[pageIndex]);
-};
-
-const updateDocAndPagesStatus = async () => {
-  if (!pagesAreChecked()) return;
-  if (!selectedDoc.value) return;
-  selectedPageIndex.value = null;
-  let isRejected = false;
-  let numOfAcceptedPages = 0;
-  const rejectionReasons: string[] = [];
-  const rejectedPageIds: string[] = [];
-  const promises: Promise<void>[] = [];
-  sortedPages.value.forEach((page) => {
-    if (page.updatedStatus === 'rejected' && page.rejection) {
-      isRejected = true;
-      if (!rejectionReasons.includes(page.rejection.reason)) {
-        rejectionReasons.push(page.rejection.reason);
-      }
-      rejectedPageIds.push(page.id);
-      const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
-      const promise = updateDoc(pageRef, {
-        status: 'rejected',
-        rejection: page.rejection,
-      });
-      promises.push(promise);
-    }
-    if (
-      page.updatedStatus === 'accepted' ||
-      page.updatedStatus === 'replaced'
-    ) {
-      numOfAcceptedPages++;
-      const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
-      const promise = updateDoc(pageRef, {
-        status: 'admin-checked',
-      });
-      promises.push(promise);
-    }
-  });
-
-  const docRef = dbDocRefs.getDocumentRef(
-    selectedDoc.value.companyId,
-    selectedDoc.value.id
-  );
-
-  if (!isRejected) {
-    // Accept Document
-    const promise = updateDoc(docRef, {
-      adminAcceptedPages: increment(numOfAcceptedPages),
-    });
-    promises.push(promise);
-
-    // TODO: UPDATE NAME FOR RRJM, REMOVE FOR OTHER CLIENTS!
-    const capitalizeFirstLetter = (string: string) => {
-      const stringToLowerCase = string.toLowerCase();
-      return (
-        stringToLowerCase.charAt(0).toUpperCase() + stringToLowerCase.slice(1)
-      );
-    };
-
-    const form = applicants.value[selectedApplicantIndex.value as number];
-    const name = form.applicant.name as {
-      first: string;
-      middle: string;
-      last: string;
-    };
-
-    const fixName = (name: string) => {
-      return name.trim().split(' ').map(capitalizeFirstLetter).join('_');
-    };
-    const fixedDocName = selectedDoc.value.name
-      .replace(' (If Available)', '')
-      .replace(' - ', '-');
-    const fixedName = [
-      fixName(name.first),
-      fixName(name.middle),
-      fixName(name.last),
-    ];
-    const DOCUMENT_SUFFIX = selectedDoc.value.requestedFormat;
-    const updatedDocName = `${fixedDocName}_${fixedName.join(
-      '_'
-    )}.${DOCUMENT_SUFFIX}`;
-    promises.push(updateDoc(docRef, { updatedName: updatedDocName }));
-    console.log(selectedDoc.value.id);
-  }
-
-  if (
-    isRejected &&
-    (numOfAcceptedPages > 0 ||
-      sortedPages.value.length < selectedDoc.value.totalPages)
-  ) {
-    // Resubmit Pages
-    const promise = updateDoc(docRef, {
-      adminAcceptedPages: increment(numOfAcceptedPages),
-      status: 'rejected',
-      rejection: {
-        rejectedAt: serverTimestamp(),
-        type: 'pages',
-        pageIds: rejectedPageIds,
-        reasons: rejectionReasons,
-        rejectedBy: 'admin',
-      },
-    });
-    promises.push(promise);
-  }
-
-  if (
-    isRejected &&
-    numOfAcceptedPages === 0 &&
-    sortedPages.value.length === selectedDoc.value.totalPages
-  ) {
-    // Resubmit Full Document
-    const promise = updateDoc(docRef, {
-      status: 'rejected',
-      rejection: {
-        rejectedAt: serverTimestamp(),
-        type: 'full-submission',
-        reasons: rejectionReasons,
-        rejectedBy: 'admin',
-      },
-    });
-    promises.push(promise);
-  }
-
-  const formRef = dbDocRefs.getFormRef(selectedDoc.value.formId);
-  const DECREMENT = increment(-1);
-  const promise = updateDoc(formRef, {
-    adminCheckDocs: DECREMENT,
-  });
-  promises.push(promise);
-
-  await Promise.all(promises);
-};
-
-const pagesAreChecked = () => {
-  for (const page of sortedPages.value) {
-    if (page.updatedStatus === 'not-checked') {
-      showWarningMessage.value = true;
-      selectedPageIndex.value = sortedPages.value.findIndex(
-        (p) => p.id === page.id
-      );
-      const timeout = setTimeout(() => {
-        showWarningMessage.value = false;
-        clearTimeout(timeout);
-      }, 10000);
-      return false;
-    }
-  }
-  return true;
-};
+// const sendAmplitudeAssessPageEvent = (status: string) => {
+//   if (originalMetadata.value && fixedMetadata.value) {
+//     const originalImageProperties = {
+//       ...originalMetadata.value.customMetadata,
+//     } as unknown as ImageProperties;
+//     const fixedImageProperties = {
+//       ...fixedMetadata.value.customMetadata,
+//     } as unknown as ImageProperties;
+//     amplitude.track('Admin Assess Page', {
+//       decision: status,
+//       originalBrightness: originalImageProperties.brightness,
+//       originalSharpness: originalImageProperties.sharpness,
+//       originalContrast: originalImageProperties.contrast,
+//       fixedBrightness: fixedImageProperties.brightness,
+//       fixedSharpness: fixedImageProperties.sharpness,
+//       fixedContrast: fixedImageProperties.contrast,
+//       docName: selectedDoc.value?.name,
+//       docId: selectedDoc.value?.id,
+//       pageNumber: selectedPage.value?.pageNumber,
+//       pageId: selectedPage.value?.id,
+//       totalNumberOfPages: sortedPages.value.length,
+//     });
+//   }
+// };
 
 const originalMetadata = ref<FullMetadata | null>(null);
 const fixedMetadata = ref<FullMetadata | null>(null);
@@ -793,10 +592,6 @@ watch(selectedPage, async (newValue) => {
     fixedMetadata.value = null;
   }
 });
-
-const clearSelectedPage = () => {
-  selectedPageIndex.value = null;
-};
 
 const step = ref(1);
 const stepperRef = ref<QStepper | null>(null);
