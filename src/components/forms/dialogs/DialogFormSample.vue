@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { QDialog, useDialogPluginComponent } from 'quasar';
 
-const props = defineProps<{
+defineProps<{
   sampleURL: string;
 }>();
 

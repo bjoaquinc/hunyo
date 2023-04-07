@@ -102,8 +102,6 @@ import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
 import { useQuasar } from 'quasar';
 import DialogAdminCheckReject from 'src/components/admin/DialogAdminCheckReject.vue';
 import DialogAdminEditImage from 'src/components/admin/DialogAdminEditImage.vue';
-import { storageRefs } from 'src/utils/storage';
-import { updateMetadata } from '@firebase/storage';
 const replaceIsLoading = ref(false);
 
 const props = defineProps<{

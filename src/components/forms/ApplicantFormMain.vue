@@ -31,34 +31,34 @@
             @click="onDocumentClick(index)"
             class="text-h6 q-py-md rounded-borders"
             :class="
-              documentItemStyles[doc.status].bgColor
-                ? `bg-${documentItemStyles[doc.status].bgColor}`
+              documentStatusStyles[doc.status].bgColor
+                ? `bg-${documentStatusStyles[doc.status].bgColor}`
                 : ''
             "
             v-for="(doc, index) in documents"
             :key="index"
-            :clickable="documentItemStyles[doc.status].clickable"
-            :v-ripple="documentItemStyles[doc.status].clickable"
+            :clickable="documentStatusStyles[doc.status].clickable"
+            :v-ripple="documentStatusStyles[doc.status].clickable"
           >
             <q-item-section avatar>
               <q-icon
                 name="fas fa-file"
-                :color="documentItemStyles[doc.status].textColor"
+                :color="documentStatusStyles[doc.status].textColor"
               />
             </q-item-section>
             <q-item-section
-              :class="`text-${documentItemStyles[doc.status].textColor}`"
+              :class="`text-${documentStatusStyles[doc.status].textColor}`"
               >{{ doc.name }}
             </q-item-section>
             <q-item-section class="text-subtitle1 text-grey-8">
               <div
                 class="q-ml-auto flex items-center"
-                :class="`text-${documentItemStyles[doc.status].textColor}`"
+                :class="`text-${documentStatusStyles[doc.status].textColor}`"
               >
-                {{ documentItemStyles[doc.status].actionLabel
+                {{ documentStatusStyles[doc.status].actionLabel
                 }}<q-icon
-                  v-if="documentItemStyles[doc.status].actionIcon"
-                  :name="(documentItemStyles[doc.status].actionIcon as string)"
+                  v-if="documentStatusStyles[doc.status].actionIcon"
+                  :name="(documentStatusStyles[doc.status].actionIcon as string)"
                   class="q-ml-md"
                   size="sm"
                 />
@@ -72,27 +72,27 @@
             @click="onDocumentClick(index)"
             class="text-subtitle1 q-py-md"
             :class="
-              documentItemStyles[doc.status].bgColor
-                ? `bg-${documentItemStyles[doc.status].bgColor}`
+              documentStatusStyles[doc.status].bgColor
+                ? `bg-${documentStatusStyles[doc.status].bgColor}`
                 : ''
             "
             v-for="(doc, index) in documents"
             :key="index"
-            :clickable="documentItemStyles[doc.status].clickable"
-            :v-ripple="documentItemStyles[doc.status].clickable"
+            :clickable="documentStatusStyles[doc.status].clickable"
+            :v-ripple="documentStatusStyles[doc.status].clickable"
           >
             <q-item-section
-              :class="`text-${documentItemStyles[doc.status].textColor}`"
+              :class="`text-${documentStatusStyles[doc.status].textColor}`"
             >
               {{
-                `${documentItemStyles[doc.status].mobileLabel} ${doc.name}`
+                `${documentStatusStyles[doc.status].mobileLabel} ${doc.name}`
               }}</q-item-section
             >
             <q-item-section avatar>
               <q-icon
-                :name="documentItemStyles[doc.status].actionIcon"
+                :name="documentStatusStyles[doc.status].actionIcon"
                 size="xs"
-                :color="documentItemStyles[doc.status].textColor"
+                :color="documentStatusStyles[doc.status].textColor"
               />
             </q-item-section>
           </q-item>
@@ -105,22 +105,20 @@
 
 <script setup lang="ts">
 import * as amplitude from '@amplitude/analytics-browser';
+import { documentStatusStyles } from './styles';
 import { useQuasar, QSpinnerPie } from 'quasar';
 import { onMounted, ref, computed } from 'vue';
-// import DialogFormSubmitDoc from 'src/components/forms/dialogs/DialogFormSubmitDoc.vue';
-import DialogFormSubmitDocImage from './dialogs/DialogFormSubmitDocImage.vue';
 import { Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
 import { DateTime } from 'luxon';
+import DialogFormSubmitDocImage from './dialogs/DialogFormSubmitDocImage.vue';
 import DialogFormDocumentAvailability from './dialogs/DialogFormDocumentAvailability.vue';
 import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
-import DialogFormResubmitPages from './dialogs/DialogFormResubmitPages.vue';
-import DialogFormResubmitFull from './dialogs/DialogFormResubmitFull.vue';
 import DialogFormDelayedUpdate from './dialogs/DialogFormDelayedUpdate.vue';
 import DialogFormSample from './dialogs/DialogFormSample.vue';
 import { dbDocRefs } from 'src/utils/db';
-import { Timestamp, updateDoc } from '@firebase/firestore';
+import { updateDoc } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
 
 const props = defineProps<{
@@ -139,64 +137,6 @@ const deadline = computed(() => {
 });
 
 const $q = useQuasar();
-const documentItemStyles = {
-  'not-submitted': {
-    textColor: 'primary',
-    actionIcon: 'fas fa-chevron-right',
-    actionLabel: 'Submit now',
-    mobileLabel: 'Upload',
-    clickable: true,
-    bgColor: null,
-  },
-  delayed: {
-    textColor: 'orange-8',
-    actionIcon: 'fas fa-clock',
-    actionLabel: 'Delayed. Update?',
-    mobileLabel: 'Delayed',
-    clickable: true,
-    bgColor: null,
-  },
-  submitted: {
-    textColor: 'grey-8',
-    actionIcon: 'fas fa-check',
-    actionLabel: 'Submitted',
-    mobileLabel: 'Uploaded',
-    clickable: false,
-    bgColor: null,
-  },
-  accepted: {
-    textColor: 'positive',
-    actionIcon: 'fas fa-check',
-    actionLabel: 'Accepted',
-    mobileLabel: 'Accepted',
-    clickable: false,
-    bgColor: null,
-  },
-  rejected: {
-    bgColor: 'negative',
-    textColor: 'white',
-    actionIcon: 'fas fa-chevron-right',
-    actionLabel: 'Rejected. Resubmit now',
-    mobileLabel: 'Rejected',
-    clickable: true,
-  },
-  'not-applicable': {
-    bgColor: null,
-    textColor: 'grey-6',
-    actionIcon: 'fas fa-minus',
-    actionLabel: 'Not Applicable. Change?',
-    mobileLabel: 'Not Applicable',
-    clickable: true,
-  },
-  'admin-checked': {
-    textColor: 'grey-8',
-    actionIcon: 'fas fa-check',
-    actionLabel: 'Submitted',
-    mobileLabel: 'Uploaded',
-    clickable: false,
-    bgColor: null,
-  },
-};
 const logoURL = ref('');
 
 onMounted(async () => {
@@ -219,7 +159,7 @@ const onDocumentClick = (index: number) => {
     onNotSubmitted(index);
   }
   if (docStatus === 'rejected' && rejection) {
-    onRejected(index, rejection);
+    onRejected();
   }
   if (docStatus === 'not-applicable') {
     onNotApplicable(index);
@@ -238,7 +178,6 @@ const onNotSubmitted = (index: number) => {
     },
   }).onOk(async (documentAvailability) => {
     if (documentAvailability === 'available') {
-      // if (props.form.company.id === 'InibLSJAf2QUlBg1bhJV' || process.env.DEV) {
       await new Promise<void>((resolve) => {
         showSample(props.documents[index], resolve);
       });
@@ -256,22 +195,6 @@ const onNotSubmitted = (index: number) => {
           type: 'positive',
         });
       });
-      // } else {
-      //   $q.dialog({
-      //     component: DialogFormSubmitDoc,
-      //     componentProps: {
-      //       doc: props.documents[index],
-      //       form: props.form,
-      //       index,
-      //     },
-      //   }).onOk(() => {
-      //     const docName = props.documents[index].name;
-      //     $q.notify({
-      //       message: `${docName} submitted. Thank you.`,
-      //       type: 'positive',
-      //     });
-      //   });
-      // }
     }
 
     if (documentAvailability === 'not-available') {
@@ -325,41 +248,8 @@ const showSample = async (
   });
 };
 
-const onRejected = (
-  index: number,
-  rejection: {
-    type: 'pages' | 'full-submission';
-    reasons: string[];
-    rejectedBy: string;
-    rejectedAt: Timestamp;
-    pageIds?: string[] | undefined;
-  }
-) => {
-  if (rejection.type === 'full-submission') {
-    $q.dialog({
-      component: DialogFormResubmitFull,
-      componentProps: {
-        doc: props.documents[index],
-        form: props.form,
-      },
-    });
-    console.log('Full Submission');
-  }
-
-  if (rejection.type === 'pages') {
-    $q.dialog({
-      component: DialogFormResubmitPages,
-      componentProps: {
-        doc: props.documents[index],
-        form: props.form,
-      },
-    }).onOk(() => {
-      $q.notify({
-        message: 'Document resubmitted. Thank you.',
-        type: 'positive',
-      });
-    });
-  }
+const onRejected = () => {
+  // CREATE NEW FLOW FOR DOCUMENT RESUBMISSION
 };
 
 const onNotApplicable = (index: number) => {

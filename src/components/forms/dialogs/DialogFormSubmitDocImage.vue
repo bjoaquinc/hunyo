@@ -165,7 +165,7 @@ import { Form, PageStatus } from 'src/utils/types';
 import { useQuasar } from 'quasar';
 import draggable from 'vuedraggable';
 import DialogFormSubmitDocPreview from './DialogFormSubmitDocPreview.vue';
-import DialogApplicantCameraImageVue from './camera/DialogApplicantCameraImage.vue';
+import DialogApplicantCameraImageVue from './DialogApplicantCameraImage.vue';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
 import { ApplicantDocument } from 'src/utils/new-types';
 
