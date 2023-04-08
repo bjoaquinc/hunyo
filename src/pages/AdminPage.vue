@@ -2,14 +2,10 @@
   <q-page>
     <div
       class="row q-col-gutter-md q-py-md"
-      v-if="
-        selectedDoc &&
-        selectedPageIndex !== null &&
-        pages.length > 0
-      "
+      v-if="selectedDoc && selectedPageIndex !== null && pages.length > 0"
     >
       <!-- Original Page Render -->
-      <div class="col">
+      <div class="col" style="min-height: 90vh">
         <q-img
           v-if="pages[selectedPageIndex].submittedFormat === 'image/jpeg'"
           style="width: 100%; height: auto"
@@ -92,8 +88,6 @@ defineProps<{
   })[];
   selectedPageIndex: number | null;
 }>();
-
-
 </script>
 
 <style scoped></style>

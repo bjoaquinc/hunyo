@@ -172,103 +172,122 @@
                       >
                         <q-item-section>{{ page.name }}</q-item-section>
                       </q-item>
-                      <q-btn
-                        @click="doc.updatedStatus = 'admin-checked'"
-                        label="Accept"
-                        color="positive"
-                        class="full-width q-mt-sm"
-                        :outline="doc.updatedStatus !== 'admin-checked'"
-                      />
-                      <q-btn
-                        @click="doc.updatedStatus = 'rejected'"
-                        label="Reject"
-                        color="negative"
-                        class="full-width q-mt-sm"
-                        :outline="doc.updatedStatus !== 'rejected'"
-                      />
-                      <q-slide-transition>
-                        <div
-                          v-if="doc.updatedStatus === 'rejected'"
-                          class="row q-gutter-sm q-mt-md"
-                        >
-                          <div class="text-body1 text-grey-8 col-12">
-                            Is this the wrong doc?
-                          </div>
-                          <q-btn
-                            @click="
-                              () => {
-                                doc.updatedRejection.reasons = [
-                                  'wrong-document',
-                                ];
-                                doc.isWrongDoc = true;
-                              }
-                            "
-                            class="col"
-                            label="Yes"
-                            color="primary"
-                            :outline="doc.isWrongDoc !== true"
-                          />
-                          <q-btn
-                            @click="
-                              () => {
-                                doc.updatedRejection.reasons = [];
-                                doc.isWrongDoc = false;
-                              }
-                            "
-                            class="col"
-                            label="No"
-                            color="primary"
-                            :outline="doc.isWrongDoc !== false"
-                          />
-                          <q-slide-transition>
-                            <div
-                              v-if="doc.isWrongDoc === false"
-                              class="col-12 q-mt-sm row"
-                            >
-                              <q-select
-                                class="col-12"
-                                filled
-                                v-model="doc.updatedRejection.reasons"
-                                multiple
-                                :options="rejectionOptions"
-                                use-chips
-                                stack-label
-                                label="Select all that apply"
-                              />
-                              <q-input
-                                autogrow
-                                v-model="doc.updatedRejection.message"
-                                filled
-                                label="Comment (optional)"
-                                class="q-mt-sm col-12"
-                              />
+                      <q-form @submit.prevent="acceptOrRejectDocument">
+                        <q-btn
+                          @click="doc.updatedStatus = 'admin-checked'"
+                          label="Accept"
+                          color="positive"
+                          class="full-width q-mt-sm"
+                          :outline="doc.updatedStatus !== 'admin-checked'"
+                        />
+                        <q-btn
+                          @click="doc.updatedStatus = 'rejected'"
+                          label="Reject"
+                          color="negative"
+                          class="full-width q-mt-sm"
+                          :outline="doc.updatedStatus !== 'rejected'"
+                        />
+                        <q-slide-transition>
+                          <div
+                            v-if="doc.updatedStatus === 'rejected'"
+                            class="row q-gutter-sm q-mt-md"
+                          >
+                            <div class="text-body1 text-grey-8 col-12">
+                              Is this the wrong doc?
                             </div>
-                          </q-slide-transition>
+                            <q-btn
+                              @click="
+                                () => {
+                                  doc.updatedRejection.reasons = [
+                                    {
+                                      label: 'Wrong document',
+                                      value: 'wrong-document',
+                                    },
+                                  ];
+                                  doc.isWrongDoc = true;
+                                }
+                              "
+                              class="col"
+                              label="Yes"
+                              color="primary"
+                              :outline="doc.isWrongDoc !== true"
+                            />
+                            <q-btn
+                              @click="
+                                () => {
+                                  doc.updatedRejection.reasons = [];
+                                  doc.isWrongDoc = false;
+                                }
+                              "
+                              class="col"
+                              label="No"
+                              color="primary"
+                              :outline="doc.isWrongDoc !== false"
+                            />
+                            <q-slide-transition>
+                              <div
+                                v-if="doc.isWrongDoc === false"
+                                class="col-12 row"
+                              >
+                                <q-select
+                                  class="col-12 q-mt-sm"
+                                  filled
+                                  v-model="doc.updatedRejection.reasons"
+                                  multiple
+                                  :options="rejectionOptions"
+                                  use-chips
+                                  stack-label
+                                  label="Select all that apply"
+                                  :rules="[
+                                    (val) =>
+                                      val.length > 0 ||
+                                      'Please add at least one reason',
+                                  ]"
+                                />
+                                <q-input
+                                  autogrow
+                                  v-model="doc.updatedRejection.message"
+                                  :rules="[
+                                    (val) =>
+                                      !!val ||
+                                      !doc.updatedRejection.reasons.some(
+                                        (reason) => reason.value === 'other'
+                                      ) ||
+                                      'Please add a comment',
+                                  ]"
+                                  filled
+                                  label="Comment (optional)"
+                                  class="col-12"
+                                />
+                              </div>
+                            </q-slide-transition>
+                          </div>
+                        </q-slide-transition>
+                        <q-btn
+                          type="submit"
+                          :loading="checkDocumentLoading"
+                          label="Done"
+                          color="primary"
+                          class="full-width q-mt-sm"
+                        />
+                        <div
+                          class="text-body1 q-mt-md text-negative q-px-sm"
+                          v-if="showWarningMessage"
+                        >
+                          <div class="q-mt-md text-center">
+                            <q-icon
+                              size="lg"
+                              name="fas fa-exclamation-triangle"
+                            />
+                          </div>
+                          <div class="q-mt-md text-center">
+                            <span>Warning!</span>
+                          </div>
+                          <div class="q-mt-md text-center">
+                            {{ warningMessage }}
+                          </div>
                         </div>
-                      </q-slide-transition>
-                      <q-btn
-                        label="Done"
-                        color="primary"
-                        class="full-width q-mt-md"
-                      />
-                      <div
-                        class="text-body1 q-mt-md text-negative q-px-sm"
-                        v-if="showWarningMessage"
-                      >
-                        <div class="q-mt-md text-center">
-                          <q-icon
-                            size="lg"
-                            name="fas fa-exclamation-triangle"
-                          />
-                        </div>
-                        <div class="q-mt-md text-center">
-                          <span>Warning!</span>
-                        </div>
-                        <div class="q-mt-md text-center">
-                          You missed some pages. Please review and accept or
-                          reject them.
-                        </div>
-                      </div>
+                      </q-form>
                     </q-list>
                   </q-slide-transition>
                 </q-item-section>
@@ -320,13 +339,15 @@
 <script lang="ts" setup>
 // import * as amplitude from '@amplitude/analytics-browser';
 import { ref, onMounted, watch, computed } from 'vue';
-import { dbColRefs } from 'src/utils/db';
+import { dbColRefs, dbDocRefs } from 'src/utils/db';
 import {
   onSnapshot,
   orderBy,
   query,
   Unsubscribe,
+  updateDoc,
   where,
+  serverTimestamp,
 } from '@firebase/firestore';
 import { Form } from 'src/utils/types';
 import { QStepper } from 'quasar';
@@ -345,25 +366,6 @@ interface ImageProperties {
   brightness: number;
   contrast: number;
 }
-
-const rejectionOptions = [
-  {
-    label: 'Blurry',
-    value: 'blurry',
-  },
-  {
-    label: 'Edges not visible',
-    value: 'birth-certificate',
-  },
-  {
-    label: 'Too dark',
-    value: 'too-dark',
-  },
-  {
-    label: 'Other',
-    value: 'other',
-  },
-];
 
 const acceptedStatus = ['submitted'];
 
@@ -393,6 +395,7 @@ onMounted(async () => {
   });
 });
 const showWarningMessage = ref(false);
+const warningMessage = ref('');
 const isEditingName = ref(false);
 const isEditingImageProperties = ref(false);
 
@@ -406,6 +409,19 @@ const selectedApplicant = computed<null | (Form & { id: string })>(() => {
     return null;
   }
 });
+const step = ref(1);
+const stepperRef = ref<QStepper | null>(null);
+const leftDrawerOpen = ref(false);
+const rightDrawerOpen = ref(false);
+const checkDocumentLoading = ref(false);
+
+const toggleLeftDrawer = () => {
+  leftDrawerOpen.value = !leftDrawerOpen.value;
+};
+
+const toggleRightDrawer = () => {
+  rightDrawerOpen.value = !rightDrawerOpen.value;
+};
 
 const showEditName = () => {
   if (selectedApplicant.value && selectedApplicant.value.applicant.name) {
@@ -427,12 +443,34 @@ const hideEditImageProperties = () => {
   isEditingImageProperties.value = false;
 };
 
+const rejectionOptions = [
+  {
+    label: 'Blurry',
+    value: 'blurry',
+  },
+  {
+    label: 'Edges not visible',
+    value: 'birth-certificate',
+  },
+  {
+    label: 'Too dark',
+    value: 'too-dark',
+  },
+  {
+    label: 'Other',
+    value: 'other',
+  },
+];
+
 const sortedDocs = ref<
   (ApplicantDocument & {
     id: string;
     updatedStatus: 'admin-checked' | 'rejected' | '';
     updatedRejection: {
-      reasons: RejectionReasons[];
+      reasons: {
+        label: string;
+        value: RejectionReasons;
+      }[];
       rejectedBy: 'admin';
       message: string;
     };
@@ -464,7 +502,7 @@ watch(selectedApplicant, async (newVal) => {
             updatedStatus: '',
             isWrongDoc: null,
             updatedRejection: {
-              reasons: ['wrong-document'],
+              reasons: [],
               rejectedBy: 'admin',
               message: '',
             },
@@ -684,16 +722,81 @@ watch(selectedPage, async (newValue) => {
   }
 });
 
-const step = ref(1);
-const stepperRef = ref<QStepper | null>(null);
-const leftDrawerOpen = ref(false);
-const rightDrawerOpen = ref(false);
-
-const toggleLeftDrawer = () => {
-  leftDrawerOpen.value = !leftDrawerOpen.value;
+const displayWarningMessage = (message: string) => {
+  warningMessage.value = message;
+  showWarningMessage.value = true;
+  setTimeout(() => {
+    clearWarningMessage();
+  }, 5000);
 };
 
-const toggleRightDrawer = () => {
-  rightDrawerOpen.value = !rightDrawerOpen.value;
+const clearWarningMessage = () => {
+  showWarningMessage.value = false;
+  warningMessage.value = '';
+};
+
+const validateDecision = () => {
+  if (selectedDoc.value) {
+    if (selectedDoc.value.updatedStatus === '') {
+      // Handle no decision
+      displayWarningMessage('Please either accept or reject document');
+      return false;
+    }
+    if (
+      selectedDoc.value.updatedStatus === 'rejected' &&
+      selectedDoc.value.isWrongDoc === null
+    ) {
+      // Handle is wrong doc not selected
+      displayWarningMessage('Please select if document is wrong');
+      return false;
+    }
+    return true;
+  }
+  return false;
+};
+
+const acceptOrRejectDocument = async () => {
+  try {
+    // Remove warning message if it is showing
+    clearWarningMessage();
+
+    checkDocumentLoading.value = true;
+    if (!validateDecision()) return;
+    if (selectedDoc.value && selectedDoc.value.updatedStatus) {
+      const applicantDocRef = dbDocRefs.getDocumentRef(
+        selectedDoc.value.companyId,
+        selectedDoc.value.id
+      );
+
+      if (selectedDoc.value.updatedStatus === 'admin-checked') {
+        // Handle accept document
+        await updateDoc(applicantDocRef, {
+          status: 'admin-checked',
+        });
+      }
+      if (selectedDoc.value.updatedStatus === 'rejected') {
+        // Handle reject document
+        const { reasons, rejectedBy, message } =
+          selectedDoc.value.updatedRejection;
+        const rejectionReasons = reasons.map((reason) => reason.value);
+        await updateDoc(applicantDocRef, {
+          status: 'rejected',
+          rejection: {
+            reasons: rejectionReasons,
+            rejectedBy,
+            message,
+            rejectedAt: serverTimestamp(),
+          },
+        });
+      }
+    } else {
+      throw new Error('No document selected');
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
+    // kill loader and possibly remove selected page and document
+    checkDocumentLoading.value = false;
+  }
 };
 </script>
