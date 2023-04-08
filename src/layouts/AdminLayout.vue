@@ -155,7 +155,7 @@
                               selectedPageIndex !== null &&
                               selectedPageIndex === index
                             ) {
-                              isEditingImageProperties = true;
+                              showEditImageProperties();
                             } else {
                               selectedPageIndex = index;
                             }
@@ -186,6 +186,66 @@
                         class="full-width q-mt-sm"
                         :outline="doc.updatedStatus !== 'rejected'"
                       />
+                      <q-slide-transition>
+                        <div
+                          v-if="doc.updatedStatus === 'rejected'"
+                          class="row q-gutter-sm q-mt-md"
+                        >
+                          <div class="text-body1 text-grey-8 col-12">
+                            Is this the wrong doc?
+                          </div>
+                          <q-btn
+                            @click="
+                              () => {
+                                doc.updatedRejection.reasons = [
+                                  'wrong-document',
+                                ];
+                                doc.isWrongDoc = true;
+                              }
+                            "
+                            class="col"
+                            label="Yes"
+                            color="primary"
+                            :outline="doc.isWrongDoc !== true"
+                          />
+                          <q-btn
+                            @click="
+                              () => {
+                                doc.updatedRejection.reasons = [];
+                                doc.isWrongDoc = false;
+                              }
+                            "
+                            class="col"
+                            label="No"
+                            color="primary"
+                            :outline="doc.isWrongDoc !== false"
+                          />
+                          <q-slide-transition>
+                            <div
+                              v-if="doc.isWrongDoc === false"
+                              class="col-12 q-mt-sm row"
+                            >
+                              <q-select
+                                class="col-12"
+                                filled
+                                v-model="doc.updatedRejection.reasons"
+                                multiple
+                                :options="rejectionOptions"
+                                use-chips
+                                stack-label
+                                label="Select all that apply"
+                              />
+                              <q-input
+                                autogrow
+                                v-model="doc.updatedRejection.message"
+                                filled
+                                label="Comment (optional)"
+                                class="q-mt-sm col-12"
+                              />
+                            </div>
+                          </q-slide-transition>
+                        </div>
+                      </q-slide-transition>
                       <q-btn
                         label="Done"
                         color="primary"
@@ -272,7 +332,11 @@ import { Form } from 'src/utils/types';
 import { QStepper } from 'quasar';
 import { FullMetadata, getDownloadURL, getMetadata } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
-import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
+import {
+  ApplicantDocument,
+  ApplicantPage,
+  RejectionReasons,
+} from 'src/utils/new-types';
 import AdminEditName from 'src/components/admin/AdminEditName.vue';
 import AdminEditImageProperties from 'src/components/admin/AdminEditImageProperties.vue';
 
@@ -281,6 +345,25 @@ interface ImageProperties {
   brightness: number;
   contrast: number;
 }
+
+const rejectionOptions = [
+  {
+    label: 'Blurry',
+    value: 'blurry',
+  },
+  {
+    label: 'Edges not visible',
+    value: 'birth-certificate',
+  },
+  {
+    label: 'Too dark',
+    value: 'too-dark',
+  },
+  {
+    label: 'Other',
+    value: 'other',
+  },
+];
 
 const acceptedStatus = ['submitted'];
 
@@ -348,6 +431,12 @@ const sortedDocs = ref<
   (ApplicantDocument & {
     id: string;
     updatedStatus: 'admin-checked' | 'rejected' | '';
+    updatedRejection: {
+      reasons: RejectionReasons[];
+      rejectedBy: 'admin';
+      message: string;
+    };
+    isWrongDoc: boolean | null;
   })[]
 >([]);
 // Get applicant documents form firestore
@@ -370,15 +459,17 @@ watch(selectedApplicant, async (newVal) => {
       unsubSortedDocs.value = onSnapshot(
         q,
         (applicantDocsSnap) => {
-          const applicantDocsList: (ApplicantDocument & {
-            id: string;
-            updatedStatus: 'admin-checked' | 'rejected' | '';
-          })[] = applicantDocsSnap.docs.map((doc) => ({
+          sortedDocs.value = applicantDocsSnap.docs.map((doc) => ({
             id: doc.id,
             updatedStatus: '',
+            isWrongDoc: null,
+            updatedRejection: {
+              reasons: ['wrong-document'],
+              rejectedBy: 'admin',
+              message: '',
+            },
             ...doc.data(),
           }));
-          sortedDocs.value = applicantDocsList;
           runOnce();
         },
         reject
