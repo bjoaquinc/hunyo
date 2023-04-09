@@ -166,6 +166,8 @@ const props = defineProps<{
   uploadedFiles: UploadedFile[];
 }>();
 
+const updatedSubmissionCount = computed(() => props.doc.submissionCount + 1);
+
 interface UploadedFile {
   name: string;
   file: File;
@@ -317,7 +319,6 @@ const createApplicantPages = async (
 ) => {
   const pagesRef = dbColRefs.getPagesRef(props.doc.companyId);
   const promises: Promise<DocumentReference>[] = [];
-  const PAGE_SUBMISSION_COUNT = props.doc.submissionCount + 1;
   pages.forEach((page) => {
     const applicantPage: ApplicantPage = {
       createdAt: serverTimestamp() as Timestamp,
@@ -327,7 +328,7 @@ const createApplicantPages = async (
       dashboardId: props.doc.dashboardId,
       applicantId: props.doc.applicantId,
       status: 'submitted',
-      submissionCount: PAGE_SUBMISSION_COUNT,
+      submissionCount: updatedSubmissionCount.value,
       ...page,
     };
     const promise = addDoc(pagesRef, applicantPage);
@@ -340,12 +341,11 @@ const createApplicantPages = async (
 const updateApplicantDocument = async (totalPages: number) => {
   const docRef = dbDocRefs.getDocumentRef(props.doc.companyId, props.doc.id);
   const UPDATED_DOC_STATUS = 'submitted';
-  const UPDATED_SUBMISSION_COUNT = props.doc.submissionCount + 1;
   await updateDoc(docRef, {
     status: UPDATED_DOC_STATUS,
     totalPages,
     deviceSubmitted: $q.platform.is.mobile ? 'mobile' : 'desktop',
-    submissionCount: UPDATED_SUBMISSION_COUNT,
+    submissionCount: updatedSubmissionCount.value,
   });
 };
 

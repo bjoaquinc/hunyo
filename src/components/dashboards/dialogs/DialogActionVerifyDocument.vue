@@ -374,7 +374,6 @@ onMounted(async () => {
   const q = query(
     pagesRef,
     where('docId', '==', props.applicantDocument.id),
-    where('status', '==', 'admin-checked'),
     orderBy('pageNumber', 'asc')
   );
   await new Promise<void>((resolve, reject) => {

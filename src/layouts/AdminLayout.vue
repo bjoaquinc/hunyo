@@ -738,26 +738,6 @@ const clearWarningMessage = () => {
   warningMessage.value = '';
 };
 
-const validateDecision = () => {
-  if (selectedDoc.value) {
-    if (selectedDoc.value.updatedStatus === '') {
-      // Handle no decision
-      displayWarningMessage('Please either accept or reject document');
-      return false;
-    }
-    if (
-      selectedDoc.value.updatedStatus === 'rejected' &&
-      selectedDoc.value.isWrongDoc === null
-    ) {
-      // Handle is wrong doc not selected
-      displayWarningMessage('Please select if document is wrong');
-      return false;
-    }
-    return true;
-  }
-  return false;
-};
-
 const acceptOrRejectDocument = async () => {
   try {
     // Remove warning message if it is showing
@@ -770,14 +750,17 @@ const acceptOrRejectDocument = async () => {
         selectedDoc.value.companyId,
         selectedDoc.value.id
       );
+      const updatedName = getUpdatedDocName();
+      const updatedStatus = selectedDoc.value.updatedStatus;
 
-      if (selectedDoc.value.updatedStatus === 'admin-checked') {
+      if (updatedStatus === 'admin-checked') {
         // Handle accept document
         await updateDoc(applicantDocRef, {
           status: 'admin-checked',
+          updatedName,
         });
       }
-      if (selectedDoc.value.updatedStatus === 'rejected') {
+      if (updatedStatus === 'rejected') {
         // Handle reject document
         const { reasons, rejectedBy, message } =
           selectedDoc.value.updatedRejection;
@@ -801,5 +784,53 @@ const acceptOrRejectDocument = async () => {
     // kill loader and possibly remove selected page and document
     checkDocumentLoading.value = false;
   }
+};
+
+const validateDecision = () => {
+  if (selectedDoc.value) {
+    if (selectedDoc.value.updatedStatus === '') {
+      // Handle no decision
+      displayWarningMessage('Please either accept or reject document');
+      return false;
+    }
+    if (
+      selectedDoc.value.updatedStatus === 'rejected' &&
+      selectedDoc.value.isWrongDoc === null
+    ) {
+      // Handle is wrong doc not selected
+      displayWarningMessage('Please select if document is wrong');
+      return false;
+    }
+    return true;
+  }
+  return false;
+};
+
+const getUpdatedDocName = () => {
+  if (
+    !selectedApplicant.value ||
+    !selectedApplicant.value.applicant.name ||
+    !selectedDoc.value
+  )
+    return;
+  const name = selectedApplicant.value.applicant.name;
+  Object.keys(name).forEach((key) => {
+    const typedKey = key as keyof typeof name;
+    name[typedKey] = fixName(name[typedKey]);
+  });
+  const { first, middle, last } = name;
+  const updatedName = `${first}_${middle}_${last}`;
+  const docName = selectedDoc.value.name.trim();
+  return docName + '_' + updatedName + '.pdf';
+};
+
+const fixName = (name: string) => {
+  // Remove all non-alphanumeric characters
+  const fixedName = name
+    .trim()
+    .split(' ')
+    .map((word) => word[0].toUpperCase() + word.slice(1).toLowerCase())
+    .join('_');
+  return fixedName;
 };
 </script>
