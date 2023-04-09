@@ -38,13 +38,11 @@ export interface ApplicantDocument {
     file: string;
   };
   instructions?: string;
-  status: DocumentStatus;
+  status: DocumentStatus; // Dictates whether document is pushed down the pipeline.
   deviceSubmitted?: 'desktop' | 'mobile';
   docNumber: number;
   totalPages: number;
-  // adminAcceptedPages: number;
-  // acceptedPages: number;
-  submissionCount: number; // NEW
+  submissionCount: number;
   delayedUntil?: Timestamp;
   rejection?: {
     reasons: RejectionReasons[];
