@@ -109,6 +109,7 @@
                           if (selectedDoc && selectedDoc.name === doc.name) {
                             return;
                           } else {
+                            clearSortedPages();
                             selectedDocIndex = index;
                           }
                         }
@@ -338,7 +339,7 @@
 
 <script lang="ts" setup>
 // import * as amplitude from '@amplitude/analytics-browser';
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { dbColRefs, dbDocRefs } from 'src/utils/db';
 import {
   onSnapshot,
@@ -394,6 +395,13 @@ onMounted(async () => {
     );
   });
 });
+
+onUnmounted(() => {
+  unsubSortedPages.value?.();
+  unsubSortedDocs.value?.();
+  unsubApplicants.value?.();
+});
+
 const showWarningMessage = ref(false);
 const warningMessage = ref('');
 const isEditingName = ref(false);
@@ -487,34 +495,21 @@ watch(selectedApplicant, async (newVal) => {
       where('formId', '==', newVal.id),
       orderBy('docNumber')
     );
-    await new Promise((resolve, reject) => {
-      let runOnce = () => {
-        runOnce = () => {
-          return;
-        };
-        resolve;
-      };
-      unsubSortedDocs.value = onSnapshot(
-        q,
-        (applicantDocsSnap) => {
-          sortedDocs.value = applicantDocsSnap.docs.map((doc) => ({
-            id: doc.id,
-            updatedStatus: '',
-            isWrongDoc: null,
-            updatedRejection: {
-              reasons: [],
-              rejectedBy: 'admin',
-              message: '',
-            },
-            ...doc.data(),
-          }));
-          runOnce();
+    unsubSortedDocs.value = onSnapshot(q, (applicantDocsSnap) => {
+      sortedDocs.value = applicantDocsSnap.docs.map((doc) => ({
+        id: doc.id,
+        updatedStatus: '',
+        isWrongDoc: null,
+        updatedRejection: {
+          reasons: [],
+          rejectedBy: 'admin',
+          message: '',
         },
-        reject
-      );
+        ...doc.data(),
+      }));
     });
   } else {
-    unsubSortedDocs.value?.();
+    clearSortedDocs();
   }
 });
 const unsubSortedDocs = ref<Unsubscribe | null>(null);
@@ -526,6 +521,10 @@ const selectedDoc = computed(() => {
     return null;
   }
 });
+const clearSortedDocs = () => {
+  unsubSortedDocs.value?.();
+  sortedDocs.value = [];
+};
 
 const sortedPages = ref<
   (ApplicantPage & {
@@ -599,7 +598,7 @@ watch(selectedDoc, async (newVal) => {
       );
     });
   } else {
-    unsubSortedPages.value?.();
+    clearSortedPages();
   }
 });
 const unsubSortedPages = ref<Unsubscribe | null>(null);
@@ -611,6 +610,10 @@ const selectedPage = computed(() => {
     return null;
   }
 });
+const clearSortedPages = () => {
+  unsubSortedPages.value?.();
+  sortedPages.value = [];
+};
 
 // const sendAmplitudeAssessPageEvent = (status: string) => {
 //   if (originalMetadata.value && fixedMetadata.value) {
