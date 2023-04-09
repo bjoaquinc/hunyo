@@ -23,39 +23,6 @@ export type RejectionReasons =
   | 'too-dark'
   | 'other';
 
-export interface Request {
-  createdAt: Timestamp;
-  applicant: {
-    id: string;
-    name?: {
-      first: string;
-      last: string;
-    };
-    email: string;
-  };
-  company: {
-    id: string;
-    logo?: string;
-    name: string;
-  };
-  dashboard: {
-    id: string;
-    formContent: {
-      header: string;
-      caption: string;
-    };
-    deadline: Timestamp;
-    job: string;
-    country: string;
-    messages: {
-      opening: string;
-    };
-  };
-  requestStatus: RequestStatus;
-  totalDocs: number;
-  totalDocsComplete: number;
-}
-
 export interface ApplicantDocument {
   createdAt: Timestamp;
   formId: string;
@@ -101,11 +68,6 @@ export interface ApplicantPage {
   submittedFormat: string;
   submittedSize: number;
   submissionCount: number; // Mapped to document submission count
-  // rejection?: {
-  //   reason: string;
-  //   other?: string;
-  //   message?: string;
-  // };
   updatingFixedImage?: boolean;
   imageProperties?: ApplicantPageImageProperties;
 }
@@ -133,28 +95,4 @@ export interface Reject {
   rejectedBy: string;
   reasonForRejection: string;
   message?: string;
-}
-
-export interface Applicant {
-  createdAt: Timestamp;
-  email: string;
-  status: 'not-submitted' | 'incomplete' | 'complete';
-  name?: {
-    first: string;
-    middle: string;
-    last: string;
-  };
-  latestMessage?: {
-    id: string;
-    status: 'pending' | 'delivered' | 'not-delivered';
-    sentAt: Timestamp;
-  };
-  actions: {
-    id: string;
-    type: 'verification';
-  }[];
-  dashboard: {
-    id: string;
-  };
-  docIds: string[];
 }

@@ -4,29 +4,12 @@ import { FieldValue, Timestamp } from 'firebase/firestore';
 
 export type Formats = 'jpeg' | 'pdf';
 
-export type FormTask = 'createDoc' | 'resubmitDoc' | 'resubmitPages';
-
 export type ApplicantStatus = 'not-submitted' | 'incomplete' | 'complete';
 
 export type ApplicantDashboardMessageStatus =
   | 'Pending'
   | 'Delivered'
   | 'Not Delivered';
-
-export type DocumentStatus =
-  | 'Submitted'
-  | 'Accepted'
-  | 'Rejected'
-  | 'Not Submitted'
-  | 'Not Applicable';
-
-export type PageStatus = 'Submitted' | 'Accepted' | 'Rejected';
-
-export type AdminCheckStatus = 'Accepted' | 'Rejected' | 'Not Checked';
-
-export type RejectionCode = 'pages' | 'full-submission';
-
-export type RejectionReason = 'image-quality' | 'wrong-doc' | 'other';
 
 // Firebase models
 
@@ -62,18 +45,6 @@ export interface User {
     id: string;
     title: string;
     type: string;
-  }[];
-  actions?: {
-    createdAt: Timestamp | FieldValue;
-    id: string;
-    type: 'verifyDocuments';
-    applicant: {
-      email: string;
-      name?: {
-        first: string;
-        last: string;
-      };
-    };
   }[];
 }
 
@@ -114,39 +85,6 @@ export interface PublishedDashboard {
   };
   isPublished: true;
   publishedAt: Timestamp;
-  applicantsCount?: number;
-  incompleteApplicantsCount?: number;
-  completeApplicantsCount?: number;
-  actionsCount?: number;
-  messagesSentCount?: number;
-}
-
-export interface Dashboard {
-  createdAt: Timestamp | FieldValue;
-  title: string;
-  options: {
-    type: 'documentCollector';
-    docs: {
-      name: string;
-      format: 'pdf' | 'jpeg';
-      sample?: string;
-    }[];
-    messages: {
-      opening: string;
-      followUps: string[];
-    };
-  };
-  users: {
-    id: string;
-    name: {
-      first: string;
-      last: string;
-    };
-  }[];
-  company: {
-    id: string;
-    name: string;
-  };
   applicantsCount?: number;
   incompleteApplicantsCount?: number;
   completeApplicantsCount?: number;
@@ -209,16 +147,16 @@ export interface Form {
   adminCheckDocs: number;
 }
 
-export interface UpdatedForm extends Omit<Form, 'applicant'> {
-  applicant: {
-    id: string;
-    status: ApplicantStatus;
-    name: {
-      first: string;
-      last: string;
-    };
-  };
-}
+// export interface UpdatedForm extends Omit<Form, 'applicant'> {
+//   applicant: {
+//     id: string;
+//     status: ApplicantStatus;
+//     name: {
+//       first: string;
+//       last: string;
+//     };
+//   };
+// }
 
 export interface AcceptedPage {
   createdAt: Timestamp;
@@ -244,7 +182,7 @@ export interface RejectedPage {
   pageId: string;
   name: string;
   rejectedBy: string;
-  reasonForRejection: RejectionReason;
+  reasonForRejection: string;
   otherReason?: string;
   docName: string;
   contentType: string;
@@ -298,37 +236,4 @@ export interface MessageMetadata {
   applicantId: string;
   dashboardId: string;
   companyId: string;
-}
-
-// Rejections
-
-export interface DocRejection {
-  code: RejectionCode;
-  reason: RejectionReason[];
-  message?: string;
-  rejectedBy: string;
-  rejectedAt: Timestamp;
-}
-
-export interface PageRejection {
-  reason: RejectionReason;
-  message?: string;
-  imageProperties: {
-    brightness: number;
-    contrast: number;
-    sharpness: number;
-  };
-}
-
-export interface RejectionPages {
-  createdAt: Timestamp;
-  companyId: string;
-  dashboardId: string;
-  applicantId: string;
-  formId: string;
-  docId: string;
-  // pages: (AdminCheckPage & {
-  //   id: string;
-  // })[];
-  rejectionData: DocRejection;
 }
