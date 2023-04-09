@@ -58,18 +58,18 @@
           </div>
           <q-separator />
           <q-item
-            @click="documentPages[selectedPageIndex].updatedStatus = 'accepted'"
+            @click="updatedStatus = 'accepted'"
             clickable
             v-ripple
             :class="
-              documentPages[selectedPageIndex].updatedStatus === 'accepted'
+              updatedStatus === 'accepted'
                 ? 'bg-positive text-white'
                 : 'accept-border text-positive'
             "
           >
             <q-item-section>
               <q-item-label class="text-subtitle1 text-weight-bold"
-                >Accept Page {{ slide }}</q-item-label
+                >Accept</q-item-label
               >
             </q-item-section>
             <q-item-section avatar side>
@@ -77,19 +77,19 @@
             </q-item-section>
           </q-item>
           <q-item
-            @click="documentPages[selectedPageIndex].updatedStatus = 'rejected'"
+            @click="updatedStatus = 'rejected'"
             clickable
             v-ripple
             class="q-mt-md"
             :class="
-              documentPages[selectedPageIndex].updatedStatus === 'rejected'
+              updatedStatus === 'rejected'
                 ? 'bg-negative text-white'
                 : 'reject-border text-negative'
             "
           >
             <q-item-section>
               <q-item-label class="text-subtitle1 text-weight-bold"
-                >Reject Page {{ slide }}</q-item-label
+                >Reject</q-item-label
               >
             </q-item-section>
             <q-item-section avatar side>
@@ -97,136 +97,59 @@
             </q-item-section>
           </q-item>
           <q-slide-transition>
+            <div
+              class="row q-gutter-sm q-mt-md"
+              v-if="updatedStatus === 'rejected'"
+            >
+              <div class="text-body1 col-12">Is this the wrong document?</div>
+              <q-btn
+                @click="isWrongDoc = true"
+                class="col"
+                color="primary"
+                label="Yes"
+                :outline="isWrongDoc !== true"
+              />
+              <q-btn
+                @click="isWrongDoc = false"
+                class="col"
+                color="primary"
+                label="No"
+                :outline="isWrongDoc !== false"
+              />
+            </div>
+          </q-slide-transition>
+          <q-slide-transition>
             <q-list
               separator
               class="q-mt-md"
-              v-show="
-                documentPages[selectedPageIndex].updatedStatus === 'rejected'
-              "
+              v-if="updatedStatus === 'rejected' && isWrongDoc === false"
             >
-              <div class="text-body1">Select One</div>
-              <q-separator class="q-mt-sm" />
+              <div class="text-body1">
+                Whats wrong with this document? (Select all that apply)
+              </div>
               <q-item
+                class="q-py-sm"
                 clickable
-                @click="
-                  documentPages[selectedPageIndex].rejectionReason = 'wrong-doc'
-                "
-                :class="
-                  documentPages[selectedPageIndex].rejectionReason ===
-                  'wrong-doc'
-                    ? 'text-white bg-primary'
-                    : 'text-primary'
-                "
+                @click="value.value = !value.value"
+                v-for="(value, key) in rejections"
+                :key="key"
               >
-                <q-item-section class="text-body1">
-                  Wrong Document
+                <q-item-section side top>
+                  <q-checkbox v-model="value.value" />
                 </q-item-section>
+                <q-item-section>{{ value.label }}</q-item-section>
               </q-item>
-              <q-item
-                clickable
-                @click="
-                  documentPages[selectedPageIndex].rejectionReason =
-                    'image-quality'
-                "
-                :class="
-                  documentPages[selectedPageIndex].rejectionReason ===
-                  'image-quality'
-                    ? 'text-white bg-primary'
-                    : 'text-primary'
-                "
-              >
-                <q-item-section class="text-body1">
-                  Poor Image Quality
-                </q-item-section>
-              </q-item>
-              <q-item
-                clickable
-                @click="
-                  documentPages[selectedPageIndex].rejectionReason = 'other'
-                "
-                :class="
-                  documentPages[selectedPageIndex].rejectionReason === 'other'
-                    ? 'text-white bg-primary'
-                    : 'text-primary'
-                "
-              >
-                <q-item-section class="text-body1"> Other </q-item-section>
-              </q-item>
-              <q-separator />
-              <q-slide-transition>
-                <q-input
-                  ref="otherReasonInput"
-                  class="q-mt-sm"
-                  autofocus
-                  autogrow
-                  v-if="
-                    documentPages[selectedPageIndex].rejectionReason === 'other'
-                  "
-                  v-model="documentPages[selectedPageIndex].otherReason"
-                  label="Please explain..."
-                />
-              </q-slide-transition>
-            </q-list>
-          </q-slide-transition>
-          <q-item
-            @click="showOptions = !showOptions"
-            clickable
-            v-ripple
-            class="q-mt-md"
-          >
-            <q-item-section>
-              <q-item-label class="text-subtitle1 text-grey-8 text-weight-bold"
-                >More Options</q-item-label
-              >
-            </q-item-section>
-            <q-item-section avatar side>
-              <q-icon
-                :name="`fas fa-chevron-${showOptions ? 'up' : 'down'}`"
-                color="grey-8"
+              <q-input
+                class="q-mt-sm"
+                v-model="message"
+                label="Add message (optional)"
+                outlined
+                autogrow
               />
-            </q-item-section>
-          </q-item>
-          <q-separator />
-          <q-slide-transition>
-            <q-list
-              v-show="showOptions"
-              class="q-pa-md"
-              style="padding-top: 0 !important"
-              separator
-            >
-              <q-item
-                @click="onAcceptAll"
-                class="text-subtitle1 text-weight-bold text-positive"
-                clickable
-                v-ripple
-              >
-                <q-item-section>
-                  <q-item-label> Accept All </q-item-label>
-                </q-item-section>
-                <q-item-section avatar side>
-                  <q-icon name="fas fa-check-double" />
-                </q-item-section>
-              </q-item>
-              <q-item
-                class="text-subtitle1 text-weight-bold text-negative"
-                clickable
-                v-ripple
-              >
-                <q-item-section>
-                  <q-item-label> Reject All </q-item-label>
-                </q-item-section>
-                <q-item-section avatar side>
-                  <q-icon name="fas fa-times" />
-                </q-item-section>
-              </q-item>
             </q-list>
           </q-slide-transition>
-          <q-btn
-            @click="onSubmit"
-            color="primary"
-            label="Done"
-            class="full-width q-mt-xl"
-          />
+          <q-separator />
+          <q-btn color="primary" label="Done" class="full-width q-mt-lg" />
         </q-list>
         <div
           class="text-body1 q-mt-md text-negative q-px-sm"
@@ -318,7 +241,11 @@
 <script setup lang="ts">
 import { QDialog, QInput, QPopupEdit, useDialogPluginComponent } from 'quasar';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
+import {
+  ApplicantDocument,
+  ApplicantPage,
+  RejectionReasons,
+} from 'src/utils/new-types';
 import { dbColRefs, dbDocRefs } from 'src/utils/db';
 import {
   onSnapshot,
@@ -334,17 +261,16 @@ import {
 } from 'firebase/firestore';
 import { getDownloadURL, updateMetadata } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
-import { useUserStore } from 'src/stores/user-store';
-import { RejectionReason } from 'src/utils/types';
+// import { useUserStore } from 'src/stores/user-store';
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
-const { user } = useUserStore();
+// const { user } = useUserStore();
 const drawerRight = ref(true);
 const updatedName = ref('');
 const popUpEditRef = ref<null | QPopupEdit>(null);
 const slide = ref(1);
-const selectedPageIndex = computed(() => slide.value - 1);
-const showOptions = ref(false);
+// const selectedPageIndex = computed(() => slide.value - 1);
+// const showOptions = ref(false);
 const documentPages = ref<
   (ApplicantPage & {
     id: string;
@@ -357,6 +283,17 @@ const documentPages = ref<
 >([]);
 // const pageStatusAndURL = ref<string[]>([]);
 const unsubDocumentPages = ref<Unsubscribe | null>(null);
+
+const updatedStatus = ref<'accepted' | 'rejected' | ''>('');
+const isWrongDoc = ref<null | boolean>(null);
+const rejections = ref({
+  'edges-not-visible': { label: 'Edges not visible', value: false },
+  blurry: { label: 'Blurry', value: false },
+  'too-dark': { label: 'Too dark', value: false },
+  other: { label: 'Other', value: false },
+});
+const message = ref('');
+
 const showWarningMessage = ref(false);
 const warningMessage = ref('');
 const otherReasonInput = ref<QInput | null>(null);
@@ -440,147 +377,147 @@ onUnmounted(() => {
   unsubDocumentPages.value?.();
 });
 
-const onAcceptAll = async () => {
-  for (const page of documentPages.value) {
-    page.updatedStatus = 'accepted';
-  }
-};
+// const onAcceptAll = async () => {
+//   for (const page of documentPages.value) {
+//     page.updatedStatus = 'accepted';
+//   }
+// };
 
-const onSubmit = async () => {
-  if (!validateFields()) return;
-  isLoading.value = true;
-  const promises: Promise<void>[] = [];
-  let rejectedPages = 0;
-  let acceptedPages = 0;
-  let isRejected = false;
-  const rejectionReasons: RejectionReason[] = [];
-  const rejectedPageIds: string[] = [];
-  // Update image status and create accepted/rejected pages
-  documentPages.value.forEach((page) => {
-    if (page.updatedStatus === 'rejected') {
-      // Reject Page
-      isRejected = true;
-      const rejectionReason = page.rejectionReason as RejectionReason;
-      if (!rejectionReasons.includes(rejectionReason)) {
-        rejectionReasons.push(rejectionReason);
-      }
-      rejectedPageIds.push(page.id);
-      rejectedPages++;
-      const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
-      const rejection = {
-        reason: rejectionReason,
-        other: page.otherReason,
-      };
-      promises.push(
-        updateDoc(pageRef, {
-          status: 'rejected',
-          rejection,
-        })
-      );
-      // Create Rejection Page Doc
-      promises.push(
-        createRejectedPageDoc(page, rejectionReason, page.otherReason)
-      );
-    }
-    if (page.updatedStatus === 'accepted') {
-      // Accept Page
-      acceptedPages++;
-      const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
-      promises.push(
-        updateDoc(pageRef, {
-          status: 'accepted',
-        })
-      );
-      // Create Accepted Page Doc
-      promises.push(createAcceptedPageDoc(page));
-    }
-    // Update Image Metadata
-    promises.push(
-      addMetadataToImage(page, page.updatedStatus as 'accepted' | 'rejected')
-    );
-  });
+// const onSubmit = async () => {
+//   if (!validateFields()) return;
+//   isLoading.value = true;
+//   const promises: Promise<void>[] = [];
+//   let rejectedPages = 0;
+//   let acceptedPages = 0;
+//   let isRejected = false;
+//   const rejectionReasons: RejectionReason[] = [];
+//   const rejectedPageIds: string[] = [];
+//   // Update image status and create accepted/rejected pages
+//   documentPages.value.forEach((page) => {
+//     if (page.updatedStatus === 'rejected') {
+//       // Reject Page
+//       isRejected = true;
+//       const rejectionReason = page.rejectionReason as RejectionReason;
+//       if (!rejectionReasons.includes(rejectionReason)) {
+//         rejectionReasons.push(rejectionReason);
+//       }
+//       rejectedPageIds.push(page.id);
+//       rejectedPages++;
+//       const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
+//       const rejection = {
+//         reason: rejectionReason,
+//         other: page.otherReason,
+//       };
+//       promises.push(
+//         updateDoc(pageRef, {
+//           status: 'rejected',
+//           rejection,
+//         })
+//       );
+//       // Create Rejection Page Doc
+//       promises.push(
+//         createRejectedPageDoc(page, rejectionReason, page.otherReason)
+//       );
+//     }
+//     if (page.updatedStatus === 'accepted') {
+//       // Accept Page
+//       acceptedPages++;
+//       const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
+//       promises.push(
+//         updateDoc(pageRef, {
+//           status: 'accepted',
+//         })
+//       );
+//       // Create Accepted Page Doc
+//       promises.push(createAcceptedPageDoc(page));
+//     }
+//     // Update Image Metadata
+//     promises.push(
+//       addMetadataToImage(page, page.updatedStatus as 'accepted' | 'rejected')
+//     );
+//   });
 
-  // Update document status
-  const DECREMENT_REJECTED_PAGES = increment(rejectedPages * -1);
-  const INCREMENT_ACCEPTED_PAGES = increment(acceptedPages);
-  const DECREMENT = increment(-1);
-  const docRef = dbDocRefs.getDocumentRef(
-    props.applicantDocument.companyId,
-    props.applicantDocument.id
-  );
-  const applicantRef = dbDocRefs.getApplicantRef(
-    props.applicantDocument.companyId,
-    props.applicantDocument.dashboardId,
-    props.applicantDocument.applicantId
-  );
+//   // Update document status
+//   const DECREMENT_REJECTED_PAGES = increment(rejectedPages * -1);
+//   const INCREMENT_ACCEPTED_PAGES = increment(acceptedPages);
+//   const DECREMENT = increment(-1);
+//   const docRef = dbDocRefs.getDocumentRef(
+//     props.applicantDocument.companyId,
+//     props.applicantDocument.id
+//   );
+//   const applicantRef = dbDocRefs.getApplicantRef(
+//     props.applicantDocument.companyId,
+//     props.applicantDocument.dashboardId,
+//     props.applicantDocument.applicantId
+//   );
 
-  if (!isRejected) {
-    // Accept Document
+//   if (!isRejected) {
+//     // Accept Document
 
-    const promise = updateDoc(docRef, {
-      acceptedPages: INCREMENT_ACCEPTED_PAGES,
-      updatedName: updatedName.value,
-    });
-    promises.push(promise);
-  }
+//     const promise = updateDoc(docRef, {
+//       acceptedPages: INCREMENT_ACCEPTED_PAGES,
+//       updatedName: updatedName.value,
+//     });
+//     promises.push(promise);
+//   }
 
-  if (
-    isRejected &&
-    (acceptedPages > 0 ||
-      documentPages.value.length < props.applicantDocument.totalPages)
-  ) {
-    // Resubmit Pages
-    const promise = updateDoc(docRef, {
-      acceptedPages: INCREMENT_ACCEPTED_PAGES,
-      adminAcceptedPages: DECREMENT_REJECTED_PAGES,
-      status: 'rejected',
-      rejection: {
-        rejectedAt: serverTimestamp(),
-        type: 'pages',
-        pageIds: rejectedPageIds,
-        reasons: rejectionReasons,
-        rejectedBy: user?.id,
-      },
-    });
-    promises.push(promise);
-    // Update Applicant Accepted Doc Count
-    promises.push(
-      updateDoc(applicantRef, {
-        adminAcceptedDocs: DECREMENT,
-      })
-    );
-  }
+//   if (
+//     isRejected &&
+//     (acceptedPages > 0 ||
+//       documentPages.value.length < props.applicantDocument.totalPages)
+//   ) {
+//     // Resubmit Pages
+//     const promise = updateDoc(docRef, {
+//       acceptedPages: INCREMENT_ACCEPTED_PAGES,
+//       adminAcceptedPages: DECREMENT_REJECTED_PAGES,
+//       status: 'rejected',
+//       rejection: {
+//         rejectedAt: serverTimestamp(),
+//         type: 'pages',
+//         pageIds: rejectedPageIds,
+//         reasons: rejectionReasons,
+//         rejectedBy: user?.id,
+//       },
+//     });
+//     promises.push(promise);
+//     // Update Applicant Accepted Doc Count
+//     promises.push(
+//       updateDoc(applicantRef, {
+//         adminAcceptedDocs: DECREMENT,
+//       })
+//     );
+//   }
 
-  if (
-    isRejected &&
-    acceptedPages === 0 &&
-    documentPages.value.length === props.applicantDocument.totalPages
-  ) {
-    // Resubmit Full Document
-    promises.push(
-      updateDoc(docRef, {
-        status: 'rejected',
-        adminAcceptedPages: DECREMENT_REJECTED_PAGES,
-        rejection: {
-          rejectedAt: serverTimestamp(),
-          type: 'full-submission',
-          reasons: rejectionReasons,
-          rejectedBy: 'admin',
-        },
-      })
-    );
-    // Update Applicant Accepted Doc Count
-    promises.push(
-      updateDoc(applicantRef, {
-        adminAcceptedDocs: DECREMENT,
-      })
-    );
-  }
+//   if (
+//     isRejected &&
+//     acceptedPages === 0 &&
+//     documentPages.value.length === props.applicantDocument.totalPages
+//   ) {
+//     // Resubmit Full Document
+//     promises.push(
+//       updateDoc(docRef, {
+//         status: 'rejected',
+//         adminAcceptedPages: DECREMENT_REJECTED_PAGES,
+//         rejection: {
+//           rejectedAt: serverTimestamp(),
+//           type: 'full-submission',
+//           reasons: rejectionReasons,
+//           rejectedBy: 'admin',
+//         },
+//       })
+//     );
+//     // Update Applicant Accepted Doc Count
+//     promises.push(
+//       updateDoc(applicantRef, {
+//         adminAcceptedDocs: DECREMENT,
+//       })
+//     );
+//   }
 
-  await Promise.all(promises);
-  isLoading.value = false;
-  onDialogOK();
-};
+//   await Promise.all(promises);
+//   isLoading.value = false;
+//   onDialogOK();
+// };
 
 const validateFields = () => {
   for (let i = 0; i < documentPages.value.length; i++) {
@@ -630,70 +567,70 @@ const validateFields = () => {
   return true;
 };
 
-const createAcceptedPageDoc = async (page: ApplicantPage & { id: string }) => {
-  if (!user) return;
-  const acceptedPagesRef = dbColRefs.acceptedPagesRef;
-  await addDoc(acceptedPagesRef, {
-    createdAt: serverTimestamp() as Timestamp,
-    companyId: page.companyId,
-    dashboardId: page.dashboardId,
-    applicantId: page.applicantId,
-    formId: page.formId,
-    docId: page.docId,
-    docName: props.applicantDocument.name,
-    pageId: page.id,
-    name: page.name,
-    contentType: props.applicantDocument.requestedFormat,
-    acceptedBy: user.id,
-  });
-};
+// const createAcceptedPageDoc = async (page: ApplicantPage & { id: string }) => {
+//   if (!user) return;
+//   const acceptedPagesRef = dbColRefs.acceptedPagesRef;
+//   await addDoc(acceptedPagesRef, {
+//     createdAt: serverTimestamp() as Timestamp,
+//     companyId: page.companyId,
+//     dashboardId: page.dashboardId,
+//     applicantId: page.applicantId,
+//     formId: page.formId,
+//     docId: page.docId,
+//     docName: props.applicantDocument.name,
+//     pageId: page.id,
+//     name: page.name,
+//     contentType: props.applicantDocument.requestedFormat,
+//     acceptedBy: user.id,
+//   });
+// };
 
-const createRejectedPageDoc = async (
-  page: ApplicantPage & { id: string },
-  reason: RejectionReason,
-  otherReason?: string
-) => {
-  if (!user) return;
-  const rejectedPagesRef = dbColRefs.rejectedPagesRef;
-  await addDoc(rejectedPagesRef, {
-    createdAt: serverTimestamp() as Timestamp,
-    companyId: page.companyId,
-    dashboardId: page.dashboardId,
-    applicantId: page.applicantId,
-    formId: page.formId,
-    docId: page.docId,
-    docName: props.applicantDocument.name,
-    pageId: page.id,
-    name: page.name,
-    contentType: props.applicantDocument.requestedFormat,
-    rejectedBy: user.id,
-    reasonForRejection: reason,
-    otherReason,
-  });
-};
+// const createRejectedPageDoc = async (
+//   page: ApplicantPage & { id: string },
+//   reason: RejectionReason,
+//   otherReason?: string
+// ) => {
+//   if (!user) return;
+//   const rejectedPagesRef = dbColRefs.rejectedPagesRef;
+//   await addDoc(rejectedPagesRef, {
+//     createdAt: serverTimestamp() as Timestamp,
+//     companyId: page.companyId,
+//     dashboardId: page.dashboardId,
+//     applicantId: page.applicantId,
+//     formId: page.formId,
+//     docId: page.docId,
+//     docName: props.applicantDocument.name,
+//     pageId: page.id,
+//     name: page.name,
+//     contentType: props.applicantDocument.requestedFormat,
+//     rejectedBy: user.id,
+//     reasonForRejection: reason,
+//     otherReason,
+//   });
+// };
 
-const addMetadataToImage = async (
-  page: ApplicantPage & { id: string },
-  status: 'accepted' | 'rejected'
-) => {
-  const FILE_SUFFIX = page.submittedFormat.includes('image') ? 'jpeg' : 'pdf';
-  const UPDATED_IMAGE_NAME = `${page.id}.${FILE_SUFFIX}`;
-  const imageRef = storageRefs.getOriginalDocRef(
-    page.companyId,
-    page.dashboardId,
-    page.applicantId,
-    `${page.name}.${FILE_SUFFIX}`
-  );
-  await updateMetadata(imageRef, {
-    customMetadata: {
-      status,
-      companyId: page.companyId,
-      dashboardId: page.dashboardId,
-      applicantId: page.applicantId,
-      updatedName: UPDATED_IMAGE_NAME,
-    },
-  });
-};
+// const addMetadataToImage = async (
+//   page: ApplicantPage & { id: string },
+//   status: 'accepted' | 'rejected'
+// ) => {
+//   const FILE_SUFFIX = page.submittedFormat.includes('image') ? 'jpeg' : 'pdf';
+//   const UPDATED_IMAGE_NAME = `${page.id}.${FILE_SUFFIX}`;
+//   const imageRef = storageRefs.getOriginalDocRef(
+//     page.companyId,
+//     page.dashboardId,
+//     page.applicantId,
+//     `${page.name}.${FILE_SUFFIX}`
+//   );
+//   await updateMetadata(imageRef, {
+//     customMetadata: {
+//       status,
+//       companyId: page.companyId,
+//       dashboardId: page.dashboardId,
+//       applicantId: page.applicantId,
+//       updatedName: UPDATED_IMAGE_NAME,
+//     },
+//   });
+// };
 
 const warningMessages = {
   notChecked: 'You missed some pages. Please review and accept or reject them.',
