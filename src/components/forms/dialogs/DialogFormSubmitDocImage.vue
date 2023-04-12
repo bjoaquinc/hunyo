@@ -161,7 +161,7 @@ import { getDownloadURL, getMetadata } from '@firebase/storage';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
 import { ref, onMounted, computed } from 'vue';
-import { Form, PageStatus } from 'src/utils/types';
+import { Form } from 'src/utils/types';
 import { useQuasar } from 'quasar';
 import draggable from 'vuedraggable';
 import DialogFormSubmitDocPreview from './DialogFormSubmitDocPreview.vue';
@@ -186,7 +186,6 @@ const sample = ref<{
 interface UploadedFile {
   name: string;
   file: File;
-  status: PageStatus | 'New';
   downloadURL: string;
   isDragging: boolean;
   angle?: 0 | 90 | 180 | 270;
@@ -228,7 +227,6 @@ const onFileChange = (e: Event) => {
       const uploadedFile = {
         name: image.name,
         file: image,
-        status: 'New' as PageStatus,
         downloadURL: IMAGE_URL,
         angle,
         isDragging: false,

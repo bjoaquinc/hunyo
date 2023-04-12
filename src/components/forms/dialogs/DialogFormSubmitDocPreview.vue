@@ -109,15 +109,6 @@
             color="primary"
           />
         </q-card-actions>
-        <!-- <q-inner-loading :showing="isLoading">
-          <q-spinner-pie size="80px" color="primary" />
-          <div
-            class="text-body1 q-mt-md q-px-lg text-weight-bold text-white bg-grey-8"
-          >
-            Uploading Documents. Can take up to 5 minutes. Don't close this
-            page.
-          </div>
-        </q-inner-loading> -->
       </q-form>
       <div v-else class="bg-white q-pa-md">
         <div class="text-h5 q-mt-md">Uploading Documents</div>
@@ -152,11 +143,7 @@ import {
 } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
-import {
-  ApplicantDocument,
-  ApplicantPage,
-  PageStatus,
-} from 'src/utils/new-types';
+import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
@@ -171,7 +158,6 @@ const updatedSubmissionCount = computed(() => props.doc.submissionCount + 1);
 interface UploadedFile {
   name: string;
   file: File;
-  status: PageStatus;
   downloadURL: string;
   angle?: 0 | 90 | 180 | 270;
 }
@@ -327,7 +313,6 @@ const createApplicantPages = async (
       companyId: props.doc.companyId,
       dashboardId: props.doc.dashboardId,
       applicantId: props.doc.applicantId,
-      status: 'submitted',
       submissionCount: updatedSubmissionCount.value,
       ...page,
     };

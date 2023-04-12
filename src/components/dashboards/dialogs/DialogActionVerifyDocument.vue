@@ -52,105 +52,115 @@
       </q-header>
 
       <q-drawer show-if-above v-model="drawerRight" side="right" bordered>
-        <q-list class="q-pa-md" v-if="documentPages.length > 0 && !isLoading">
-          <div class="text-h5 q-mb-md">
-            Page {{ slide }} of {{ documentPages.length }}
-          </div>
-          <q-separator />
-          <q-item
-            @click="updatedStatus = 'accepted'"
-            clickable
-            v-ripple
-            :class="
-              updatedStatus === 'accepted'
-                ? 'bg-positive text-white'
-                : 'accept-border text-positive'
-            "
-          >
-            <q-item-section>
-              <q-item-label class="text-subtitle1 text-weight-bold"
-                >Accept</q-item-label
-              >
-            </q-item-section>
-            <q-item-section avatar side>
-              <q-icon name="fas fa-check" />
-            </q-item-section>
-          </q-item>
-          <q-item
-            @click="updatedStatus = 'rejected'"
-            clickable
-            v-ripple
-            class="q-mt-md"
-            :class="
-              updatedStatus === 'rejected'
-                ? 'bg-negative text-white'
-                : 'reject-border text-negative'
-            "
-          >
-            <q-item-section>
-              <q-item-label class="text-subtitle1 text-weight-bold"
-                >Reject</q-item-label
-              >
-            </q-item-section>
-            <q-item-section avatar side>
-              <q-icon name="fas fa-times" />
-            </q-item-section>
-          </q-item>
-          <q-slide-transition>
-            <div
-              class="row q-gutter-sm q-mt-md"
-              v-if="updatedStatus === 'rejected'"
-            >
-              <div class="text-body1 col-12">Is this the wrong document?</div>
-              <q-btn
-                @click="isWrongDoc = true"
-                class="col"
-                color="primary"
-                label="Yes"
-                :outline="isWrongDoc !== true"
-              />
-              <q-btn
-                @click="isWrongDoc = false"
-                class="col"
-                color="primary"
-                label="No"
-                :outline="isWrongDoc !== false"
-              />
+        <q-form @submit="onSubmit">
+          <q-list class="q-pa-md">
+            <div class="text-h5 q-mb-md">
+              Page {{ slide }} of {{ documentPages.length }}
             </div>
-          </q-slide-transition>
-          <q-slide-transition>
-            <q-list
-              separator
-              class="q-mt-md"
-              v-if="updatedStatus === 'rejected' && isWrongDoc === false"
+            <q-separator />
+            <q-item
+              @click="updatedStatus = 'accepted'"
+              clickable
+              v-ripple
+              :class="
+                updatedStatus === 'accepted'
+                  ? 'bg-positive text-white'
+                  : 'accept-border text-positive'
+              "
             >
-              <div class="text-body1">
-                Whats wrong with this document? (Select all that apply)
-              </div>
-              <q-item
-                class="q-py-sm"
-                clickable
-                @click="value.value = !value.value"
-                v-for="(value, key) in rejections"
-                :key="key"
+              <q-item-section>
+                <q-item-label class="text-subtitle1 text-weight-bold"
+                  >Accept</q-item-label
+                >
+              </q-item-section>
+              <q-item-section avatar side>
+                <q-icon name="fas fa-check" />
+              </q-item-section>
+            </q-item>
+            <q-item
+              @click="updatedStatus = 'rejected'"
+              clickable
+              v-ripple
+              class="q-mt-md"
+              :class="
+                updatedStatus === 'rejected'
+                  ? 'bg-negative text-white'
+                  : 'reject-border text-negative'
+              "
+            >
+              <q-item-section>
+                <q-item-label class="text-subtitle1 text-weight-bold"
+                  >Reject</q-item-label
+                >
+              </q-item-section>
+              <q-item-section avatar side>
+                <q-icon name="fas fa-times" />
+              </q-item-section>
+            </q-item>
+            <q-slide-transition>
+              <div
+                class="row q-gutter-sm q-mt-md"
+                v-if="updatedStatus === 'rejected'"
               >
-                <q-item-section side top>
-                  <q-checkbox v-model="value.value" />
-                </q-item-section>
-                <q-item-section>{{ value.label }}</q-item-section>
-              </q-item>
-              <q-input
-                class="q-mt-sm"
-                v-model="message"
-                label="Add message (optional)"
-                outlined
-                autogrow
-              />
-            </q-list>
-          </q-slide-transition>
-          <q-separator />
-          <q-btn color="primary" label="Done" class="full-width q-mt-lg" />
-        </q-list>
+                <div class="text-body1 col-12">Is this the wrong document?</div>
+                <q-btn
+                  @click="isWrongDoc = true"
+                  class="col"
+                  color="primary"
+                  label="Yes"
+                  :outline="isWrongDoc !== true"
+                />
+                <q-btn
+                  @click="isWrongDoc = false"
+                  class="col"
+                  color="primary"
+                  label="No"
+                  :outline="isWrongDoc !== false"
+                />
+              </div>
+            </q-slide-transition>
+            <q-slide-transition>
+              <q-list
+                separator
+                class="q-mt-md"
+                v-if="updatedStatus === 'rejected' && isWrongDoc === false"
+              >
+                <div class="text-body1">
+                  Whats wrong with this document? (Select all that apply)
+                </div>
+                <q-item
+                  class="q-py-sm"
+                  clickable
+                  @click="value.value = !value.value"
+                  v-for="(value, key) in rejections"
+                  :key="key"
+                >
+                  <q-item-section side top>
+                    <q-checkbox v-model="value.value" />
+                  </q-item-section>
+                  <q-item-section>{{ value.label }}</q-item-section>
+                </q-item>
+                <q-input
+                  class="q-mt-sm"
+                  v-model="message"
+                  :label="`Add message ${
+                    rejections['other'].value === true ? '' : '(Optional)'
+                  }`"
+                  outlined
+                  autogrow
+                />
+              </q-list>
+            </q-slide-transition>
+            <q-separator />
+            <q-btn
+              type="submit"
+              color="primary"
+              label="Done"
+              :loading="isLoading"
+              class="full-width q-mt-lg"
+            />
+          </q-list>
+        </q-form>
         <div
           class="text-body1 q-mt-md text-negative q-px-sm"
           v-if="showWarningMessage"
@@ -198,7 +208,7 @@
               style="max-height: 100%; overflow: auto !important"
             >
               <q-carousel
-                v-if="documentPages.length > 0 && !isLoading"
+                v-if="documentPages.length > 0"
                 style="height: 100%; width: 80%"
                 animated
                 v-model="slide"
@@ -261,10 +271,10 @@ import {
 } from 'firebase/firestore';
 import { getDownloadURL, updateMetadata } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
-// import { useUserStore } from 'src/stores/user-store';
+import { useUserStore } from 'src/stores/user-store';
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
-// const { user } = useUserStore();
+const { user } = useUserStore();
 const drawerRight = ref(true);
 const updatedName = ref('');
 const popUpEditRef = ref<null | QPopupEdit>(null);
@@ -293,10 +303,10 @@ const rejections = ref({
   other: { label: 'Other', value: false },
 });
 const message = ref('');
+const timeout = ref<ReturnType<typeof setTimeout> | null>(null);
 
 const showWarningMessage = ref(false);
 const warningMessage = ref('');
-const otherReasonInput = ref<QInput | null>(null);
 const isLoading = ref(false);
 
 const props = defineProps<{
@@ -519,52 +529,88 @@ onUnmounted(() => {
 //   onDialogOK();
 // };
 
-const validateFields = () => {
-  for (let i = 0; i < documentPages.value.length; i++) {
-    const page = documentPages.value[i];
-    if (page.updatedStatus === 'not-checked') {
-      slide.value = i + 1;
-      warningMessage.value = warningMessages['notChecked'];
-      showWarningMessage.value = true;
+const setWarningMessage = (warningKey: keyof typeof warningMessages) => {
+  warningMessage.value = warningMessages[warningKey];
+  showWarningMessage.value = true;
 
-      const timeout = setTimeout(() => {
-        warningMessage.value = '';
-        showWarningMessage.value = false;
-        clearTimeout(timeout);
-      }, 8000);
+  timeout.value = setTimeout(() => {
+    clearWarningMessage();
+  }, 8000);
+  return false;
+};
+const clearWarningMessage = () => {
+  showWarningMessage.value = false;
+  warningMessage.value = '';
+  if (timeout.value) {
+    clearTimeout(timeout.value);
+  }
+  timeout.value = null;
+};
+
+const validateFields = () => {
+  clearWarningMessage(); // Clear any previous warning messages
+  if (updatedStatus.value === '') {
+    setWarningMessage('no-status-decision');
+    return false;
+  }
+
+  if (updatedStatus.value === 'rejected') {
+    if (isWrongDoc.value === null) {
+      setWarningMessage('no-wrong-doc-decision');
       return false;
     }
-    if (page.updatedStatus === 'rejected') {
-      if (page.rejectionReason === null) {
-        slide.value = i + 1;
-        showWarningMessage.value = true;
-        warningMessage.value = warningMessages['noRejectionReason'];
+    const hasRejectionReason = Object.values(rejections.value).some(
+      (val) => val.value === true
+    );
+    console.log(hasRejectionReason);
+    if (!hasRejectionReason) {
+      setWarningMessage('no-rejection-reason');
+      return false;
+    }
 
-        const timeout = setTimeout(() => {
-          warningMessage.value = '';
-          showWarningMessage.value = false;
-          clearTimeout(timeout);
-        }, 8000);
-
-        return false;
-      }
-      if (page.rejectionReason === 'other' && page.otherReason === '') {
-        slide.value = i + 1;
-        warningMessage.value = warningMessages['noOtherReason'];
-        showWarningMessage.value = true;
-        otherReasonInput.value?.focus();
-
-        const timeout = setTimeout(() => {
-          warningMessage.value = '';
-          showWarningMessage.value = false;
-          clearTimeout(timeout);
-        }, 8000);
-
-        return false;
-      }
+    // If other reason is selected, message is required
+    if (rejections.value['other'].value && !message.value) {
+      setWarningMessage('no-other-reason');
+      return false;
     }
   }
+
   return true;
+};
+
+const onSubmit = async () => {
+  console.log('Running on submit');
+  isLoading.value = true;
+  if (!validateFields()) return;
+  const docRef = dbDocRefs.getDocumentRef(
+    props.applicantDocument.companyId,
+    props.applicantDocument.id
+  );
+  if (updatedStatus.value === 'accepted') {
+    // Handle Accept
+    await updateDoc(docRef, {
+      status: 'accepted',
+      isUpdating: true,
+    });
+  }
+  if (updatedStatus.value === 'rejected') {
+    const rejectionReasons = Object.keys(rejections.value).filter(
+      (key) => rejections.value[key as keyof typeof rejections.value].value
+    ) as RejectionReasons[];
+    console.log(rejectionReasons);
+    await updateDoc(docRef, {
+      status: 'rejected',
+      rejection: {
+        rejectedAt: serverTimestamp(),
+        reasons: rejectionReasons,
+        rejectedBy: user?.id,
+        message: message.value,
+      },
+      isUpdating: true,
+    });
+  }
+  isLoading.value = false;
+  onDialogOK();
 };
 
 // const createAcceptedPageDoc = async (page: ApplicantPage & { id: string }) => {
@@ -633,9 +679,10 @@ const validateFields = () => {
 // };
 
 const warningMessages = {
-  notChecked: 'You missed some pages. Please review and accept or reject them.',
-  noRejectionReason: 'Please specify the reason for rejection',
-  noOtherReason: 'Please explain the reason for rejection',
+  'no-status-decision': 'Please select if the document is accepted or rejected',
+  'no-wrong-doc-decision': 'Please select if the document is wrong or not',
+  'no-rejection-reason': 'Please select at least one reason for rejection',
+  'no-other-reason': "Please add a message for the 'other' reason",
 };
 
 defineEmits([

@@ -11,11 +11,11 @@ export type DocumentStatus =
   | 'accepted'
   | 'rejected'
   | 'not-applicable';
-export type PageStatus =
-  | 'submitted'
-  | 'admin-checked'
-  | 'accepted'
-  | 'rejected';
+// export type PageStatus =
+//   | 'submitted'
+//   | 'admin-checked'
+//   | 'accepted'
+//   | 'rejected';
 export type RejectionReasons =
   | 'wrong-document'
   | 'edges-not-visible'
@@ -43,6 +43,7 @@ export interface ApplicantDocument {
   docNumber: number;
   totalPages: number;
   submissionCount: number;
+  isUpdating: boolean;
   delayedUntil?: Timestamp;
   rejection?: {
     reasons: RejectionReasons[];
@@ -62,7 +63,7 @@ export interface ApplicantPage {
   companyId: string;
   name: string;
   pageNumber: number;
-  status: PageStatus;
+  // status: PageStatus;
   submittedFormat: string;
   submittedSize: number;
   submissionCount: number; // Mapped to document submission count

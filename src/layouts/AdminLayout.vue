@@ -797,7 +797,7 @@ const validateDecision = () => {
       selectedDoc.value.updatedStatus === 'rejected' &&
       selectedDoc.value.isWrongDoc === null
     ) {
-      // Handle is wrong doc not selected
+      // Handle 'wrong doc' not selected
       displayWarningMessage('Please select if document is wrong');
       return false;
     }
@@ -825,7 +825,6 @@ const getUpdatedDocName = () => {
 };
 
 const fixName = (name: string) => {
-  // Remove all non-alphanumeric characters
   const fixedName = name
     .trim()
     .split(' ')
