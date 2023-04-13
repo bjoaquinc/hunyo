@@ -165,7 +165,7 @@ onMounted(async () => {
   const q = query(
     pagesRef,
     where('docId', '==', props.applicantDocument.id),
-    where('status', '==', 'accepted'),
+    where('submissionCount', '==', props.applicantDocument.submissionCount),
     orderBy('pageNumber', 'asc')
   );
   await new Promise<void>((resolve, reject) => {

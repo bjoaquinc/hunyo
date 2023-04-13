@@ -250,7 +250,7 @@
 
 <script setup lang="ts">
 import { QDialog, QInput, QPopupEdit, useDialogPluginComponent } from 'quasar';
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import {
   ApplicantDocument,
   ApplicantPage,
@@ -264,12 +264,10 @@ import {
   orderBy,
   Unsubscribe,
   updateDoc,
-  increment,
-  addDoc,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
-import { getDownloadURL, updateMetadata } from '@firebase/storage';
+import { getDownloadURL } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
 import { useUserStore } from 'src/stores/user-store';
 
@@ -387,148 +385,6 @@ onUnmounted(() => {
   unsubDocumentPages.value?.();
 });
 
-// const onAcceptAll = async () => {
-//   for (const page of documentPages.value) {
-//     page.updatedStatus = 'accepted';
-//   }
-// };
-
-// const onSubmit = async () => {
-//   if (!validateFields()) return;
-//   isLoading.value = true;
-//   const promises: Promise<void>[] = [];
-//   let rejectedPages = 0;
-//   let acceptedPages = 0;
-//   let isRejected = false;
-//   const rejectionReasons: RejectionReason[] = [];
-//   const rejectedPageIds: string[] = [];
-//   // Update image status and create accepted/rejected pages
-//   documentPages.value.forEach((page) => {
-//     if (page.updatedStatus === 'rejected') {
-//       // Reject Page
-//       isRejected = true;
-//       const rejectionReason = page.rejectionReason as RejectionReason;
-//       if (!rejectionReasons.includes(rejectionReason)) {
-//         rejectionReasons.push(rejectionReason);
-//       }
-//       rejectedPageIds.push(page.id);
-//       rejectedPages++;
-//       const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
-//       const rejection = {
-//         reason: rejectionReason,
-//         other: page.otherReason,
-//       };
-//       promises.push(
-//         updateDoc(pageRef, {
-//           status: 'rejected',
-//           rejection,
-//         })
-//       );
-//       // Create Rejection Page Doc
-//       promises.push(
-//         createRejectedPageDoc(page, rejectionReason, page.otherReason)
-//       );
-//     }
-//     if (page.updatedStatus === 'accepted') {
-//       // Accept Page
-//       acceptedPages++;
-//       const pageRef = dbDocRefs.getPageRef(page.companyId, page.id);
-//       promises.push(
-//         updateDoc(pageRef, {
-//           status: 'accepted',
-//         })
-//       );
-//       // Create Accepted Page Doc
-//       promises.push(createAcceptedPageDoc(page));
-//     }
-//     // Update Image Metadata
-//     promises.push(
-//       addMetadataToImage(page, page.updatedStatus as 'accepted' | 'rejected')
-//     );
-//   });
-
-//   // Update document status
-//   const DECREMENT_REJECTED_PAGES = increment(rejectedPages * -1);
-//   const INCREMENT_ACCEPTED_PAGES = increment(acceptedPages);
-//   const DECREMENT = increment(-1);
-//   const docRef = dbDocRefs.getDocumentRef(
-//     props.applicantDocument.companyId,
-//     props.applicantDocument.id
-//   );
-//   const applicantRef = dbDocRefs.getApplicantRef(
-//     props.applicantDocument.companyId,
-//     props.applicantDocument.dashboardId,
-//     props.applicantDocument.applicantId
-//   );
-
-//   if (!isRejected) {
-//     // Accept Document
-
-//     const promise = updateDoc(docRef, {
-//       acceptedPages: INCREMENT_ACCEPTED_PAGES,
-//       updatedName: updatedName.value,
-//     });
-//     promises.push(promise);
-//   }
-
-//   if (
-//     isRejected &&
-//     (acceptedPages > 0 ||
-//       documentPages.value.length < props.applicantDocument.totalPages)
-//   ) {
-//     // Resubmit Pages
-//     const promise = updateDoc(docRef, {
-//       acceptedPages: INCREMENT_ACCEPTED_PAGES,
-//       adminAcceptedPages: DECREMENT_REJECTED_PAGES,
-//       status: 'rejected',
-//       rejection: {
-//         rejectedAt: serverTimestamp(),
-//         type: 'pages',
-//         pageIds: rejectedPageIds,
-//         reasons: rejectionReasons,
-//         rejectedBy: user?.id,
-//       },
-//     });
-//     promises.push(promise);
-//     // Update Applicant Accepted Doc Count
-//     promises.push(
-//       updateDoc(applicantRef, {
-//         adminAcceptedDocs: DECREMENT,
-//       })
-//     );
-//   }
-
-//   if (
-//     isRejected &&
-//     acceptedPages === 0 &&
-//     documentPages.value.length === props.applicantDocument.totalPages
-//   ) {
-//     // Resubmit Full Document
-//     promises.push(
-//       updateDoc(docRef, {
-//         status: 'rejected',
-//         adminAcceptedPages: DECREMENT_REJECTED_PAGES,
-//         rejection: {
-//           rejectedAt: serverTimestamp(),
-//           type: 'full-submission',
-//           reasons: rejectionReasons,
-//           rejectedBy: 'admin',
-//         },
-//       })
-//     );
-//     // Update Applicant Accepted Doc Count
-//     promises.push(
-//       updateDoc(applicantRef, {
-//         adminAcceptedDocs: DECREMENT,
-//       })
-//     );
-//   }
-
-//   await Promise.all(promises);
-//   isLoading.value = false;
-//   onDialogOK();
-// };
-
 const setWarningMessage = (warningKey: keyof typeof warningMessages) => {
   warningMessage.value = warningMessages[warningKey];
   showWarningMessage.value = true;
@@ -579,9 +435,8 @@ const validateFields = () => {
 };
 
 const onSubmit = async () => {
-  console.log('Running on submit');
-  isLoading.value = true;
   if (!validateFields()) return;
+  isLoading.value = true;
   const docRef = dbDocRefs.getDocumentRef(
     props.applicantDocument.companyId,
     props.applicantDocument.id
@@ -597,7 +452,6 @@ const onSubmit = async () => {
     const rejectionReasons = Object.keys(rejections.value).filter(
       (key) => rejections.value[key as keyof typeof rejections.value].value
     ) as RejectionReasons[];
-    console.log(rejectionReasons);
     await updateDoc(docRef, {
       status: 'rejected',
       rejection: {
@@ -613,7 +467,7 @@ const onSubmit = async () => {
   onDialogOK();
 };
 
-// const createAcceptedPageDoc = async (page: ApplicantPage & { id: string }) => {
+// const createAcceptedDoc = async (page: ApplicantPage & { id: string }) => {
 //   if (!user) return;
 //   const acceptedPagesRef = dbColRefs.acceptedPagesRef;
 //   await addDoc(acceptedPagesRef, {
@@ -631,7 +485,7 @@ const onSubmit = async () => {
 //   });
 // };
 
-// const createRejectedPageDoc = async (
+// const createRejectedDoc = async (
 //   page: ApplicantPage & { id: string },
 //   reason: RejectionReason,
 //   otherReason?: string
@@ -652,29 +506,6 @@ const onSubmit = async () => {
 //     rejectedBy: user.id,
 //     reasonForRejection: reason,
 //     otherReason,
-//   });
-// };
-
-// const addMetadataToImage = async (
-//   page: ApplicantPage & { id: string },
-//   status: 'accepted' | 'rejected'
-// ) => {
-//   const FILE_SUFFIX = page.submittedFormat.includes('image') ? 'jpeg' : 'pdf';
-//   const UPDATED_IMAGE_NAME = `${page.id}.${FILE_SUFFIX}`;
-//   const imageRef = storageRefs.getOriginalDocRef(
-//     page.companyId,
-//     page.dashboardId,
-//     page.applicantId,
-//     `${page.name}.${FILE_SUFFIX}`
-//   );
-//   await updateMetadata(imageRef, {
-//     customMetadata: {
-//       status,
-//       companyId: page.companyId,
-//       dashboardId: page.dashboardId,
-//       applicantId: page.applicantId,
-//       updatedName: UPDATED_IMAGE_NAME,
-//     },
 //   });
 // };
 

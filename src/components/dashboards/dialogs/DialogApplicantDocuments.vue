@@ -88,7 +88,7 @@ import {
 import { Applicant } from 'src/utils/types';
 import { ApplicantDocument } from 'src/utils/new-types';
 import DialogActionVerifyDocument from './DialogActionVerifyDocument.vue';
-import DialogApplicantPages from './DialogApplicantPages.vue';
+import DialogApplicantPages from './DialogApplicantAcceptedDocument.vue';
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const applicantDocuments = ref<(ApplicantDocument & { id: string })[]>([]);
