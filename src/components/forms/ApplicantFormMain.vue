@@ -120,6 +120,7 @@ import DialogFormSample from './dialogs/DialogFormSample.vue';
 import { dbDocRefs } from 'src/utils/db';
 import { updateDoc } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
+import DialogFormRejectionInformation from './dialogs/DialogFormRejectionInformation.vue';
 
 const props = defineProps<{
   form: Form & { id: string };
@@ -159,7 +160,7 @@ const onDocumentClick = (index: number) => {
     onNotSubmitted(index);
   }
   if (docStatus === 'rejected' && rejection) {
-    onRejected();
+    onRejected(index);
   }
   if (docStatus === 'not-applicable') {
     onNotApplicable(index);
@@ -248,8 +249,29 @@ const showSample = async (
   });
 };
 
-const onRejected = () => {
+const onRejected = (index: number) => {
   // CREATE NEW FLOW FOR DOCUMENT RESUBMISSION
+  $q.dialog({
+    component: DialogFormRejectionInformation,
+    componentProps: {
+      doc: props.documents[index],
+    },
+  }).onOk(() => {
+    $q.dialog({
+      component: DialogFormSubmitDocImage,
+      componentProps: {
+        doc: props.documents[index],
+        form: props.form,
+        index,
+      },
+    }).onOk(() => {
+      const docName = props.documents[index].name;
+      $q.notify({
+        message: `${docName} submitted. Thank you.`,
+        type: 'positive',
+      });
+    });
+  });
 };
 
 const onNotApplicable = (index: number) => {
