@@ -454,6 +454,7 @@ const onSubmit = async () => {
     let rejectionReasons: RejectionReasons[] = [];
     if (isWrongDoc.value) {
       rejectionReasons = ['wrong-document'];
+      message.value = '';
     } else {
       rejectionReasons = Object.keys(rejections.value).filter(
         (key) => rejections.value[key as keyof typeof rejections.value].value

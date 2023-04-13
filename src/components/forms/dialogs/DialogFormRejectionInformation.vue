@@ -10,7 +10,7 @@
     <q-card class="card-container text-grey-8">
       <q-card-section>
         <div class="flex full-width justify-between items-center">
-          <div class="text-h6 text-grey-8">{{ doc.name }} Rejected</div>
+          <div class="text-h6 text-grey-8">Reason for Rejection</div>
           <q-btn
             icon="fas fa-times"
             flat
