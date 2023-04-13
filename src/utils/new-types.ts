@@ -50,6 +50,16 @@ export interface ApplicantDocument {
     rejectedBy: string;
     rejectedAt: Timestamp;
     message?: string;
+  } | null;
+}
+
+export interface ApplicantDocumentWithRejection
+  extends Omit<ApplicantDocument, 'rejection'> {
+  rejection: {
+    reasons: RejectionReasons[];
+    rejectedBy: string;
+    rejectedAt: Timestamp;
+    message?: string;
   };
 }
 

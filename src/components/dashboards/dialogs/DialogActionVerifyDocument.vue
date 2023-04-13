@@ -265,7 +265,6 @@ import {
   Unsubscribe,
   updateDoc,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { getDownloadURL } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
@@ -284,7 +283,6 @@ const documentPages = ref<
     id: string;
     url: string;
     updatedStatus: 'not-checked' | 'accepted' | 'rejected';
-    rejectionReason: 'wrong-doc' | 'image-quality' | 'other' | null;
     otherReason: string;
     message?: string;
   })[]
@@ -319,6 +317,7 @@ onMounted(async () => {
   const q = query(
     pagesRef,
     where('docId', '==', props.applicantDocument.id),
+    where('submissionCount', '==', props.applicantDocument.submissionCount),
     orderBy('pageNumber', 'asc')
   );
   await new Promise<void>((resolve, reject) => {
@@ -415,19 +414,22 @@ const validateFields = () => {
       setWarningMessage('no-wrong-doc-decision');
       return false;
     }
-    const hasRejectionReason = Object.values(rejections.value).some(
-      (val) => val.value === true
-    );
-    console.log(hasRejectionReason);
-    if (!hasRejectionReason) {
-      setWarningMessage('no-rejection-reason');
-      return false;
-    }
 
-    // If other reason is selected, message is required
-    if (rejections.value['other'].value && !message.value) {
-      setWarningMessage('no-other-reason');
-      return false;
+    if (isWrongDoc.value === false) {
+      const hasRejectionReason = Object.values(rejections.value).some(
+        (val) => val.value === true
+      );
+      console.log(hasRejectionReason);
+      if (!hasRejectionReason) {
+        setWarningMessage('no-rejection-reason');
+        return false;
+      }
+
+      // If other reason is selected, message is required
+      if (rejections.value['other'].value && !message.value) {
+        setWarningMessage('no-other-reason');
+        return false;
+      }
     }
   }
 
@@ -449,9 +451,14 @@ const onSubmit = async () => {
     });
   }
   if (updatedStatus.value === 'rejected') {
-    const rejectionReasons = Object.keys(rejections.value).filter(
-      (key) => rejections.value[key as keyof typeof rejections.value].value
-    ) as RejectionReasons[];
+    let rejectionReasons: RejectionReasons[] = [];
+    if (isWrongDoc.value) {
+      rejectionReasons = ['wrong-document'];
+    } else {
+      rejectionReasons = Object.keys(rejections.value).filter(
+        (key) => rejections.value[key as keyof typeof rejections.value].value
+      ) as RejectionReasons[];
+    }
     await updateDoc(docRef, {
       status: 'rejected',
       rejection: {

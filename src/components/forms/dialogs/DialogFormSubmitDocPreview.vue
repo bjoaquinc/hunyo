@@ -331,6 +331,7 @@ const updateApplicantDocument = async (totalPages: number) => {
     totalPages,
     deviceSubmitted: $q.platform.is.mobile ? 'mobile' : 'desktop',
     submissionCount: updatedSubmissionCount.value,
+    rejection: null,
   });
 };
 
