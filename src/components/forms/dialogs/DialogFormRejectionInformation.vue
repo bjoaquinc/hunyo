@@ -38,15 +38,6 @@
             </q-item-section>
           </q-item>
         </q-list>
-        <!-- <ul
-          class="q-mt-sm text-negative text-body2"
-          v-for="rejection in doc.rejection.reasons"
-          :key="rejection"
-        >
-          {{
-            rejectionLabels[rejection]
-          }}
-        </ul> -->
         <div class="flex column q-mt-lg" v-if="doc.rejection.message">
           <div class="text-subtitle1 text-grey-8">Kindly note:</div>
           <div class="text-body2 text-grey-8 q-mt-sm">
@@ -73,10 +64,7 @@
 <script setup lang="ts">
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { ref } from 'vue';
-import {
-  ApplicantDocumentWithRejection,
-  RejectionReasons,
-} from 'src/utils/new-types';
+import { ApplicantDocumentWithRejection } from 'src/utils/new-types';
 
 const rejectionLabels: { [key: string]: string } = {
   'wrong-document': 'You uploaded the wrong document',
@@ -86,7 +74,7 @@ const rejectionLabels: { [key: string]: string } = {
   other: 'See below',
 };
 
-const props = defineProps<{
+defineProps<{
   doc: ApplicantDocumentWithRejection & { id: string };
 }>();
 
