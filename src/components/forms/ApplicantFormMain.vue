@@ -256,7 +256,10 @@ const onRejected = (index: number) => {
     componentProps: {
       doc: props.documents[index],
     },
-  }).onOk(() => {
+  }).onOk(async () => {
+    await new Promise<void>((resolve) => {
+      showSample(props.documents[index], resolve);
+    });
     $q.dialog({
       component: DialogFormSubmitDocImage,
       componentProps: {

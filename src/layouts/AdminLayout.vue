@@ -522,6 +522,7 @@ const selectedDoc = computed(() => {
   }
 });
 const clearSortedDocs = () => {
+  selectedDocIndex.value = null;
   unsubSortedDocs.value?.();
   sortedDocs.value = [];
 };
@@ -610,7 +611,9 @@ const selectedPage = computed(() => {
     return null;
   }
 });
+
 const clearSortedPages = () => {
+  selectedPageIndex.value = null;
   unsubSortedPages.value?.();
   sortedPages.value = [];
 };
