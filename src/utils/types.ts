@@ -113,6 +113,7 @@ export interface Applicant {
   totalDocs: number;
   adminAcceptedDocs: number;
   acceptedDocs: number;
+  unCheckedOptionalDocs: number;
 }
 
 export interface Form {

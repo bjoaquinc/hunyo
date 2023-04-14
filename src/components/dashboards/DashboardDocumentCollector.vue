@@ -169,7 +169,10 @@
           <q-td key="action" :props="props">
             <q-btn
               @click="openDialogAction(props.row.id)"
-              v-if="props.row.adminAcceptedDocs > props.row.acceptedDocs"
+              v-if="
+                props.row.adminAcceptedDocs > props.row.acceptedDocs ||
+                props.row.unCheckedOptionalDocs > 0
+              "
               label="Check Documents"
               color="negative"
               class="full-width"
@@ -212,7 +215,9 @@ const completeApplicants = computed(() =>
 );
 const actionApplicants = computed(() =>
   props.applicants.filter(
-    (applicant) => applicant.adminAcceptedDocs > applicant.acceptedDocs
+    (applicant) =>
+      applicant.adminAcceptedDocs > applicant.acceptedDocs ||
+      applicant.unCheckedOptionalDocs > 0
   )
 );
 

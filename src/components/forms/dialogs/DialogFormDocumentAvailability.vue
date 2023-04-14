@@ -43,7 +43,7 @@
             color="primary"
             :label="`I'm waiting to receive my ${doc.name}`"
           />
-          <q-btn
+          <!-- <q-btn
             v-if="!doc.isRequired"
             @click="onButtonClick('not-applicable')"
             size="lg"
@@ -52,7 +52,7 @@
             no-caps
             color="primary"
             :label="`${doc.name} does not apply to me`"
-          />
+          /> -->
         </q-card-section>
         <q-inner-loading :showing="isLoading">
           <q-spinner-pie size="80px" color="primary" />
@@ -64,9 +64,9 @@
 
 <script setup lang="ts">
 import * as amplitude from '@amplitude/analytics-browser';
-import { updateDoc } from '@firebase/firestore';
+// import { updateDoc } from '@firebase/firestore';
 import { QDialog, useDialogPluginComponent } from 'quasar';
-import { dbDocRefs } from 'src/utils/db';
+// import { dbDocRefs } from 'src/utils/db';
 import { ApplicantDocument } from 'src/utils/new-types';
 import { ref } from 'vue';
 
@@ -85,11 +85,12 @@ const onButtonClick = (
     status: type,
     isRequired: props.doc.isRequired,
   });
-  if (type === 'available' || type === 'not-available') {
-    onDialogOK(type);
-  } else {
-    changeStatusToNotApplicable();
-  }
+  onDialogOK(type);
+  // if (type === 'available' || type === 'not-available') {
+  //   onDialogOK(type);
+  // } else {
+  //   changeStatusToNotApplicable();
+  // }
 };
 
 defineEmits([
@@ -98,15 +99,15 @@ defineEmits([
   ...useDialogPluginComponent.emits,
 ]);
 
-const changeStatusToNotApplicable = async () => {
-  isLoading.value = true;
-  const docRef = dbDocRefs.getDocumentRef(props.doc.companyId, props.doc.id);
-  await updateDoc(docRef, {
-    status: 'not-applicable',
-  });
-  onDialogOK('not-applicable');
-  isLoading.value = false;
-};
+// const changeStatusToNotApplicable = async () => {
+//   isLoading.value = true;
+//   const docRef = dbDocRefs.getDocumentRef(props.doc.companyId, props.doc.id);
+//   await updateDoc(docRef, {
+//     status: 'not-applicable',
+//   });
+//   onDialogOK('not-applicable');
+//   isLoading.value = false;
+// };
 </script>
 
 <style lang="sass" scoped>

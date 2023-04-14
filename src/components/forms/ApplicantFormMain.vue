@@ -106,7 +106,7 @@
 <script setup lang="ts">
 import * as amplitude from '@amplitude/analytics-browser';
 import { documentStatusStyles } from './styles';
-import { useQuasar, QSpinnerPie } from 'quasar';
+import { useQuasar } from 'quasar';
 import { onMounted, ref, computed } from 'vue';
 import { Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
@@ -117,8 +117,6 @@ import DialogFormDocumentAvailability from './dialogs/DialogFormDocumentAvailabi
 import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
 import DialogFormDelayedUpdate from './dialogs/DialogFormDelayedUpdate.vue';
 import DialogFormSample from './dialogs/DialogFormSample.vue';
-import { dbDocRefs } from 'src/utils/db';
-import { updateDoc } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
 import DialogFormRejectionInformation from './dialogs/DialogFormRejectionInformation.vue';
 
@@ -162,9 +160,9 @@ const onDocumentClick = (index: number) => {
   if (docStatus === 'rejected' && rejection) {
     onRejected(index);
   }
-  if (docStatus === 'not-applicable') {
-    onNotApplicable(index);
-  }
+  // if (docStatus === 'not-applicable') {
+  //   onNotApplicable(index);
+  // }
   if (docStatus === 'delayed') {
     onDelayed(index);
   }
@@ -277,31 +275,31 @@ const onRejected = (index: number) => {
   });
 };
 
-const onNotApplicable = (index: number) => {
-  $q.dialog({
-    title: 'Change to Applicable?',
-    ok: 'Yes',
-    cancel: 'No',
-  }).onOk(async () => {
-    const loadingDialog = $q.dialog({
-      title: 'Changing document to Applicable...',
-      progress: {
-        spinner: QSpinnerPie,
-      },
-      persistent: true,
-      ok: false,
-    });
-    const selectedDoc = props.documents[index];
-    const documentRef = dbDocRefs.getDocumentRef(
-      selectedDoc.companyId,
-      selectedDoc.id
-    );
-    await updateDoc(documentRef, {
-      status: 'not-submitted',
-    });
-    loadingDialog.hide();
-  });
-};
+// const onNotApplicable = (index: number) => {
+//   $q.dialog({
+//     title: 'Change to Applicable?',
+//     ok: 'Yes',
+//     cancel: 'No',
+//   }).onOk(async () => {
+//     const loadingDialog = $q.dialog({
+//       title: 'Changing document to Applicable...',
+//       progress: {
+//         spinner: QSpinnerPie,
+//       },
+//       persistent: true,
+//       ok: false,
+//     });
+//     const selectedDoc = props.documents[index];
+//     const documentRef = dbDocRefs.getDocumentRef(
+//       selectedDoc.companyId,
+//       selectedDoc.id
+//     );
+//     await updateDoc(documentRef, {
+//       status: 'not-submitted',
+//     });
+//     loadingDialog.hide();
+//   });
+// };
 
 const onDelayed = (index: number) => {
   const dialog = $q.dialog({
