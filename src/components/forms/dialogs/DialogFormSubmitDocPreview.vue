@@ -129,7 +129,7 @@
 <script setup lang="ts">
 import * as amplitude from '@amplitude/analytics-browser';
 import { uploadBytesResumable } from '@firebase/storage';
-import { QDialog, useDialogPluginComponent } from 'quasar';
+import { QDialog, uid, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
 import { ref, computed } from 'vue';
 import { Form } from 'src/utils/types';
@@ -223,11 +223,11 @@ const uploadFilesToStorage = async () => {
 };
 
 const uploadFileToStorage = async (file: UploadedFile, pageNumber: number) => {
-  const applicantName = `${props.form.applicant.name?.first} ${props.form.applicant.name?.last}`;
-  let fileName = applicantName + '-' + props.doc.name + '-' + pageNumber;
-  if (props.uploadedFiles.length <= 1) {
-    fileName = applicantName + '-' + props.doc.name;
-  }
+  const applicantName = `${props.form.applicant.name?.first} ${props.form.applicant.name?.middle} ${props.form.applicant.name?.last}`;
+  const fileName = applicantName + '-' + props.doc.name + '-' + uid();
+  // if (props.uploadedFiles.length <= 1) {
+  //   fileName = applicantName + '-' + props.doc.name;
+  // }
   const format = props.doc.requestedFormat;
   const formId = props.form.id;
   const docId = props.doc.id;

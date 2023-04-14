@@ -458,7 +458,7 @@ const rejectionOptions = [
   },
   {
     label: 'Edges not visible',
-    value: 'birth-certificate',
+    value: 'edges-not-visible',
   },
   {
     label: 'Too dark',
