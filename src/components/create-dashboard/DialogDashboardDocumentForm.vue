@@ -22,7 +22,7 @@
                 outlined
                 :rules="[(val) => !!val || 'Please add a document name']"
               />
-              <q-select
+              <!-- <q-select
                 v-model="format"
                 :options="options"
                 filled
@@ -33,9 +33,23 @@
                   (val) =>
                     !!val || 'Please choose the format to receive the document',
                 ]"
-              />
+              /> -->
             </div>
             <div class="q-gutter-md row q-mt-xs">
+              <q-select
+                v-model="required"
+                :options="requiredOptions"
+                option-value="value"
+                option-label="label"
+                filled
+                class="col"
+                label="Is Required?"
+                outlined
+                :rules="[
+                  (val) =>
+                    !!val || 'Please choose if mandatory or if available',
+                ]"
+              />
               <q-file
                 class="col"
                 v-model="sample"
@@ -53,20 +67,6 @@
                   <q-icon name="fas fa-plus" />
                 </template>
               </q-file>
-              <q-select
-                v-model="required"
-                :options="requiredOptions"
-                option-value="value"
-                option-label="label"
-                filled
-                class="col"
-                label="Select One"
-                outlined
-                :rules="[
-                  (val) =>
-                    !!val || 'Please choose if mandatory or if available',
-                ]"
-              />
             </div>
             <div class="col q-mt-md">
               <q-input
@@ -125,11 +125,14 @@ const { user } = useUserStore();
 const companyId = user?.company.id as string;
 const name = ref('');
 const format = ref<'jpeg' | 'pdf'>('pdf');
-const options = ['jpeg', 'pdf'];
+// const options = ['jpeg', 'pdf'];
 const required = ref<{
   label: string;
   value: boolean;
-} | null>(null);
+}>({
+  label: 'Mandatory',
+  value: true,
+});
 const requiredOptions = [
   {
     label: 'If Available',

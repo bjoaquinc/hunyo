@@ -64,6 +64,9 @@
         </q-item>
       </q-list>
     </div>
+    <q-inner-loading :showing="isLoading">
+      <q-spinner-pie size="80px" color="primary" />
+    </q-inner-loading>
   </q-page>
 </template>
 
@@ -89,27 +92,38 @@ const companyDashboards = computed(() => {
     (dashboard) => dashboard.createdBy !== user.id
   );
 });
+const isLoading = ref(true);
 
 onMounted(async () => {
   if (!user) return;
   const dashboardsRef = dbColRefs.getPublishedDashboardsRef(user.company.id);
   const q = query(dashboardsRef, where('isPublished', '==', true));
-  await new Promise((resolve) => {
+  await new Promise<void>((resolve, reject) => {
     let resolveOnce = () => {
       resolveOnce = () => {
         return;
       };
-      resolve;
+      resolve();
     };
-    unsubDashboards.value = onSnapshot(q, (dashboardSnap) => {
-      const dasboardDocs: (PublishedDashboard & { id: string })[] = [];
-      dashboardSnap.forEach((dashboardDoc) => {
-        dasboardDocs.push({ id: dashboardDoc.id, ...dashboardDoc.data() });
-      });
-      dashboards.value = dasboardDocs;
-      resolveOnce();
-    });
+    unsubDashboards.value = onSnapshot(
+      q,
+      (dashboardSnap) => {
+        console.log('dashboardSnap', dashboardSnap);
+        const dasboardDocs: (PublishedDashboard & { id: string })[] = [];
+        dashboardSnap.forEach((dashboardDoc) => {
+          dasboardDocs.push({ id: dashboardDoc.id, ...dashboardDoc.data() });
+        });
+        console.log('running');
+        dashboards.value = dasboardDocs;
+        resolveOnce();
+      },
+      (err) => {
+        console.error(err);
+        reject(err);
+      }
+    );
   });
+  isLoading.value = false;
 });
 
 onUnmounted(() => {
