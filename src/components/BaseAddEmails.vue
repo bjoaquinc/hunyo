@@ -69,6 +69,7 @@ export interface AddEmail {
   actionButtonTitle?: string;
   required?: boolean;
   savedEmails?: string[];
+  addedEmails?: string[];
 }
 
 export interface AddEmailsComp {
@@ -124,11 +125,15 @@ function isValidEmail(val: string) {
 }
 
 function isDuplicate(val: string) {
-  return !emails.value.includes(val) || 'Email is already added';
+  return (
+    (!emails.value.includes(val) &&
+      (!props.addedEmails || !props.addedEmails.includes(val))) ||
+    'Email is already added'
+  );
 }
 
 function isRequired(val: string) {
-  if (props.required) {
+  if (props.required && emails.value.length === 0) {
     return !!val || 'Please add at least one email.';
   } else {
     return true;

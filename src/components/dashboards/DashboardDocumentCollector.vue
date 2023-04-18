@@ -32,7 +32,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item clickable v-close-popup>
+              <q-item clickable @click="openDialogApplicantsAdd" v-close-popup>
                 <q-item-section avatar>
                   <q-icon color="grey-8" name="fas fa-plus" />
                 </q-item-section>
@@ -193,6 +193,7 @@ import Header from './headers/DashboardCollectorHeader.vue';
 import { Applicant, PublishedDashboard, User } from 'src/utils/types';
 import { useUserStore } from 'src/stores/user-store';
 import { DateTime } from 'luxon';
+import DialogApplicantsAdd from './dialogs/DialogApplicantsAdd.vue';
 
 const headerRef = ref<InstanceType<typeof Header> | null>(null);
 
@@ -239,7 +240,7 @@ const filteredApplicants = computed(() => {
   return applicantsFilters[activeHeader.value];
 });
 
-const q = useQuasar();
+const $q = useQuasar();
 const columns: QTableProps['columns'] = [
   {
     name: 'index',
@@ -282,8 +283,19 @@ const columns: QTableProps['columns'] = [
 
 const selected = ref([]);
 
+const openDialogApplicantsAdd = () => {
+  $q.dialog({
+    component: DialogApplicantsAdd,
+    componentProps: {
+      companyId,
+      dashboard: props.dashboard,
+      addedEmails: props.applicants.map((applicant) => applicant.email),
+    },
+  });
+};
+
 const openDialogAction = (applicantId: string) => {
-  q.dialog({
+  $q.dialog({
     component: defineAsyncComponent(
       () =>
         import('src/components/dashboards/dialogs/DialogActionDocuments.vue')
@@ -302,7 +314,7 @@ const openDialogApplicantDocuments = (applicantId: string) => {
   const applicant = props.applicants.find(
     (applicant) => applicant.id === applicantId
   );
-  q.dialog({
+  $q.dialog({
     component: defineAsyncComponent(
       () =>
         import('src/components/dashboards/dialogs/DialogApplicantDocuments.vue')

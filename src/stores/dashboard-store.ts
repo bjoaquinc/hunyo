@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia';
 import { useUserStore } from './user-store';
-import { DocumentReference, onSnapshot, Unsubscribe } from 'firebase/firestore';
-import { ref } from 'vue';
+import {
+  DocumentReference,
+  onSnapshot,
+  Unsubscribe,
+  query,
+  orderBy,
+} from 'firebase/firestore';
+import { computed, ref } from 'vue';
 import { Applicant, PublishedDashboard } from 'src/utils/types';
 import { dbColRefs } from 'src/utils/db';
 
@@ -15,7 +21,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const unsubDashboard = ref<Unsubscribe | null>(null);
   const applicants = ref<ApplicantData[]>([]);
   const unsubApplicants = ref<Unsubscribe | null>(null);
-  const applicantIds = ref<string[]>([]);
+  const applicantIds = computed(() => applicants.value.map((a) => a.id));
 
   const setDashboard = async (
     dashboardRef: DocumentReference<PublishedDashboard>
@@ -49,6 +55,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const setApplicants = async (companyId: string, dashboardId: string) => {
     const { user } = userStore;
     const applicantsRef = dbColRefs.getApplicantsRef(companyId, dashboardId);
+    const q = query(applicantsRef, orderBy('createdAt', 'desc'));
     if (!user) return;
     await new Promise<void>((resolve, reject) => {
       let resolveOnce = () => {
@@ -58,28 +65,31 @@ export const useDashboardStore = defineStore('dashboard', () => {
         resolve();
       };
       unsubApplicants.value = onSnapshot(
-        applicantsRef,
+        q,
         (snapshot) => {
           snapshot.docChanges().forEach((change) => {
             const id = change.doc.id;
             if (change.type === 'added') {
+              console.log(change.newIndex);
               if (applicantIds.value.includes(id)) return;
               const applicant = {
                 id,
                 ...change.doc.data(),
               };
-              applicants.value.push(applicant);
-              applicantIds.value.push(id);
+              if (change.newIndex === 0) {
+                applicants.value.unshift(applicant);
+              } else {
+                applicants.value.push(applicant);
+              }
             }
             if (change.type === 'modified') {
-              applicants.value.splice(change.oldIndex, 1, {
+              applicants.value.splice(change.newIndex, 1, {
                 id,
                 ...change.doc.data(),
               });
             }
             if (change.type === 'removed') {
               applicants.value.splice(change.oldIndex, 1);
-              applicantIds.value.splice(change.oldIndex, 1);
             }
           });
           resolveOnce();
@@ -94,7 +104,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
     unsubDashboard.value = null;
     applicants.value = [];
     unsubApplicants.value = null;
-    applicantIds.value = [];
   };
 
   return {

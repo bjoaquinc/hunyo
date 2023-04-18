@@ -68,9 +68,7 @@ import { ApplicantDocument } from 'src/utils/new-types';
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const $q = useQuasar();
-const applicantDocuments = ref<
-  (ApplicantDocument & { id: string; isUpdating: boolean })[]
->([]);
+const applicantDocuments = ref<(ApplicantDocument & { id: string })[]>([]);
 const unsubApplicantDocuments = ref<Unsubscribe | null>(null);
 
 const props = defineProps<{
@@ -113,7 +111,6 @@ onMounted(async () => {
           const index = change.oldIndex;
           applicantDocuments.value[index] = {
             id: change.doc.id,
-            isUpdating: true,
             ...change.doc.data(),
           };
         }
@@ -121,7 +118,6 @@ onMounted(async () => {
           // add doc
           applicantDocuments.value.push({
             id: change.doc.id,
-            isUpdating: false,
             ...change.doc.data(),
           });
         }
@@ -145,7 +141,6 @@ const openDialogActionVerifyDocument = (index: number) => {
     },
   }).onOk(async () => {
     console.log('onOk');
-    applicantDocument.isUpdating = true;
   });
 };
 
