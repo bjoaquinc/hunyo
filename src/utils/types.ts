@@ -60,7 +60,7 @@ export interface DraftDashboard {
     caption: string;
   };
   docs: { [key: string]: DashboardDoc };
-  applicants?: string[];
+  newApplicants?: string[];
   messages?: {
     opening: string;
   };
@@ -79,7 +79,7 @@ export interface PublishedDashboard {
     caption: string;
   };
   docs: { [key: string]: DashboardDoc };
-  applicants: string[];
+  newApplicants: string[];
   messages: {
     opening: string;
   };

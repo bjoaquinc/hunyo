@@ -329,8 +329,8 @@ const setDashboard = async (dashboardId: string) => {
             header.value = docData.formContent.header;
             caption.value = docData.formContent.caption;
           }
-          if (docData.applicants) {
-            savedEmails.value = docData.applicants;
+          if (docData.newApplicants) {
+            savedEmails.value = docData.newApplicants;
           }
           // if (docData.messages) {
           //   message.value = docData.messages.opening;
@@ -387,7 +387,7 @@ const updateFormContent = async () => {
   await updateDoc(dashboardRef, {
     'formContent.header': header.value,
     'formContent.caption': caption.value,
-    applicants: emails.value,
+    newApplicants: emails.value,
     messages: {
       opening: message.value,
     },
@@ -441,7 +441,7 @@ const publishDashboard = async () => {
   await updateDoc(dashboardRef, {
     'formContent.header': header.value,
     'formContent.caption': caption.value,
-    applicants: emails.value,
+    newApplicants: emails.value,
     messages: {
       opening: message.value,
     },
