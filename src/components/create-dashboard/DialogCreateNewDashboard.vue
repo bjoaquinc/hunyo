@@ -49,6 +49,12 @@
             <div class="col-12 q-mt-xs">
               <q-input
                 label="Deadline for document submission (YYYY/mm/dd)"
+                @focus="
+                  () => {
+                    showCalendar = true;
+                    deadlineRef?.blur();
+                  }
+                "
                 ref="deadlineRef"
                 filled
                 v-model="deadline"
@@ -67,8 +73,9 @@
                       cover
                       transition-show="scale"
                       transition-hide="scale"
+                      v-model="showCalendar"
                     >
-                      <q-date v-model="deadline">
+                      <q-date v-model="deadline" :options="showOnlyFutureDates">
                         <div class="row items-center justify-end">
                           <q-btn
                             v-close-popup
@@ -102,8 +109,8 @@
 </template>
 
 <script setup lang="ts">
-import { QDialog, useDialogPluginComponent } from 'quasar';
-import { ref } from 'vue';
+import { QDialog, QInput, useDialogPluginComponent } from 'quasar';
+import { ref, computed } from 'vue';
 import { countryList } from 'src/utils/countries-list';
 import { dbColRefs } from 'src/utils/db';
 import { addDoc, serverTimestamp, Timestamp } from '@firebase/firestore';
@@ -118,6 +125,8 @@ const country = ref('');
 const job = ref('');
 const title = ref('');
 const deadline = ref('');
+const deadlineRef = ref<null | QInput>(null);
+const showCalendar = ref(false);
 const options = ref<string[]>([]);
 const isLoading = ref(false);
 
@@ -134,6 +143,12 @@ const filterFn = (val: string, update: (callbackFn: () => void) => void) => {
       (v) => v.toLowerCase().indexOf(needle) > -1
     );
   });
+};
+
+const currentDate = computed(() => DateTime.now().toFormat('yyyy/MM/dd'));
+
+const showOnlyFutureDates = (date: string) => {
+  return date > currentDate.value;
 };
 
 const onSubmit = async () => {
