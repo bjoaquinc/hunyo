@@ -72,7 +72,7 @@
           </div>
           <q-separator class="q-mt-md" />
           <q-btn
-            @click="openDialogCreateNewDashboard"
+            @click="createNewDashboard"
             icon="fas fa-list-check"
             size="lg"
             outline
@@ -85,22 +85,23 @@
           </div>
           <q-separator class="q-mt-md" />
           <q-list separator>
-            <!-- <q-item class="q-py-md text-h6 text-weight-regular">
+            <q-item
+              v-for="dashboard in publishedDashboards"
+              :key="dashboard.id"
+              class="q-py-md text-h6 text-weight-regular"
+            >
               <q-item-section>
-                Poland - Butcher - Visa Application
+                {{ dashboard.title }}
               </q-item-section>
               <q-item-section avatar>
-                <q-btn label="Copy" outline color="primary" />
+                <q-btn
+                  @click="copyPreviousDashboard(dashboard)"
+                  label="Copy"
+                  outline
+                  color="primary"
+                />
               </q-item-section>
             </q-item>
-            <q-item class="q-py-md text-h6 text-weight-regular">
-              <q-item-section>
-                Poland - Butcher - Visa Application
-              </q-item-section>
-              <q-item-section avatar>
-                <q-btn label="Copy" outline color="primary" />
-              </q-item-section>
-            </q-item> -->
           </q-list>
           <div class="q-mt-xl text-h5 text-weight-medium">
             Draft Document Requests
@@ -145,7 +146,7 @@ import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import DialogCreateNewDashboard from 'src/components/create-dashboard/DialogCreateNewDashboard.vue';
 import { useQuasar } from 'quasar';
-import { DraftDashboard } from 'src/utils/types';
+import { DraftDashboard, PublishedDashboard } from 'src/utils/types';
 import { dbColRefs } from 'src/utils/db';
 import {
   onSnapshot,
@@ -180,11 +181,16 @@ const essentialLinks = [
 
 const draftDashboards = ref<(DraftDashboard & { id: string })[] | null>([]);
 const unsubDraftDashboards = ref<Unsubscribe | null>(null);
+const publishedDashboards = ref<(PublishedDashboard & { id: string })[] | null>(
+  null
+);
+const unsubPublishedDashboards = ref<Unsubscribe | null>(null);
 const leftDrawerOpen = ref(false);
 const createDocumentRequestTemplate = ref(false);
 
 onMounted(() => {
   getDraftDashboards();
+  getPublishedDashboards();
 });
 
 const getDraftDashboards = async () => {
@@ -207,9 +213,40 @@ const getDraftDashboards = async () => {
   });
 };
 
-const openDialogCreateNewDashboard = () => {
+const getPublishedDashboards = async () => {
+  if (!user.value) return;
+  const publishedDashboardsRef = dbColRefs.getPublishedDashboardsRef(
+    user.value.company.id
+  );
+  const q = query(
+    publishedDashboardsRef,
+    where('isPublished', '==', true),
+    orderBy('createdAt', 'desc')
+  );
+  unsubPublishedDashboards.value = onSnapshot(q, (snapshot) => {
+    publishedDashboards.value = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  });
+};
+
+const createNewDashboard = () => {
   q.dialog({
     component: DialogCreateNewDashboard,
+  }).onOk(() => {
+    createDocumentRequestTemplate.value = false;
+  });
+};
+
+const copyPreviousDashboard = (
+  dashboard: PublishedDashboard & { id: string }
+) => {
+  q.dialog({
+    component: DialogCreateNewDashboard,
+    componentProps: {
+      dashboard,
+    },
   }).onOk(() => {
     createDocumentRequestTemplate.value = false;
   });
@@ -226,5 +263,6 @@ const signOut = async () => {
 
 onUnmounted(() => {
   unsubDraftDashboards.value?.();
+  unsubPublishedDashboards.value?.();
 });
 </script>

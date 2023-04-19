@@ -1,5 +1,5 @@
 <template>
-  <q-dialog ref="dialogRef" @hide="onDialogHide">
+  <q-dialog ref="dialogRef" @hide="onDialogHide" @show="onDialogShow">
     <q-card style="width: 700px; max-width: 80vw">
       <q-card-section>
         <div class="flex justify-between">
@@ -117,6 +117,7 @@ import { addDoc, serverTimestamp, Timestamp } from '@firebase/firestore';
 import { useUserStore } from 'src/stores/user-store';
 import { useRouter } from 'vue-router';
 import { DateTime } from 'luxon';
+import { PublishedDashboard } from 'src/utils/types';
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const router = useRouter();
@@ -129,6 +130,18 @@ const deadlineRef = ref<null | QInput>(null);
 const showCalendar = ref(false);
 const options = ref<string[]>([]);
 const isLoading = ref(false);
+
+const props = defineProps<{
+  dashboard: PublishedDashboard & { id: string };
+}>();
+
+const onDialogShow = () => {
+  if (props.dashboard) {
+    country.value = props.dashboard.country;
+    job.value = props.dashboard.job;
+    title.value = props.dashboard.title + ' copy';
+  }
+};
 
 const filterFn = (val: string, update: (callbackFn: () => void) => void) => {
   if (val === '') {
@@ -164,7 +177,7 @@ const onSubmit = async () => {
       job: job.value,
       title: title.value,
       deadline: Timestamp.fromMillis(deadlineTimestamp.toMillis()),
-      docs: {},
+      docs: props.dashboard ? props.dashboard.docs : {},
       isPublished: false,
     });
     onDialogOK();
