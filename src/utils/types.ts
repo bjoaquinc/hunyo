@@ -65,6 +65,7 @@ export interface DraftDashboard {
     opening: string;
   };
   isPublished: false;
+  copiedDashboard?: string;
 }
 
 export interface PublishedDashboard {
@@ -90,6 +91,7 @@ export interface PublishedDashboard {
   completeApplicantsCount?: number;
   actionsCount?: number;
   messagesSentCount?: number;
+  copiedDashboard?: string;
 }
 
 export interface Applicant {

@@ -132,7 +132,7 @@ const options = ref<string[]>([]);
 const isLoading = ref(false);
 
 const props = defineProps<{
-  dashboard: PublishedDashboard & { id: string };
+  dashboard?: PublishedDashboard & { id: string };
 }>();
 
 const onDialogShow = () => {
@@ -179,6 +179,7 @@ const onSubmit = async () => {
       deadline: Timestamp.fromMillis(deadlineTimestamp.toMillis()),
       docs: props.dashboard ? props.dashboard.docs : {},
       isPublished: false,
+      copiedDashboard: props.dashboard ? props.dashboard.id : undefined,
     });
     onDialogOK();
     router.push({
