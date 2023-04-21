@@ -388,7 +388,10 @@ onMounted(async () => {
           const applicantData = applicantSnap.data();
           applicantsList.push({ id: applicantSnap.id, ...applicantData });
         });
-        applicants.value = applicantsList;
+        console.log('applicants list: ', applicantsList);
+        applicants.value = applicantsList.sort(
+          (a, b) => a.createdAt.toMillis() - b.createdAt.toMillis()
+        );
         runOnce();
       },
       reject
@@ -784,7 +787,13 @@ const acceptOrRejectDocument = async () => {
   } catch (error) {
     console.error(error);
   } finally {
-    // kill loader and possibly remove selected page and document
+    // Kill loader and remove selected page and document
+    clearSortedPages();
+    selectedDocIndex.value = null;
+    if (sortedDocs.value.length < 1) {
+      clearSortedDocs();
+      selectedApplicantIndex.value = null;
+    }
     checkDocumentLoading.value = false;
   }
 };

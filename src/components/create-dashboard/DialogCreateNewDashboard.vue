@@ -180,6 +180,7 @@ const onSubmit = async () => {
       docs: props.dashboard ? props.dashboard.docs : {},
       isPublished: false,
       copiedDashboard: props.dashboard ? props.dashboard.id : undefined,
+      newApplicants: [],
     });
     onDialogOK();
     router.push({

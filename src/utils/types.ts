@@ -60,7 +60,7 @@ export interface DraftDashboard {
     caption: string;
   };
   docs: { [key: string]: DashboardDoc };
-  newApplicants?: string[];
+  newApplicants: string[];
   messages?: {
     opening: string;
   };
@@ -119,6 +119,7 @@ export interface Applicant {
 }
 
 export interface Form {
+  createdAt: Timestamp;
   applicant: {
     id: string;
     status: ApplicantStatus;
