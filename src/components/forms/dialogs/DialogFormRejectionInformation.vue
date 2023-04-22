@@ -40,7 +40,10 @@
         </q-list>
         <div class="flex column q-mt-lg" v-if="doc.rejection.message">
           <div class="text-subtitle1 text-grey-8">Kindly note:</div>
-          <div class="text-body2 text-grey-8 q-mt-sm">
+          <div
+            class="text-body2 text-grey-8 q-mt-sm"
+            style="white-space: pre-line"
+          >
             {{ doc.rejection.message }}
           </div>
         </div>
