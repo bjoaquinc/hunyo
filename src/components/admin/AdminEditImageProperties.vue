@@ -79,6 +79,15 @@
             color="primary"
           />
         </div>
+        <div class="col-12" v-if="selectedDoc && selectedDoc.totalPages > 1">
+          <q-btn
+            @click="deletePage"
+            label="Delete Page"
+            :loading="isDeleting"
+            class="full-width"
+            color="negative"
+          />
+        </div>
       </div>
     </q-form>
   </div>
@@ -87,8 +96,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { dbDocRefs } from 'src/utils/db';
-import { updateDoc } from 'firebase/firestore';
+import { deleteDoc, updateDoc } from 'firebase/firestore';
 import {
+  ApplicantDocument,
   ApplicantPage,
   ApplicantPageImageProperties,
 } from 'src/utils/new-types';
@@ -96,6 +106,7 @@ import { useQuasar } from 'quasar';
 
 const props = defineProps<{
   selectedPage: (ApplicantPage & { id: string }) | null;
+  selectedDoc: (ApplicantDocument & { id: string }) | null;
 }>();
 const $q = useQuasar();
 const imageProperties = ref({
@@ -121,7 +132,7 @@ const originalImageProperties = {
   clahe: false,
 };
 const quickFixImageProperties = {
-  brightness: '1.3',
+  brightness: '1.1',
   contrast: '1.2',
   sharpness: '1',
   rotateRight: { label: '0°', value: 0 },
@@ -129,6 +140,7 @@ const quickFixImageProperties = {
   clahe: false,
 };
 const isLoading = ref(false);
+const isDeleting = ref(false);
 
 onMounted(() => {
   if (!props.selectedPage) throw new Error('No selected page.');
@@ -192,8 +204,44 @@ const updateImageProperties = async () => {
   }
 };
 
+const deletePage = async () => {
+  $q.dialog({
+    title: 'Delete this page?',
+    message: 'Are you sure you want to permanently delete this page?',
+    ok: {
+      color: 'negative',
+      label: 'Yes',
+    },
+    cancel: {
+      color: 'primary',
+      label: 'No',
+      outline: true,
+    },
+  }).onOk(async () => {
+    if (!props.selectedPage) return;
+    try {
+      isDeleting.value = true;
+      const { selectedPage } = props; // Remove reactivity to selected page
+      emit('clearSelectedPage');
+      const { companyId, id } = selectedPage;
+      const pageRef = dbDocRefs.getPageRef(companyId, id);
+      await deleteDoc(pageRef);
+    } catch (err) {
+      console.error(err);
+      $q.notify({
+        type: 'negative',
+        message: 'Something went wrong. Please try again.',
+      });
+    } finally {
+      isDeleting.value = false;
+      emit('exitUpdateImageProperties');
+    }
+  });
+};
+
 const emit = defineEmits<{
   (e: 'exitUpdateImageProperties'): void;
+  (e: 'clearSelectedPage'): void;
 }>();
 </script>
 

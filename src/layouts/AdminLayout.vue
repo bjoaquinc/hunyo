@@ -304,7 +304,13 @@
           <AdminEditImageProperties
             v-if="isEditingImageProperties"
             :selected-page="selectedPage"
+            :selected-doc="selectedDoc"
             @exitUpdateImageProperties="hideEditImageProperties"
+            @clear-selected-page="
+              () => {
+                selectedPageIndex = null;
+              }
+            "
           />
         </q-step>
       </q-stepper>
