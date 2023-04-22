@@ -183,8 +183,8 @@ const onSubmit = async () => {
   try {
     isLoading.value = true;
     const pages = await uploadFilesToStorage();
-    const totalPages = await createApplicantPages(pages);
-    await updateApplicantDocument(totalPages);
+    await createApplicantPages(pages);
+    await updateApplicantDocument();
     isLoading.value = false;
     const CONVERT_TO_KB = 0.001;
     amplitude.track('Document Successfully Submitted', {
@@ -323,12 +323,13 @@ const createApplicantPages = async (
   return TOTAL_PAGES_NUMBER;
 };
 
-const updateApplicantDocument = async (totalPages: number) => {
+const updateApplicantDocument = async () => {
   const docRef = dbDocRefs.getDocumentRef(props.doc.companyId, props.doc.id);
   const UPDATED_DOC_STATUS = 'submitted';
+  const TOTAL_PAGES = props.uploadedFiles.length;
   await updateDoc(docRef, {
     status: UPDATED_DOC_STATUS,
-    totalPages,
+    totalPages: TOTAL_PAGES,
     deviceSubmitted: $q.platform.is.mobile ? 'mobile' : 'desktop',
     submissionCount: updatedSubmissionCount.value,
     rejection: null,

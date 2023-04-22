@@ -145,6 +145,7 @@ const isDeleting = ref(false);
 onMounted(() => {
   if (!props.selectedPage) throw new Error('No selected page.');
   if (props.selectedPage.imageProperties) {
+    console.log(props);
     const { brightness, contrast, sharpness, rotateRight, normalise, clahe } =
       props.selectedPage.imageProperties;
     const rotateValue = rotateOptions.find(
