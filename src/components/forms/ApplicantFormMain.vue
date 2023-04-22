@@ -26,9 +26,9 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none">
-        <q-list class="gt-xs" separator>
+        <!-- <q-list class="gt-xs" separator>
           <q-item
-            @click="onDocumentClick(index)"
+            @click="onDocumentClick(doc)"
             class="text-h6 q-py-md rounded-borders"
             :class="
               documentStatusStyles[doc.status].bgColor
@@ -66,17 +66,54 @@
             </q-item-section>
           </q-item>
           <q-separator />
-        </q-list>
-        <q-list class="lt-sm" separator>
+        </q-list> -->
+        <q-list v-if="requiredDocs.length > 0" class="lt-sm" separator>
+          <div class="text-h6 text-grey-8">Required</div>
           <q-item
-            @click="onDocumentClick(index)"
+            @click="onDocumentClick(doc)"
             class="text-subtitle1 q-py-md"
             :class="
               documentStatusStyles[doc.status].bgColor
                 ? `bg-${documentStatusStyles[doc.status].bgColor}`
                 : ''
             "
-            v-for="(doc, index) in documents"
+            v-for="(doc, index) in requiredDocs"
+            :key="index"
+            :clickable="documentStatusStyles[doc.status].clickable"
+            :v-ripple="documentStatusStyles[doc.status].clickable"
+          >
+            <q-item-section
+              :class="`text-${documentStatusStyles[doc.status].textColor}`"
+            >
+              {{
+                `${documentStatusStyles[doc.status].mobileLabel} ${doc.name}`
+              }}</q-item-section
+            >
+            <q-item-section avatar>
+              <q-icon
+                :name="documentStatusStyles[doc.status].actionIcon"
+                size="xs"
+                :color="documentStatusStyles[doc.status].textColor"
+              />
+            </q-item-section>
+          </q-item>
+          <q-separator />
+        </q-list>
+        <q-list
+          v-if="ifAvailableDocs.length > 0"
+          class="lt-sm q-mt-md"
+          separator
+        >
+          <div class="text-h6 text-grey-8">If Available</div>
+          <q-item
+            @click="onDocumentClick(doc)"
+            class="text-subtitle1 q-py-md"
+            :class="
+              documentStatusStyles[doc.status].bgColor
+                ? `bg-${documentStatusStyles[doc.status].bgColor}`
+                : ''
+            "
+            v-for="(doc, index) in ifAvailableDocs"
             :key="index"
             :clickable="documentStatusStyles[doc.status].clickable"
             :v-ripple="documentStatusStyles[doc.status].clickable"
@@ -124,6 +161,13 @@ const props = defineProps<{
   form: Form & { id: string };
   documents: (ApplicantDocument & { id: string })[];
 }>();
+const requiredDocs = computed(() => {
+  return props.documents.filter((doc) => doc.isRequired);
+});
+
+const ifAvailableDocs = computed(() => {
+  return props.documents.filter((doc) => !doc.isRequired);
+});
 
 const deadline = computed(() => {
   const deadlineTimestamp = props.form.dashboard.deadline;
@@ -146,8 +190,8 @@ onMounted(async () => {
   }
 });
 
-const onDocumentClick = (index: number) => {
-  const doc = props.documents[index];
+const onDocumentClick = (doc: ApplicantDocument & { id: string }) => {
+  const index = props.documents.findIndex((d) => d.id === doc.id);
   amplitude.track('Select Document', {
     documentName: doc.name,
     orderOnList: doc.docNumber,

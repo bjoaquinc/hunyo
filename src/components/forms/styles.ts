@@ -19,7 +19,7 @@ export const documentStatusStyles = {
     textColor: 'grey-8',
     actionIcon: 'fas fa-check',
     actionLabel: 'Submitted',
-    mobileLabel: 'Uploaded',
+    mobileLabel: 'Submitted',
     clickable: false,
     bgColor: null,
   },
