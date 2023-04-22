@@ -212,18 +212,18 @@ const onDocumentClick = (doc: ApplicantDocument & { id: string }) => {
   }
 };
 
-const onNotSubmitted = (index: number) => {
+const onNotSubmitted = async (index: number) => {
+  await new Promise<void>((resolve) => {
+    showSample(props.documents[index], resolve);
+  });
   $q.dialog({
     component: DialogFormDocumentAvailability,
     componentProps: {
       formId: props.form.id,
       doc: props.documents[index],
     },
-  }).onOk(async (documentAvailability) => {
+  }).onOk((documentAvailability) => {
     if (documentAvailability === 'available') {
-      await new Promise<void>((resolve) => {
-        showSample(props.documents[index], resolve);
-      });
       $q.dialog({
         component: DialogFormSubmitDocImage,
         componentProps: {

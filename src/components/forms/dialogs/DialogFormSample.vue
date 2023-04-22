@@ -7,12 +7,11 @@
     transition-show="slide-up"
     transition-hide="slide-down"
   >
-    <div class="flex">
+    <div class="flex bg-primary">
       <q-img :src="sampleURL" />
       <q-btn
         class="full-width"
         @click="onDialogOK"
-        size="lg"
         label="Ok"
         color="primary"
       />
