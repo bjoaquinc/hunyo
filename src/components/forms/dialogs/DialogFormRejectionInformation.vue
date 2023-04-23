@@ -1,6 +1,7 @@
 <template>
   <q-dialog
     ref="dialogRef"
+    @show="onDialogShow"
     @hide="onDialogHide"
     maximized
     persistent
@@ -50,7 +51,7 @@
       </q-card-section>
       <q-card-actions>
         <q-btn
-          @click="onDialogOK"
+          @click="resubmitNow"
           label="Resubmit Now"
           type="submit"
           class="full-width"
@@ -68,6 +69,7 @@
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { ref } from 'vue';
 import { ApplicantDocumentWithRejection } from 'src/utils/new-types';
+import * as amplitude from '@amplitude/analytics-browser';
 
 const rejectionLabels: { [key: string]: string } = {
   'wrong-document': 'You uploaded the wrong document',
@@ -77,12 +79,29 @@ const rejectionLabels: { [key: string]: string } = {
   other: 'See below',
 };
 
-defineProps<{
+const props = defineProps<{
   doc: ApplicantDocumentWithRejection & { id: string };
 }>();
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const isLoading = ref(false);
+const viewStart = ref(0);
+
+const onDialogShow = () => {
+  viewStart.value = Date.now();
+};
+
+const resubmitNow = () => {
+  const TIME_SPENT_SECONDS = Math.round((Date.now() - viewStart.value) / 1000);
+  amplitude.track('View Reason For Rejection', {
+    docId: props.doc.id,
+    docName: props.doc.name,
+    reason: props.doc.rejection.reasons,
+    message: props.doc.rejection.message,
+    timeSpent: TIME_SPENT_SECONDS,
+  });
+  onDialogOK();
+};
 
 defineEmits([
   // REQUIRED; need to specify some events that your

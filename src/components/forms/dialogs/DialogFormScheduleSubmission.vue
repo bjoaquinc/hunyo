@@ -119,8 +119,10 @@ onMounted(() => {
 const onSubmit = async () => {
   isLoading.value = true;
   await updateDocStatusAndDelayedUntil();
-  amplitude.track('Document Unavailable', {
-    documentName: props.doc.name,
+  amplitude.track('Delayed Document', {
+    docId: props.doc.id,
+    docName: props.doc.name,
+    // TODO: Add days after due date
   });
   onDialogOK();
   isLoading.value = false;

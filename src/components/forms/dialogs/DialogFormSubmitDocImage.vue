@@ -50,6 +50,7 @@
               {{ isDraggable ? 'REORDER' : 'ADDED' }} PAGES
             </div>
             <q-btn
+              v-if="uploadedFiles.length > 1"
               class="q-ml-md"
               :label="isDraggable ? 'Done' : 'Reorder'"
               color="primary"
@@ -197,6 +198,10 @@ const latestIndex = ref(0);
 const isLoading = ref(false);
 
 const clickInputImage = () => {
+  amplitude.track('Upload Document Page Start', {
+    docId: props.doc.id,
+    docName: props.doc.name,
+  });
   if (imageInputRef.value) {
     imageInputRef.value.click();
   }
@@ -234,6 +239,11 @@ const onFileChange = (e: Event) => {
       uploadedFiles.value.push(uploadedFile);
       latestIndex.value++;
       isLoading.value = false;
+      amplitude.track('Upload Document Page Finish', {
+        docId: props.doc.id,
+        docName: props.doc.name,
+        rotated: angle ? true : false,
+      });
     });
 };
 
@@ -247,7 +257,13 @@ const dragStart = (e: { oldIndex: number }) => {
   drag.value = true;
 };
 
-const dragEnd = (e: { newIndex: number }) => {
+const dragEnd = (e: { newIndex: number; oldIndex: number }) => {
+  if (e.newIndex !== e.oldIndex) {
+    amplitude.track('Reorder Document', {
+      docId: props.doc.id,
+      docName: props.doc.name,
+    });
+  }
   drag.value = false;
   const index = e.newIndex;
   uploadedFiles.value[index].isDragging = false;
@@ -279,11 +295,9 @@ const removeFile = (element: UploadedFile) => {
 
 const onSubmit = async () => {
   amplitude.track('Confirm Document', {
-    docName: props.doc.name,
     docId: props.doc.id,
+    docName: props.doc.name,
     numberOfPages: uploadedFiles.value.length,
-    source: 'applicant',
-    status: 'submit',
   });
   await openDialogFormSubmitDocPreview();
   onDialogOK();
@@ -329,6 +343,11 @@ const openBaseDialogViewImage = (
   contentType: string,
   angle: 0 | 90 | 180 | 270
 ) => {
+  amplitude.track('View Added Page', {
+    docId: props.doc.id,
+    docName: props.doc.name,
+    numberOfPages: uploadedFiles.value.length,
+  });
   $q.dialog({
     component: BaseDialogViewImage,
     componentProps: {

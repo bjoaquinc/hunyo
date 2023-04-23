@@ -193,11 +193,13 @@ onMounted(async () => {
 const onDocumentClick = (doc: ApplicantDocument & { id: string }) => {
   const index = props.documents.findIndex((d) => d.id === doc.id);
   amplitude.track('Select Document', {
-    documentName: doc.name,
+    docId: doc.id,
+    docName: doc.name,
     orderOnList: doc.docNumber,
+    docStatus: doc.status,
   });
-  const docStatus = props.documents[index].status;
-  const rejection = props.documents[index].rejection;
+  const docStatus = doc.status;
+  const rejection = doc.rejection;
   if (docStatus === 'not-submitted') {
     onNotSubmitted(index);
   }
@@ -283,6 +285,7 @@ const showSample = async (
     component: DialogFormSample,
     componentProps: {
       sampleURL: url,
+      doc,
     },
   }).onOk(() => {
     if (resolve) {
@@ -349,8 +352,11 @@ const onDelayed = (index: number) => {
   const dialog = $q.dialog({
     component: DialogFormDelayedUpdate,
   });
-  dialog.onOk((payload: 'submit-now' | 'reschedule') => {
+  dialog.onOk(async (payload: 'submit-now' | 'reschedule') => {
     if (payload === 'submit-now') {
+      await new Promise<void>((resolve) => {
+        showSample(props.documents[index], resolve);
+      });
       const dialog = $q.dialog({
         component: DialogFormSubmitDocImage,
         componentProps: {

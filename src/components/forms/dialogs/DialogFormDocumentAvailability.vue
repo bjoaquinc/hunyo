@@ -82,8 +82,10 @@ const onButtonClick = (
   type: 'available' | 'not-available' | 'not-applicable'
 ) => {
   amplitude.track('Select Document Availability', {
-    status: type,
+    status: type === 'available' ? type : 'delayed',
     isRequired: props.doc.isRequired,
+    docName: props.doc.name,
+    docId: props.doc.id,
   });
   onDialogOK(type);
   // if (type === 'available' || type === 'not-available') {

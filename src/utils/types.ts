@@ -116,6 +116,7 @@ export interface Applicant {
   adminAcceptedDocs: number;
   acceptedDocs: number;
   unCheckedOptionalDocs: number;
+  isDeleted?: boolean;
 }
 
 export interface Form {

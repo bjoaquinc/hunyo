@@ -173,12 +173,13 @@ const averageProgress = computed(() => {
 });
 
 const onSubmit = async () => {
-  amplitude.track('Click Document Complete', {
-    docName: props.doc.name,
+  const CONVERT_TO_KB = 0.001;
+  amplitude.track('Submit Document Start', {
     docId: props.doc.id,
+    docName: props.doc.name,
     numberOfPages: props.uploadedFiles.length,
-    source: 'applicant',
-    status: 'submit',
+    totalFileSizeKB:
+      props.uploadedFiles.reduce((a, b) => a + b.file.size, 0) * CONVERT_TO_KB,
   });
   try {
     isLoading.value = true;
@@ -186,22 +187,27 @@ const onSubmit = async () => {
     await createApplicantPages(pages);
     await updateApplicantDocument();
     isLoading.value = false;
-    const CONVERT_TO_KB = 0.001;
-    amplitude.track('Document Successfully Submitted', {
-      docName: props.doc.name,
+    amplitude.track('Submit Document Finish', {
       docId: props.doc.id,
+      docName: props.doc.name,
       numberOfPages: props.uploadedFiles.length,
-      source: 'applicant',
-      status: 'submit',
-      formatsSubmitted: props.uploadedFiles.map((file) => file.file.type),
-      formatRequired: props.doc.requestedFormat,
       orderOnList: props.doc.docNumber,
+      submissionCount: updatedSubmissionCount.value,
       totalFileSizeKB:
         props.uploadedFiles.reduce((a, b) => a + b.file.size, 0) *
         CONVERT_TO_KB,
     });
     onDialogOK();
   } catch (error) {
+    amplitude.track('Submit Document Error', {
+      docId: props.doc.id,
+      docName: props.doc.name,
+      numberOfPages: props.uploadedFiles.length,
+      totalFileSizeKB:
+        props.uploadedFiles.reduce((a, b) => a + b.file.size, 0) *
+        CONVERT_TO_KB,
+      error,
+    });
     console.log(error);
   }
 };
