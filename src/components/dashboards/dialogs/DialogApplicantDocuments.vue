@@ -89,6 +89,7 @@ import { Applicant } from 'src/utils/types';
 import { ApplicantDocument } from 'src/utils/new-types';
 import DialogActionVerifyDocument from './DialogActionVerifyDocument.vue';
 import DialogApplicantPages from './DialogApplicantAcceptedDocument.vue';
+import { DateTime } from 'luxon';
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const applicantDocuments = ref<(ApplicantDocument & { id: string })[]>([]);
@@ -203,6 +204,20 @@ const onDocumentClick = (docId: string) => {
 
   if (doc.status === 'delayed') {
     // TODO: Show dialog delayed
+    const delayedUntil = doc.delayedUntil;
+    if (!delayedUntil) return;
+    const FORMATTED_DELAYED_UNTIL = DateTime.fromMillis(
+      delayedUntil.toMillis()
+    ).toLocaleString({
+      month: 'long',
+      day: '2-digit',
+      year: 'numeric',
+    });
+    $q.dialog({
+      title: `${doc.name} is delayed until ${FORMATTED_DELAYED_UNTIL}`,
+      // message: `${doc.name} is delayed until ${FORMATTED_DELAYED_UNTIL}`,
+      ok: true,
+    });
   }
 };
 
