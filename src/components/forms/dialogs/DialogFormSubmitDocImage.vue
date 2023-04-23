@@ -199,6 +199,7 @@ const isLoading = ref(false);
 
 const clickInputImage = () => {
   amplitude.track('Upload Document Page Start', {
+    applicantName: props.form.applicant.name,
     docId: props.doc.id,
     docName: props.doc.name,
   });
@@ -240,6 +241,7 @@ const onFileChange = (e: Event) => {
       latestIndex.value++;
       isLoading.value = false;
       amplitude.track('Upload Document Page Finish', {
+        applicantName: props.form.applicant.name,
         docId: props.doc.id,
         docName: props.doc.name,
         rotated: angle ? true : false,
@@ -260,6 +262,7 @@ const dragStart = (e: { oldIndex: number }) => {
 const dragEnd = (e: { newIndex: number; oldIndex: number }) => {
   if (e.newIndex !== e.oldIndex) {
     amplitude.track('Reorder Document', {
+      applicantName: props.form.applicant.name,
       docId: props.doc.id,
       docName: props.doc.name,
     });
@@ -295,6 +298,7 @@ const removeFile = (element: UploadedFile) => {
 
 const onSubmit = async () => {
   amplitude.track('Confirm Document', {
+    applicantName: props.form.applicant.name,
     docId: props.doc.id,
     docName: props.doc.name,
     numberOfPages: uploadedFiles.value.length,
@@ -344,6 +348,7 @@ const openBaseDialogViewImage = (
   angle: 0 | 90 | 180 | 270
 ) => {
   amplitude.track('View Added Page', {
+    applicantName: props.form.applicant.name,
     docId: props.doc.id,
     docName: props.doc.name,
     numberOfPages: uploadedFiles.value.length,

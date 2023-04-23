@@ -91,6 +91,7 @@ import { DateTime } from 'luxon';
 import { dbDocRefs } from 'src/utils/db';
 import { updateDoc, Timestamp } from 'firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
+import { Form } from 'src/utils/types';
 
 const date = ref('');
 const previousDate = ref('');
@@ -103,7 +104,7 @@ const dateIsGreaterThanToday = (date: string) => {
 
 const props = defineProps<{
   doc: ApplicantDocument & { id: string };
-  formId: string;
+  form: Form & { id: string };
 }>();
 
 onMounted(() => {
@@ -120,6 +121,7 @@ const onSubmit = async () => {
   isLoading.value = true;
   await updateDocStatusAndDelayedUntil();
   amplitude.track('Delayed Document', {
+    applicantName: props.form.applicant.name,
     docId: props.doc.id,
     docName: props.doc.name,
     // TODO: Add days after due date

@@ -175,6 +175,7 @@ const averageProgress = computed(() => {
 const onSubmit = async () => {
   const CONVERT_TO_KB = 0.001;
   amplitude.track('Submit Document Start', {
+    applicantName: props.form.applicant.name,
     docId: props.doc.id,
     docName: props.doc.name,
     numberOfPages: props.uploadedFiles.length,
@@ -188,6 +189,7 @@ const onSubmit = async () => {
     await updateApplicantDocument();
     isLoading.value = false;
     amplitude.track('Submit Document Finish', {
+      applicantName: props.form.applicant.name,
       docId: props.doc.id,
       docName: props.doc.name,
       numberOfPages: props.uploadedFiles.length,
@@ -200,6 +202,7 @@ const onSubmit = async () => {
     onDialogOK();
   } catch (error) {
     amplitude.track('Submit Document Error', {
+      applicantName: props.form.applicant.name,
       docId: props.doc.id,
       docName: props.doc.name,
       numberOfPages: props.uploadedFiles.length,

@@ -193,6 +193,7 @@ onMounted(async () => {
 const onDocumentClick = (doc: ApplicantDocument & { id: string }) => {
   const index = props.documents.findIndex((d) => d.id === doc.id);
   amplitude.track('Select Document', {
+    applicantName: props.form.applicant.name,
     docId: doc.id,
     docName: doc.name,
     orderOnList: doc.docNumber,
@@ -221,7 +222,7 @@ const onNotSubmitted = async (index: number) => {
   $q.dialog({
     component: DialogFormDocumentAvailability,
     componentProps: {
-      formId: props.form.id,
+      form: props.form,
       doc: props.documents[index],
     },
   }).onOk((documentAvailability) => {
@@ -247,7 +248,7 @@ const onNotSubmitted = async (index: number) => {
         component: DialogFormScheduleSubmission,
         componentProps: {
           doc: props.documents[index],
-          formId: props.form.id,
+          form: props.form,
         },
       }).onOk(() => {
         $q.notify({
@@ -286,6 +287,7 @@ const showSample = async (
     componentProps: {
       sampleURL: url,
       doc,
+      form: props.form,
     },
   }).onOk(() => {
     if (resolve) {
@@ -300,6 +302,7 @@ const onRejected = (index: number) => {
     component: DialogFormRejectionInformation,
     componentProps: {
       doc: props.documents[index],
+      form: props.form,
     },
   }).onOk(async () => {
     await new Promise<void>((resolve) => {
@@ -321,32 +324,6 @@ const onRejected = (index: number) => {
     });
   });
 };
-
-// const onNotApplicable = (index: number) => {
-//   $q.dialog({
-//     title: 'Change to Applicable?',
-//     ok: 'Yes',
-//     cancel: 'No',
-//   }).onOk(async () => {
-//     const loadingDialog = $q.dialog({
-//       title: 'Changing document to Applicable...',
-//       progress: {
-//         spinner: QSpinnerPie,
-//       },
-//       persistent: true,
-//       ok: false,
-//     });
-//     const selectedDoc = props.documents[index];
-//     const documentRef = dbDocRefs.getDocumentRef(
-//       selectedDoc.companyId,
-//       selectedDoc.id
-//     );
-//     await updateDoc(documentRef, {
-//       status: 'not-submitted',
-//     });
-//     loadingDialog.hide();
-//   });
-// };
 
 const onDelayed = (index: number) => {
   const dialog = $q.dialog({
@@ -378,7 +355,7 @@ const onDelayed = (index: number) => {
         component: DialogFormScheduleSubmission,
         componentProps: {
           doc: props.documents[index],
-          formId: props.form.id,
+          form: props.form,
         },
       });
       dialog.onOk(() => {

@@ -68,11 +68,12 @@ import * as amplitude from '@amplitude/analytics-browser';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 // import { dbDocRefs } from 'src/utils/db';
 import { ApplicantDocument } from 'src/utils/new-types';
+import { Form } from 'src/utils/types';
 import { ref } from 'vue';
 
 const props = defineProps<{
   doc: ApplicantDocument & { id: string };
-  formId: string;
+  form: Form & { id: string };
 }>();
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
@@ -82,6 +83,7 @@ const onButtonClick = (
   type: 'available' | 'not-available' | 'not-applicable'
 ) => {
   amplitude.track('Select Document Availability', {
+    applicantName: props.form.applicant.name,
     status: type === 'available' ? type : 'delayed',
     isRequired: props.doc.isRequired,
     docName: props.doc.name,
