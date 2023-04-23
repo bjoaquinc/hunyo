@@ -15,6 +15,15 @@
           <div class="text-h5 q-ml-auto" style="cursor: pointer">
             {{ updatedName }}
             <q-popup-edit
+              @hide="
+                () => {
+                  amplitude.track('Check - Edit Document Label', {
+                    docId: applicantDocument.id,
+                    docName: applicantDocument.name,
+                    applicantId: applicantDocument.applicantId,
+                  });
+                }
+              "
               ref="popUpEditRef"
               v-model="updatedName"
               auto-save
@@ -185,7 +194,7 @@
           >
             <q-btn
               v-if="slide > 1"
-              @click="slide--"
+              @click="swipePage('left')"
               outline
               round
               class="nav-left"
@@ -195,7 +204,7 @@
             />
             <q-btn
               v-if="slide < documentPages.length"
-              @click="slide++"
+              @click="swipePage('right')"
               outline
               round
               class="nav-right"
@@ -269,6 +278,7 @@ import {
 import { getDownloadURL } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
 import { useUserStore } from 'src/stores/user-store';
+import * as amplitude from '@amplitude/analytics-browser';
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const { user } = useUserStore();
@@ -276,8 +286,6 @@ const drawerRight = ref(true);
 const updatedName = ref('');
 const popUpEditRef = ref<null | QPopupEdit>(null);
 const slide = ref(1);
-// const selectedPageIndex = computed(() => slide.value - 1);
-// const showOptions = ref(false);
 const documentPages = ref<
   (ApplicantPage & {
     id: string;
@@ -384,6 +392,20 @@ onUnmounted(() => {
   unsubDocumentPages.value?.();
 });
 
+const swipePage = (direction: 'left' | 'right') => {
+  if (direction === 'left') {
+    slide.value--;
+  } else {
+    slide.value++;
+  }
+  amplitude.track('Check - View Document Page', {
+    docId: props.applicantDocument.id,
+    docName: props.applicantDocument.name,
+    pageNumber: slide.value,
+    numTotalPages: documentPages.value.length,
+  });
+};
+
 const setWarningMessage = (warningKey: keyof typeof warningMessages) => {
   warningMessage.value = warningMessages[warningKey];
   showWarningMessage.value = true;
@@ -438,41 +460,80 @@ const validateFields = () => {
 
 const onSubmit = async () => {
   if (!validateFields()) return;
-  isLoading.value = true;
-  const docRef = dbDocRefs.getDocumentRef(
-    props.applicantDocument.companyId,
-    props.applicantDocument.id
-  );
-  if (updatedStatus.value === 'accepted') {
-    // Handle Accept
-    await updateDoc(docRef, {
-      status: 'accepted',
-      isUpdating: true,
+  try {
+    amplitude.track('Check - Document Decision Start', {
+      decision: updatedStatus.value,
+      docId: props.applicantDocument.id,
+      docName: props.applicantDocument.name,
+      applicantId: props.applicantDocument.applicantId,
+      submissionCount: props.applicantDocument.submissionCount,
+      companyId: props.applicantDocument.companyId,
     });
-  }
-  if (updatedStatus.value === 'rejected') {
-    let rejectionReasons: RejectionReasons[] = [];
-    if (isWrongDoc.value) {
-      rejectionReasons = ['wrong-document'];
-      message.value = '';
-    } else {
-      rejectionReasons = Object.keys(rejections.value).filter(
-        (key) => rejections.value[key as keyof typeof rejections.value].value
-      ) as RejectionReasons[];
+    isLoading.value = true;
+    const docRef = dbDocRefs.getDocumentRef(
+      props.applicantDocument.companyId,
+      props.applicantDocument.id
+    );
+    if (updatedStatus.value === 'accepted') {
+      // Handle Accept
+      await updateDoc(docRef, {
+        status: 'accepted',
+        isUpdating: true,
+      });
+      amplitude.track('Check - Document Decision Finish', {
+        decision: updatedStatus.value,
+        docId: props.applicantDocument.id,
+        docName: props.applicantDocument.name,
+        applicantId: props.applicantDocument.applicantId,
+        submissionCount: props.applicantDocument.submissionCount,
+        companyId: props.applicantDocument.companyId,
+      });
     }
-    await updateDoc(docRef, {
-      status: 'rejected',
-      rejection: {
-        rejectedAt: serverTimestamp(),
-        reasons: rejectionReasons,
-        rejectedBy: user?.id,
+    if (updatedStatus.value === 'rejected') {
+      let rejectionReasons: RejectionReasons[] = [];
+      if (isWrongDoc.value) {
+        rejectionReasons = ['wrong-document'];
+        message.value = '';
+      } else {
+        rejectionReasons = Object.keys(rejections.value).filter(
+          (key) => rejections.value[key as keyof typeof rejections.value].value
+        ) as RejectionReasons[];
+      }
+      await updateDoc(docRef, {
+        status: 'rejected',
+        rejection: {
+          rejectedAt: serverTimestamp(),
+          reasons: rejectionReasons,
+          rejectedBy: user?.id,
+          message: message.value,
+        },
+        isUpdating: true,
+      });
+      amplitude.track('Check - Document Decision Finish', {
+        decision: updatedStatus.value,
+        docId: props.applicantDocument.id,
+        docName: props.applicantDocument.name,
+        applicantId: props.applicantDocument.applicantId,
+        submissionCount: props.applicantDocument.submissionCount,
+        reason: rejectionReasons,
         message: message.value,
-      },
-      isUpdating: true,
+      });
+    }
+  } catch (error) {
+    amplitude.track('Check - Document Decision Error', {
+      decision: updatedStatus.value,
+      docId: props.applicantDocument.id,
+      docName: props.applicantDocument.name,
+      applicantId: props.applicantDocument.applicantId,
+      submissionCount: props.applicantDocument.submissionCount,
+      companyId: props.applicantDocument.companyId,
+      error,
     });
+    // console.log(error);
+  } finally {
+    isLoading.value = false;
+    onDialogOK();
   }
-  isLoading.value = false;
-  onDialogOK();
 };
 
 // const createAcceptedDoc = async (page: ApplicantPage & { id: string }) => {

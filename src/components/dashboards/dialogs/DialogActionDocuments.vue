@@ -65,6 +65,7 @@ import {
   onSnapshot,
 } from '@firebase/firestore';
 import { ApplicantDocument } from 'src/utils/new-types';
+import * as amplitude from '@amplitude/analytics-browser';
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const $q = useQuasar();
@@ -132,12 +133,17 @@ onUnmounted(() => {
 });
 
 const openDialogActionVerifyDocument = (index: number) => {
-  console.log('running');
-  const applicantDocument = applicantDocuments.value[index];
+  const doc = applicantDocuments.value[index];
+  amplitude.track('Check - Select Document', {
+    docName: doc.name,
+    docId: doc.id,
+    applicantId: props.applicantId,
+    numOfUncheckedDocs: applicantDocuments.value.length,
+  });
   $q.dialog({
     component: DialogActionVerifyDocument,
     componentProps: {
-      applicantDocument,
+      applicantDocument: doc,
     },
   }).onOk(async () => {
     console.log('onOk');

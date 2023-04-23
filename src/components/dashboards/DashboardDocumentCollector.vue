@@ -194,6 +194,7 @@ import { Applicant, PublishedDashboard, User } from 'src/utils/types';
 import { useUserStore } from 'src/stores/user-store';
 import { DateTime } from 'luxon';
 import DialogApplicantsAdd from './dialogs/DialogApplicantsAdd.vue';
+import * as amplitude from '@amplitude/analytics-browser';
 
 const headerRef = ref<InstanceType<typeof Header> | null>(null);
 
@@ -295,6 +296,17 @@ const openDialogApplicantsAdd = () => {
 };
 
 const openDialogAction = (applicantId: string) => {
+  const applicant = props.applicants.find(
+    (applicant) => applicant.id === applicantId
+  );
+  if (!applicant) return;
+  const NUM_OF_UNCHECKED_DOCS =
+    applicant.adminAcceptedDocs - applicant.acceptedDocs;
+  amplitude.track('Check - Click Red Check Documents Button', {
+    applicantId: applicant.id,
+    applicantStatus: applicant.status,
+    numOfUncheckedDocs: NUM_OF_UNCHECKED_DOCS,
+  });
   $q.dialog({
     component: defineAsyncComponent(
       () =>
@@ -303,9 +315,7 @@ const openDialogAction = (applicantId: string) => {
     componentProps: {
       companyId,
       applicantId,
-      applicantName: props.applicants.find(
-        (applicant) => applicant.id === applicantId
-      )?.name,
+      applicantName: applicant.name,
     },
   });
 };
@@ -314,6 +324,15 @@ const openDialogApplicantDocuments = (applicantId: string) => {
   const applicant = props.applicants.find(
     (applicant) => applicant.id === applicantId
   );
+  if (!applicant) return;
+  const NUM_OF_UNCHECKED_DOCS =
+    applicant.adminAcceptedDocs - applicant.acceptedDocs;
+  amplitude.track('Click Applicant on Dashboard', {
+    applicantId: applicant.id,
+    applicantStatus: applicant.status,
+    numOfUncheckedDocs: NUM_OF_UNCHECKED_DOCS,
+    numOfAcceptedDocs: applicant.acceptedDocs,
+  });
   $q.dialog({
     component: defineAsyncComponent(
       () =>

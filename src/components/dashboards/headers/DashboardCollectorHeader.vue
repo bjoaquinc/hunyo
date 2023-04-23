@@ -4,7 +4,7 @@
     <div class="row q-col-gutter-lg q-mt-sm">
       <div class="col">
         <q-btn
-          @click="active = 0"
+          @click="clickFilter(0)"
           size="lg"
           class="full-width q-py-lg full-height"
           :class="active === 0 ? 'active' : ''"
@@ -17,7 +17,7 @@
       </div>
       <div class="col">
         <q-btn
-          @click="active = 1"
+          @click="clickFilter(1)"
           size="lg"
           class="full-width q-py-lg full-height"
           :class="active === 1 ? 'active' : ''"
@@ -30,7 +30,7 @@
       </div>
       <div class="col">
         <q-btn
-          @click="active = 2"
+          @click="clickFilter(2)"
           size="lg"
           class="full-width q-py-lg full-height"
           :class="active === 2 ? 'active' : ''"
@@ -43,7 +43,7 @@
       </div>
       <div class="col">
         <q-btn
-          @click="active = 3"
+          @click="clickFilter(3)"
           size="lg"
           class="full-width q-py-lg full-height"
           :class="active === 3 ? 'active' : ''"
@@ -60,6 +60,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import * as amplitude from '@amplitude/analytics-browser';
 
 export interface CollectorHeader {
   title?: string;
@@ -78,6 +79,20 @@ withDefaults(defineProps<CollectorHeader>(), {
   completeApplicantsCount: 0,
   incompleteApplicantsCount: 0,
 });
+
+const activeIndexes = [
+  'Total Applicants',
+  'Incomplete Applicants',
+  'Complete Applicants',
+  'Action Required',
+];
+
+const clickFilter = (activeIndex: number) => {
+  amplitude.track('Click Dashboard Overview', {
+    filterType: activeIndexes[activeIndex],
+  });
+  active.value = activeIndex;
+};
 
 defineExpose({
   active,
