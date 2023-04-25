@@ -8,9 +8,15 @@
     transition-show="slide-up"
     transition-hide="slide-down"
   >
-    <div class="flex bg-primary">
+    <div class="flex container">
       <q-img :src="sampleURL" />
-      <q-btn class="full-width" @click="onOk" label="Ok" color="primary" />
+      <q-btn
+        class="full-width"
+        @click="onOk"
+        size="lg"
+        label="Ok"
+        color="primary"
+      />
     </div>
   </q-dialog>
 </template>
@@ -55,8 +61,6 @@ defineEmits([
 </script>
 
 <style lang="sass" scoped>
-.card-container
-  @media only screen and (width > $breakpoint-xs)
-    max-width: 600px !important
-    height: auto !important
+.container
+  background-color: #7b95a3
 </style>

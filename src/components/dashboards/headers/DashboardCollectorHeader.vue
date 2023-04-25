@@ -51,7 +51,7 @@
           stack
         >
           <div class="text-h2">{{ actionsCount }}</div>
-          <div class="text-body2 q-mt-md">Action Required</div>
+          <div class="text-body2 q-mt-md">Unchecked Documents</div>
         </q-btn>
       </div>
     </div>

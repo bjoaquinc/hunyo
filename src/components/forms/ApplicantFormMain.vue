@@ -1,5 +1,5 @@
 <template>
-  <div class="absolute-center">
+  <div>
     <q-card class="my-card text-grey-8">
       <q-card-section>
         <q-img
@@ -373,8 +373,8 @@ const onDelayed = (index: number) => {
 .my-card
   min-width: 10px
   width: 100vw
-  max-height: 2000px
-  height: 100vh
+  min-height: 100vh
+  height: auto !important
   padding: 8px
   @media only screen and (width > $breakpoint-xs)
     width: auto
