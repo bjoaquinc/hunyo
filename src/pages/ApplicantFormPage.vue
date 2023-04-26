@@ -102,7 +102,7 @@ const setForm = async () => {
       formRef,
       async (docSnap) => {
         const docData = docSnap.data();
-        if (docData) {
+        if (docData && !docData.isDeleted) {
           console.log(docData);
           form.value = { id: docSnap.id, ...docData };
         } else {

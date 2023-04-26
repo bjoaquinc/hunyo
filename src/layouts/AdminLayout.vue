@@ -395,7 +395,10 @@ onMounted(async () => {
           applicantsList.push({ id: applicantSnap.id, ...applicantData });
         });
         console.log('applicants list: ', applicantsList);
-        applicants.value = applicantsList.sort(
+        const filteredApplicants = applicantsList.filter(
+          (applicant) => applicant.isDeleted !== true
+        );
+        applicants.value = filteredApplicants.sort(
           (a, b) => a.createdAt.toMillis() - b.createdAt.toMillis()
         );
         runOnce();

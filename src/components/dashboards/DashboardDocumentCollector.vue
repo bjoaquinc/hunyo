@@ -353,22 +353,41 @@ const openDialogApplicantDocuments = (applicantId: string) => {
 
 const deleteApplicants = async () => {
   if (selected.value.length > 0 && user) {
-    const promises: Promise<void>[] = [];
-    selected.value.forEach((applicant) => {
-      const COMPANY_ID = user.company.id;
-      const DASHBOARD_ID = props.dashboard.id;
-      const APPLICANT_ID = applicant.id;
-      const applicantRef = dbDocRefs.getApplicantRef(
-        COMPANY_ID,
-        DASHBOARD_ID,
-        APPLICANT_ID
-      );
-      const promise = updateDoc(applicantRef, {
-        isDeleted: true,
+    $q.dialog({
+      title: `Are you sure you want to delete ${selected.value.length} ${
+        selected.value.length === 1 ? 'applicant' : 'applicants'
+      }?`,
+      ok: {
+        outline: true,
+        label: 'Yes',
+        color: 'primary',
+      },
+      cancel: {
+        label: 'No',
+        color: 'primary',
+      },
+    })
+      .onOk(async () => {
+        const promises: Promise<void>[] = [];
+        selected.value.forEach((applicant) => {
+          const COMPANY_ID = user.company.id;
+          const DASHBOARD_ID = props.dashboard.id;
+          const APPLICANT_ID = applicant.id;
+          const applicantRef = dbDocRefs.getApplicantRef(
+            COMPANY_ID,
+            DASHBOARD_ID,
+            APPLICANT_ID
+          );
+          const promise = updateDoc(applicantRef, {
+            isDeleted: true,
+          });
+          promises.push(promise);
+        });
+        await Promise.all(promises);
+      })
+      .onCancel(() => {
+        return;
       });
-      promises.push(promise);
-    });
-    await Promise.all(promises);
   } else {
     console.log('No applicants have been selected');
   }

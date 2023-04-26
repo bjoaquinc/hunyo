@@ -152,6 +152,7 @@ export interface Form {
     };
   };
   adminCheckDocs: number;
+  isDeleted?: boolean;
 }
 
 // export interface UpdatedForm extends Omit<Form, 'applicant'> {
