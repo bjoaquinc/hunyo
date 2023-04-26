@@ -45,7 +45,7 @@
                 <q-item-section avatar>
                   <q-icon color="grey-8" name="fas fa-times" />
                 </q-item-section>
-                <q-item-section>
+                <q-item-section @click="deleteApplicants">
                   <q-item-label>DELETE APPLICANTS</q-item-label>
                 </q-item-section>
               </q-item>
@@ -195,6 +195,8 @@ import { useUserStore } from 'src/stores/user-store';
 import { DateTime } from 'luxon';
 import DialogApplicantsAdd from './dialogs/DialogApplicantsAdd.vue';
 import * as amplitude from '@amplitude/analytics-browser';
+import { dbDocRefs } from 'src/utils/db';
+import { updateDoc } from '@firebase/firestore';
 
 const headerRef = ref<InstanceType<typeof Header> | null>(null);
 
@@ -206,17 +208,21 @@ const props = defineProps<{
 const { user } = useUserStore();
 const companyId = (user as User & { id: string }).company.id;
 
+const activeApplicants = computed(() =>
+  props.applicants.filter((applicant) => !applicant.isDeleted)
+);
+
 const incompleteApplicants = computed(() =>
-  props.applicants.filter(
+  activeApplicants.value.filter(
     (applicant) =>
       applicant.status === 'incomplete' || applicant.status === 'not-submitted'
   )
 );
 const completeApplicants = computed(() =>
-  props.applicants.filter((applicant) => applicant.status === 'complete')
+  activeApplicants.value.filter((applicant) => applicant.status === 'complete')
 );
 const actionApplicants = computed(() =>
-  props.applicants.filter(
+  activeApplicants.value.filter(
     (applicant) =>
       applicant.adminAcceptedDocs > applicant.acceptedDocs ||
       applicant.unCheckedOptionalDocs > 0
@@ -233,7 +239,7 @@ const activeHeader = computed(() => {
 
 const filteredApplicants = computed(() => {
   const applicantsFilters = [
-    props.applicants,
+    activeApplicants.value,
     incompleteApplicants.value,
     completeApplicants.value,
     actionApplicants.value,
@@ -282,7 +288,7 @@ const columns: QTableProps['columns'] = [
   },
 ];
 
-const selected = ref([]);
+const selected = ref<(Applicant & { id: string })[]>([]);
 
 const openDialogApplicantsAdd = () => {
   $q.dialog({
@@ -343,6 +349,29 @@ const openDialogApplicantDocuments = (applicantId: string) => {
       applicant,
     },
   });
+};
+
+const deleteApplicants = async () => {
+  if (selected.value.length > 0 && user) {
+    const promises: Promise<void>[] = [];
+    selected.value.forEach((applicant) => {
+      const COMPANY_ID = user.company.id;
+      const DASHBOARD_ID = props.dashboard.id;
+      const APPLICANT_ID = applicant.id;
+      const applicantRef = dbDocRefs.getApplicantRef(
+        COMPANY_ID,
+        DASHBOARD_ID,
+        APPLICANT_ID
+      );
+      const promise = updateDoc(applicantRef, {
+        isDeleted: true,
+      });
+      promises.push(promise);
+    });
+    await Promise.all(promises);
+  } else {
+    console.log('No applicants have been selected');
+  }
 };
 </script>
 

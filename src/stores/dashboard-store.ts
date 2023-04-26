@@ -83,13 +83,19 @@ export const useDashboardStore = defineStore('dashboard', () => {
               }
             }
             if (change.type === 'modified') {
-              applicants.value.splice(change.newIndex, 1, {
+              const index = applicants.value.findIndex(
+                (applicant) => applicant.id === id
+              );
+              applicants.value.splice(index, 1, {
                 id,
                 ...change.doc.data(),
               });
             }
             if (change.type === 'removed') {
-              applicants.value.splice(change.oldIndex, 1);
+              const index = applicants.value.findIndex(
+                (applicant) => applicant.id === id
+              );
+              applicants.value.splice(index, 1);
             }
           });
           resolveOnce();

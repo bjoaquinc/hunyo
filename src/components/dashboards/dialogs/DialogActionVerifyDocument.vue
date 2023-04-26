@@ -441,7 +441,6 @@ const validateFields = () => {
       const hasRejectionReason = Object.values(rejections.value).some(
         (val) => val.value === true
       );
-      console.log(hasRejectionReason);
       if (!hasRejectionReason) {
         setWarningMessage('no-rejection-reason');
         return false;
