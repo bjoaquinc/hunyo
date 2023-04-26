@@ -12,7 +12,7 @@
   <q-page v-else>
     <q-card
       class="card-container absolute-center bg-primary q-pa-xl"
-      style="width: 600px"
+      style="width: 600px; max-width: 100vw"
     >
       <q-card-section class="flex">
         <q-icon
@@ -52,11 +52,13 @@ import { ApplicantDocument } from 'src/utils/new-types';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { signInAnonymously, getAuth } from 'firebase/auth';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useRouter } from 'vue-router';
 
 const props = defineProps<{
   formId: string;
 }>();
 const $q = useQuasar();
+const router = useRouter();
 const unsubForm = ref<Unsubscribe | null>(null);
 const authStore = useAuthStore();
 const form = ref<(Form & { id: string }) | null>(null);
@@ -69,9 +71,14 @@ onMounted(async () => {
   try {
     await setApplicantAuth();
     await setForm();
-    await setDocuments();
     amplitude.setUserId(form.value?.id);
-    // showReminder();
+    if (form.value && form.value.company.logo) {
+      logoURL.value = await getLogoURL(form.value.company.logo);
+    }
+    await setDocuments();
+    if (form.value && !form.value.applicant.name && $q.platform.is.mobile) {
+      getApplicantName();
+    }
     isReady.value = true;
   } catch (error) {
     console.error(error);
@@ -96,19 +103,11 @@ const setForm = async () => {
       async (docSnap) => {
         const docData = docSnap.data();
         if (docData) {
+          console.log(docData);
           form.value = { id: docSnap.id, ...docData };
-          if (docData.company.logo && !logoURL.value) {
-            logoURL.value = await getLogoURL(docData.company.logo);
-          }
-          if (!docData.applicant.name) {
-            $q.dialog({
-              component: DialogFormName,
-              componentProps: {
-                formId: props.formId,
-                logo: logoURL.value,
-              },
-            });
-          }
+        } else {
+          console.log('Applicant does not exist');
+          router.push('/404');
         }
         runOnce();
       },
@@ -142,6 +141,16 @@ const setDocuments = async () => {
       },
       reject
     );
+  });
+};
+
+const getApplicantName = () => {
+  $q.dialog({
+    component: DialogFormName,
+    componentProps: {
+      formId: props.formId,
+      logo: logoURL.value,
+    },
   });
 };
 
