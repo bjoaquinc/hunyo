@@ -61,6 +61,7 @@ export interface DraftDashboard {
   };
   docs: { [key: string]: DashboardDoc };
   newApplicants: string[];
+  savedApplicants: string[];
   messages?: {
     opening: string;
   };
@@ -81,6 +82,7 @@ export interface PublishedDashboard {
   };
   docs: { [key: string]: DashboardDoc };
   newApplicants: string[];
+  savedApplicants: string[];
   messages: {
     opening: string;
   };
