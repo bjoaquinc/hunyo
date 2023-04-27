@@ -23,14 +23,14 @@
                 </q-item-section>
               </q-item>
 
-              <q-item clickable v-close-popup>
+              <!-- <q-item clickable v-close-popup>
                 <q-item-section avatar>
                   <q-icon color="grey-8" name="fas fa-envelope" />
                 </q-item-section>
                 <q-item-section>
                   <q-item-label>SEND MESSAGE</q-item-label>
                 </q-item-section>
-              </q-item>
+              </q-item> -->
 
               <q-item clickable @click="openDialogApplicantsAdd" v-close-popup>
                 <q-item-section avatar>
@@ -384,7 +384,7 @@ const deleteApplicants = async () => {
           promises.push(promise);
         });
         await Promise.all(promises);
-        selected.value = [] // Clear the selected deleted applicants
+        selected.value = []; // Clear the selected deleted applicants
       })
       .onCancel(() => {
         return;
