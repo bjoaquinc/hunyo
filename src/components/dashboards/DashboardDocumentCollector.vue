@@ -384,6 +384,7 @@ const deleteApplicants = async () => {
           promises.push(promise);
         });
         await Promise.all(promises);
+        selected.value = [] // Clear the selected deleted applicants
       })
       .onCancel(() => {
         return;

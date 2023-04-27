@@ -138,7 +138,7 @@ function setInvites() {
     snapshot.forEach((doc) => {
       invitedMembers.push({ id: doc.id, ...doc.data() });
     });
-    invites.value = invitedMembers;
+    invites.value = invitedMembers.filter((invite) => !invite.isComplete);
   });
 }
 
@@ -162,11 +162,12 @@ async function createInvite(email: string) {
     email,
     company: user.company,
     resend: false,
+    isComplete: false,
   });
 }
 
 async function removeInvite(inviteId: string) {
-  const inviteRef = dbDocRefs.invite(inviteId);
+  const inviteRef = dbDocRefs.getInviteRef(inviteId);
   await deleteDoc(inviteRef);
 }
 </script>

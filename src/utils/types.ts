@@ -21,6 +21,7 @@ export interface Invite {
   };
   email: string;
   resend: boolean;
+  isComplete: boolean;
 }
 
 export interface Company {
@@ -119,6 +120,10 @@ export interface Applicant {
   acceptedDocs: number;
   unCheckedOptionalDocs: number;
   isDeleted?: boolean;
+}
+
+export interface ApplicantWithFormId extends Applicant {
+  formId: string;
 }
 
 export interface Form {
