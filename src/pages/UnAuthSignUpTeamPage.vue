@@ -148,7 +148,7 @@ onMounted(async () => {
   try {
     const inviteRef = dbDocRefs.getInviteRef(props.inviteId);
     const inviteDoc = await getDoc(inviteRef);
-    if (inviteDoc.exists()) {
+    if (inviteDoc.exists() && !inviteDoc.data().isComplete) {
       invite.value = { id: inviteDoc.id, ...inviteDoc.data() };
       companyName.value = invite.value.company.name;
       email.value = invite.value.email;

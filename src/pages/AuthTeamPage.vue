@@ -64,6 +64,9 @@
         </q-item>
       </q-list>
     </div>
+    <q-inner-loading :showing="isLoading">
+      <q-spinner-pie size="80px" color="primary" />
+    </q-inner-loading>
   </q-page>
 </template>
 
@@ -88,6 +91,7 @@ type InviteData = Invite & { id: string };
 type UserData = User & { id: string };
 
 const { user } = useUserStore();
+const isLoading = ref(true);
 const team = ref<UserData[]>([]);
 const invites = ref<InviteData[]>([]);
 const unsubTeam = ref<Unsubscribe | null>(null);
@@ -102,9 +106,10 @@ const emails = computed((): string[] => {
   }
 });
 
-onMounted(() => {
-  setTeam();
-  setInvites();
+onMounted(async () => {
+  await setTeam();
+  await setInvites();
+  isLoading.value = false;
 });
 
 onUnmounted(() => {
@@ -116,29 +121,47 @@ onUnmounted(() => {
   }
 });
 
-function setTeam() {
+async function setTeam() {
   if (user) {
     const teamRef = dbColRefs.getUsersRef(user.company.id);
-    unsubTeam.value = onSnapshot(teamRef, (snapshot) => {
-      const teamMembers: UserData[] = [];
-      snapshot.forEach((doc) => {
-        teamMembers.push({ id: doc.id, ...doc.data() });
+    await new Promise<void>((resolve) => {
+      let runOnce = () => {
+        runOnce = () => {
+          return;
+        };
+        resolve();
+      };
+      unsubTeam.value = onSnapshot(teamRef, (snapshot) => {
+        const teamMembers: UserData[] = [];
+        snapshot.forEach((doc) => {
+          teamMembers.push({ id: doc.id, ...doc.data() });
+        });
+        team.value = teamMembers;
+        runOnce();
       });
-      team.value = teamMembers;
     });
   } else {
     console.log('No User logged in');
   }
 }
 
-function setInvites() {
+async function setInvites() {
   const q = query(invitesRef, where('company.id', '==', user?.company.id));
-  unsubInvites.value = onSnapshot(q, (snapshot) => {
-    const invitedMembers: InviteData[] = [];
-    snapshot.forEach((doc) => {
-      invitedMembers.push({ id: doc.id, ...doc.data() });
+  await new Promise<void>((resolve) => {
+    let runOnce = () => {
+      runOnce = () => {
+        return;
+      };
+      resolve();
+    };
+    unsubInvites.value = onSnapshot(q, (snapshot) => {
+      const invitedMembers: InviteData[] = [];
+      snapshot.forEach((doc) => {
+        invitedMembers.push({ id: doc.id, ...doc.data() });
+      });
+      invites.value = invitedMembers.filter((invite) => !invite.isComplete);
+      runOnce();
     });
-    invites.value = invitedMembers.filter((invite) => !invite.isComplete);
   });
 }
 
