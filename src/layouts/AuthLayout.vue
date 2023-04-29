@@ -172,6 +172,12 @@ const essentialLinks = [
     link: '/auth/dashboards',
   },
   {
+    title: 'Team',
+    caption: 'Manage team members',
+    icon: 'fas fa-people-group',
+    link: '/auth/team',
+  },
+  {
     title: 'Links',
     caption: 'All download links created',
     icon: 'fas fa-link',

@@ -27,7 +27,7 @@
             <q-item-label caption lines="1">{{ contact.email }}</q-item-label>
           </q-item-section>
 
-          <q-item-section side>
+          <!-- <q-item-section side>
             <q-btn
               label="Remove"
               icon="fas fa-times"
@@ -36,7 +36,7 @@
               no-caps
               color="negative"
             />
-          </q-item-section>
+          </q-item-section> -->
         </q-item>
 
         <q-item v-for="invite in invites" :key="invite.id" class="q-my-sm">
@@ -163,6 +163,7 @@ async function createInvite(email: string) {
     company: user.company,
     resend: false,
     isComplete: false,
+    invitedBy: user.id,
   });
 }
 

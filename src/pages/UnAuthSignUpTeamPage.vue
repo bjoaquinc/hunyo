@@ -114,7 +114,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import {
-  deleteDoc,
+  updateDoc,
   getDoc,
   serverTimestamp,
   setDoc,
@@ -168,7 +168,7 @@ async function onSubmit() {
     const userId = await createUserAuth();
     await createUser(userId, company);
     await store.addUserDetails(userId, company.id);
-    await deleteInvite();
+    await updateInvite();
     router.push('/auth/welcome');
   } catch (error) {
     console.log(error);
@@ -201,9 +201,11 @@ const createUser = async (
   });
 };
 
-const deleteInvite = async () => {
+const updateInvite = async () => {
   const inviteRef = dbDocRefs.getInviteRef(props.inviteId);
-  await deleteDoc(inviteRef);
+  await updateDoc(inviteRef, {
+    isComplete: true,
+  });
 };
 </script>
 

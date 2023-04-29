@@ -22,6 +22,7 @@ export interface Invite {
   email: string;
   resend: boolean;
   isComplete: boolean;
+  invitedBy: string;
 }
 
 export interface Company {

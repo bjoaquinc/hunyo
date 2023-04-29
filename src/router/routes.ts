@@ -47,6 +47,10 @@ const routes: RouteRecordRaw[] = [
         ],
       },
       {
+        path: 'team',
+        component: () => import('src/pages/AuthTeamPage.vue'),
+      },
+      {
         path: 'links',
         component: () => import('src/pages/AuthLinksPage.vue'),
       },
