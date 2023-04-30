@@ -48,6 +48,7 @@ export interface User {
     title: string;
     type: string;
   }[];
+  hunyoAdmin?: boolean;
 }
 
 export interface DraftDashboard {

@@ -138,7 +138,7 @@ async function setTeam() {
         snapshot.forEach((doc) => {
           teamMembers.push({ id: doc.id, ...doc.data() });
         });
-        team.value = teamMembers;
+        team.value = teamMembers.filter((member) => !member.hunyoAdmin);
         runOnce();
       });
     });
