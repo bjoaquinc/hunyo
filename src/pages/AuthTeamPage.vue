@@ -81,6 +81,7 @@ import {
   deleteDoc,
   onSnapshot,
   query,
+  orderBy,
   serverTimestamp,
   Unsubscribe,
   where,
@@ -124,6 +125,7 @@ onUnmounted(() => {
 async function setTeam() {
   if (user) {
     const teamRef = dbColRefs.getUsersRef(user.company.id);
+    const q = query(teamRef, orderBy('createdAt'));
     await new Promise<void>((resolve) => {
       let runOnce = () => {
         runOnce = () => {
@@ -131,7 +133,7 @@ async function setTeam() {
         };
         resolve();
       };
-      unsubTeam.value = onSnapshot(teamRef, (snapshot) => {
+      unsubTeam.value = onSnapshot(q, (snapshot) => {
         const teamMembers: UserData[] = [];
         snapshot.forEach((doc) => {
           teamMembers.push({ id: doc.id, ...doc.data() });
@@ -198,8 +200,8 @@ async function removeInvite(inviteId: string) {
 
 <style lang="sass" scoped>
 .container
-  max-width: 600px
-  @media only screen and (width > $breakpoint-md)
+  max-width: 100vw
+  @media only screen and (width > $breakpoint-xs)
     margin-left: 100px
     max-width: 800px
 </style>
