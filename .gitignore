@@ -45,4 +45,4 @@ firestore.rules
 storage.rules
 
 # Firebase cached files
-.firebase/*
+.firebase
