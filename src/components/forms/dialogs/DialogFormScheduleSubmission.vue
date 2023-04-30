@@ -33,6 +33,13 @@
             If you don't know the exact date, give an approximate date.
           </div>
           <q-input
+            ref="schedulerRef"
+            @focus="
+              () => {
+                showCalendar = true;
+                schedulerRef?.blur();
+              }
+            "
             class="q-mt-md"
             placeholder="YYYY-MM-DD"
             filled
@@ -49,6 +56,7 @@
             <template v-slot:append>
               <q-icon name="event" class="cursor-pointer">
                 <q-popup-proxy
+                  v-model="showCalendar"
                   cover
                   transition-show="scale"
                   transition-hide="scale"
@@ -85,7 +93,7 @@
 
 <script setup lang="ts">
 import * as amplitude from '@amplitude/analytics-browser';
-import { QDialog, useDialogPluginComponent } from 'quasar';
+import { QDialog, QInput, useDialogPluginComponent } from 'quasar';
 import { ref, onMounted } from 'vue';
 import { DateTime } from 'luxon';
 import { dbDocRefs } from 'src/utils/db';
@@ -101,6 +109,8 @@ const dateIsGreaterThanToday = (date: string) => {
   const today = DateTime.now().toFormat('yyyy/MM/dd');
   return date > today;
 };
+const showCalendar = ref(false);
+const schedulerRef = ref<QInput | null>(null);
 
 const props = defineProps<{
   doc: ApplicantDocument & { id: string };

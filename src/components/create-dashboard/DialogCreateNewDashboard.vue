@@ -181,6 +181,7 @@ const onSubmit = async () => {
       isPublished: false,
       copiedDashboard: props.dashboard ? props.dashboard.id : undefined,
       newApplicants: [],
+      savedApplicants: [],
     });
     onDialogOK();
     router.push({
