@@ -1,6 +1,10 @@
 <template>
   <q-page>
-    <q-form @submit.prevent="onSubmit" class="container">
+    <q-form
+      @submit.prevent="onSubmit"
+      class="container"
+      v-if="$q.platform.is.desktop"
+    >
       <q-card>
         <q-card-section>
           <q-img style="max-width: 150px" src="~assets/logo-icon.png" />
@@ -156,6 +160,16 @@
         </q-stepper>
       </q-card>
     </q-form>
+    <div
+      class="full-width flex column justify-center items-center"
+      style="min-height: 80vh"
+      v-else
+    >
+      <q-icon name="fas fa-computer" size="4em" color="primary" />
+      <div class="text-h5 text-grey-8 text-weight-medium q-mt-md text-center">
+        Please use a desktop/laptop to view sign up page
+      </div>
+    </div>
   </q-page>
 </template>
 
@@ -291,10 +305,12 @@ const createUser = async (companyId: string, userId: string) => {
 
 <style lang="sass" scoped>
 .container
-  max-width: 650px
-  min-width: 600px
-  position: absolute
-  top: 50%
-  left: 50%
-  transform: translate(-50%, -50%)
+  max-width: 100vw
+  @media only screen and (width > $breakpoint-xs)
+    max-width: 650px
+    min-width: 600px
+    position: absolute
+    top: 50%
+    left: 50%
+    transform: translate(-50%, -50%)
 </style>

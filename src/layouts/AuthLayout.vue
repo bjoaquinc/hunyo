@@ -132,7 +132,17 @@
     </q-dialog>
 
     <q-page-container style="min-height: inherit">
-      <router-view />
+      <router-view v-if="$q.platform.is.desktop" />
+      <div
+        class="full-width flex column justify-center items-center"
+        style="min-height: 80vh"
+        v-else
+      >
+        <q-icon name="fas fa-computer" size="4em" color="primary" />
+        <div class="text-h5 text-grey-8 text-weight-medium q-mt-md text-center">
+          Please use a desktop/laptop to view dashboard
+        </div>
+      </div>
     </q-page-container>
   </q-layout>
 </template>
@@ -159,7 +169,7 @@ import {
 const store = useUserStore();
 const { user } = storeToRefs(store);
 const { logOut } = useAuthStore();
-const q = useQuasar();
+const $q = useQuasar();
 const router = useRouter();
 
 // const searchText = ref('');
@@ -238,7 +248,7 @@ const getPublishedDashboards = async () => {
 };
 
 const createNewDashboard = () => {
-  q.dialog({
+  $q.dialog({
     component: DialogCreateNewDashboard,
   }).onOk(() => {
     createDocumentRequestTemplate.value = false;
@@ -248,7 +258,7 @@ const createNewDashboard = () => {
 const copyPreviousDashboard = (
   dashboard: PublishedDashboard & { id: string }
 ) => {
-  q.dialog({
+  $q.dialog({
     component: DialogCreateNewDashboard,
     componentProps: {
       dashboard,
