@@ -25,10 +25,20 @@
               />
             </template>
           </q-input>
+          <div class="q-mt-sm">
+            <q-btn
+              @click="resetPassword"
+              label="Forgot Password?"
+              color="primary"
+              no-caps
+              flat
+              dense
+            />
+          </div>
           <q-btn
             :loading="isLoading"
             @click="login"
-            class="q-mt-lg full-width"
+            class="q-mt-md full-width"
             label="Login"
             color="primary"
           />
@@ -44,7 +54,11 @@
 </template>
 
 <script setup lang="ts">
-import { signInWithEmailAndPassword, getAuth } from '@firebase/auth';
+import {
+  signInWithEmailAndPassword,
+  getAuth,
+  sendPasswordResetEmail,
+} from '@firebase/auth';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
@@ -97,6 +111,45 @@ const login = async () => {
     }
   }
   isLoading.value = false;
+};
+
+const resetPassword = () => {
+  $q.dialog({
+    title: 'Send Reset Password Email',
+    message: 'Enter your email address',
+    prompt: {
+      model: email.value,
+      type: 'email',
+    },
+    ok: {
+      label: 'Send Email',
+      color: 'primary',
+    },
+    cancel: true,
+  }).onOk(() => {
+    const auth = getAuth();
+    sendPasswordResetEmail(auth, email.value)
+      .then(() => {
+        $q.notify({
+          message: 'Reset password email sent',
+          color: 'positive',
+        });
+      })
+      .catch((error) => {
+        let message;
+        if (error.code === 'auth/user-not-found') {
+          message = 'User not found';
+        } else if (error.code === 'auth/invalid-email') {
+          message = 'Invalid email';
+        } else {
+          message = error.message;
+        }
+        $q.notify({
+          message: message,
+          color: 'negative',
+        });
+      });
+  });
 };
 </script>
 
