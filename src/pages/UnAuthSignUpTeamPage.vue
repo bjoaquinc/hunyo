@@ -119,7 +119,7 @@
     >
       <q-icon name="fas fa-computer" size="4em" color="primary" />
       <div class="text-h5 text-grey-8 text-weight-medium q-mt-md text-center">
-        Please use a desktop/laptop to view sign up page
+        Please use your desktop/laptop to sign up
       </div>
     </div>
   </q-page>

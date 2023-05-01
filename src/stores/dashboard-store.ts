@@ -12,7 +12,9 @@ import { Applicant, PublishedDashboard } from 'src/utils/types';
 import { dbColRefs } from 'src/utils/db';
 
 type DashboardData = PublishedDashboard & { id: string };
-type ApplicantData = Applicant & { id: string };
+type ApplicantData = Applicant & {
+  id: string;
+};
 
 export const useDashboardStore = defineStore('dashboard', () => {
   const userStore = useUserStore();
@@ -20,6 +22,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const dashboard = ref<null | DashboardData>(null);
   const unsubDashboard = ref<Unsubscribe | null>(null);
   const applicants = ref<ApplicantData[]>([]);
+  const applicantsResendControl = ref<
+    Record<string, { isLoading: boolean; isResent: boolean }>
+  >({});
   const unsubApplicants = ref<Unsubscribe | null>(null);
   const applicantIds = computed(() => applicants.value.map((a) => a.id));
 
@@ -74,6 +79,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
               if (applicantIds.value.includes(id)) return;
               const applicant = {
                 id,
+                resendIsLoading: false,
                 ...change.doc.data(),
               };
               if (change.newIndex === 0) {
@@ -81,15 +87,20 @@ export const useDashboardStore = defineStore('dashboard', () => {
               } else {
                 applicants.value.push(applicant);
               }
+              applicantsResendControl.value[id] = {
+                isLoading: false,
+                isResent: false,
+              };
             }
             if (change.type === 'modified') {
               const index = applicants.value.findIndex(
                 (applicant) => applicant.id === id
               );
-              applicants.value.splice(index, 1, {
+              const UPDATED_APPLICANT: ApplicantData = {
                 id,
                 ...change.doc.data(),
-              });
+              };
+              applicants.value.splice(index, 1, UPDATED_APPLICANT);
             }
             if (change.type === 'removed') {
               const index = applicants.value.findIndex(
@@ -119,6 +130,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     unsubApplicants,
     dashboard,
     applicants,
+    applicantsResendControl,
     clearDashboard,
   };
 });

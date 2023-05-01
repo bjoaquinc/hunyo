@@ -121,6 +121,7 @@ export interface Applicant {
   adminAcceptedDocs: number;
   acceptedDocs: number;
   unCheckedOptionalDocs: number;
+  resendLink?: boolean;
   isDeleted?: boolean;
 }
 

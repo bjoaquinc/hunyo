@@ -180,6 +180,28 @@
             />
             <div v-else class="text-h5">-</div>
           </q-td>
+          <!-- Resend button -->
+          <q-td key="resend" :props="props">
+            <q-btn
+              v-if="!applicantsResendControl[props.row.id].isResent || props.row.resendLink"
+              @click="resendLink(props.row.id)"
+              :loading="props.row.resendLink || applicantsResendControl[props.row.id].isLoading"
+              label="Resend"
+              color="primary"
+              class="full-width"
+              outline
+              no-caps
+            />
+            <q-btn
+              v-else
+              label="Sent"
+              icon="fas fa-check"
+              color="positive"
+              class="full-width"
+              outline
+              no-caps
+            />
+          </q-td>
         </q-tr>
       </template>
     </q-table>
@@ -196,20 +218,26 @@ import { DateTime } from 'luxon';
 import DialogApplicantsAdd from './dialogs/DialogApplicantsAdd.vue';
 import * as amplitude from '@amplitude/analytics-browser';
 import { dbDocRefs } from 'src/utils/db';
-import { updateDoc } from '@firebase/firestore';
+import { updateDoc, deleteField } from '@firebase/firestore';
+import { useDashboardStore } from 'src/stores/dashboard-store';
+import { storeToRefs } from 'pinia';
+
+type ApplicantWithLoader = Applicant & { id: string; isResent?: boolean };
 
 const headerRef = ref<InstanceType<typeof Header> | null>(null);
 
 const props = defineProps<{
   dashboard: PublishedDashboard & { id: string };
-  applicants: (Applicant & { id: string })[];
 }>();
 
 const { user } = useUserStore();
+const dashboardStore = useDashboardStore();
+const { applicants, applicantsResendControl } = storeToRefs(dashboardStore);
+
 const companyId = (user as User & { id: string }).company.id;
 
 const activeApplicants = computed(() =>
-  props.applicants.filter((applicant) => !applicant.isDeleted)
+  applicants.value.filter((applicant) => !applicant.isDeleted)
 );
 
 const incompleteApplicants = computed(() =>
@@ -286,9 +314,16 @@ const columns: QTableProps['columns'] = [
     field: 'action',
     sortable: true,
   },
+  {
+    name: 'resend',
+    label: 'Resend Link',
+    align: 'center',
+    field: 'resend',
+    sortable: false,
+  },
 ];
 
-const selected = ref<(Applicant & { id: string })[]>([]);
+const selected = ref<ApplicantWithLoader[]>([]);
 
 const openDialogApplicantsAdd = () => {
   $q.dialog({
@@ -296,13 +331,13 @@ const openDialogApplicantsAdd = () => {
     componentProps: {
       companyId,
       dashboard: props.dashboard,
-      addedEmails: props.applicants.map((applicant) => applicant.email),
+      addedEmails: applicants.value.map((applicant) => applicant.email),
     },
   });
 };
 
 const openDialogAction = (applicantId: string) => {
-  const applicant = props.applicants.find(
+  const applicant = applicants.value.find(
     (applicant) => applicant.id === applicantId
   );
   if (!applicant) return;
@@ -327,7 +362,7 @@ const openDialogAction = (applicantId: string) => {
 };
 
 const openDialogApplicantDocuments = (applicantId: string) => {
-  const applicant = props.applicants.find(
+  const applicant = applicants.value.find(
     (applicant) => applicant.id === applicantId
   );
   if (!applicant) return;
@@ -391,6 +426,38 @@ const deleteApplicants = async () => {
       });
   } else {
     console.log('No applicants have been selected');
+    $q.notify({
+      message: 'No applicants have been selected',
+      type: 'negative',
+    });
+  }
+};
+
+const resendLink = async (applicantId: string) => {
+  const index = applicants.value.findIndex(
+    (applicantInList) => applicantInList.id === applicantId
+  );
+  const applicant = applicants.value[index];
+  const resendControl = applicantsResendControl.value[applicantId];
+  if (!user || !applicant) return;
+  try {
+    resendControl.isLoading = true;
+    const companyId = user.company.id;
+    const { dashboard, id } = applicant;
+    const applicantRef = dbDocRefs.getApplicantRef(companyId, dashboard.id, id);
+    await updateDoc(applicantRef, {
+      resendLink: true,
+      latestMessage: deleteField(),
+    });
+    resendControl.isResent = true;
+  } catch (error) {
+    console.log(error);
+    $q.notify({
+      message: 'Failed to resend link',
+      type: 'negative',
+    });
+  } finally {
+    resendControl.isLoading = false;
   }
 };
 </script>
