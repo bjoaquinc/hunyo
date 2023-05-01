@@ -85,7 +85,11 @@
                     />
                   </q-item-section>
                   <q-item-section>{{
-                    capsFirstLetters(doc.name)
+                    doc.alias
+                      ? `${capsFirstLetters(doc.alias)} (${capsFirstLetters(
+                          doc.name
+                        )})`
+                      : capsFirstLetters(doc.name)
                   }}</q-item-section>
                   <q-item-section class="text-subtitle1 text-grey-8" side>
                     <div

@@ -23,7 +23,7 @@
         </div>
         <q-separator class="q-my-md" />
         <div class="text-subtitle1 text-grey-8">
-          Your {{ doc.name }} was rejected because:
+          Your {{ doc.alias || doc.name }} was rejected because:
         </div>
         <q-list>
           <q-item

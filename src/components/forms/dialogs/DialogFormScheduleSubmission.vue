@@ -11,10 +11,10 @@
         <q-card-section>
           <div class="flex items-center no-wrap">
             <div class="text-h5 gt-xs">
-              When can you submit your {{ doc.name }}?
+              When can you submit your {{ doc.alias || doc.name }}?
             </div>
             <div class="text-body1 lt-sm">
-              When can you submit your {{ doc.name }}?
+              When can you submit your {{ doc.alias || doc.name }}?
             </div>
             <q-btn
               v-close-popup

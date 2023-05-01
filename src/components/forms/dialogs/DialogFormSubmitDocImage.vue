@@ -11,8 +11,8 @@
       <q-form @submit.prevent="onSubmit" greedy>
         <q-card-section>
           <div class="flex justify-between q-mt-sm no-wrap">
-            <div class="text-h5 gt-xs">Upload {{ doc.name }}</div>
-            <div class="text-h6 lt-sm">Upload {{ doc.name }}</div>
+            <div class="text-h5 gt-xs">Upload {{ doc.alias || doc.name }}</div>
+            <div class="text-h6 lt-sm">Upload {{ doc.alias || doc.name }}</div>
             <q-btn
               @click="onExitWithUploadedFiles"
               icon="fas fa-times"

@@ -22,18 +22,13 @@
                 outlined
                 :rules="[(val) => !!val || 'Please add a document name']"
               />
-              <!-- <q-select
-                v-model="format"
-                :options="options"
+              <q-input
+                v-model="alias"
                 filled
                 class="col"
-                label="Format"
+                label="Alias (Optional)"
                 outlined
-                :rules="[
-                  (val) =>
-                    !!val || 'Please choose the format to receive the document',
-                ]"
-              /> -->
+              />
             </div>
             <div class="q-gutter-md row q-mt-xs">
               <q-select
@@ -124,6 +119,7 @@ const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const { user } = useUserStore();
 const companyId = user?.company.id as string;
 const name = ref('');
+const alias = ref('');
 const format = ref<'jpeg' | 'pdf'>('pdf');
 // const options = ['jpeg', 'pdf'];
 const required = ref<{
@@ -169,6 +165,7 @@ const onSubmit = async () => {
     const newDoc: DashboardDoc = {
       format: format.value as 'pdf' | 'jpeg',
       docNumber: props.lastDocNumber + 1,
+      alias: alias.value,
       isRequired: (
         required.value as {
           label: string;

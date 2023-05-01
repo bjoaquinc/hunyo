@@ -86,7 +86,9 @@
               :class="`text-${documentStatusStyles[doc.status].textColor}`"
             >
               {{
-                `${documentStatusStyles[doc.status].mobileLabel} ${doc.name}`
+                `${documentStatusStyles[doc.status].mobileLabel} ${
+                  doc.alias || doc.name
+                }`
               }}</q-item-section
             >
             <q-item-section avatar>
@@ -122,7 +124,9 @@
               :class="`text-${documentStatusStyles[doc.status].textColor}`"
             >
               {{
-                `${documentStatusStyles[doc.status].mobileLabel} ${doc.name}`
+                `${documentStatusStyles[doc.status].mobileLabel} ${
+                  doc.alias || doc.name
+                }`
               }}</q-item-section
             >
             <q-item-section avatar>

@@ -32,7 +32,7 @@
             outline
             no-caps
             color="primary"
-            :label="`I have my ${doc.name}`"
+            :label="`I have my ${doc.alias || doc.name}`"
           />
           <q-btn
             @click="onButtonClick('not-available')"
@@ -41,7 +41,7 @@
             outline
             no-caps
             color="primary"
-            :label="`I'm waiting to receive my ${doc.name}`"
+            :label="`I'm waiting to receive my ${doc.alias || doc.name}`"
           />
           <!-- <q-btn
             v-if="!doc.isRequired"

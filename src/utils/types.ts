@@ -211,6 +211,7 @@ export interface DashboardDoc {
     file: string;
     contentType: string;
   };
+  alias?: string;
   instructions?: string;
   docNumber: number;
 }

@@ -13,7 +13,7 @@
           <div class="flex justify-between q-mt-sm no-wrap">
             <div class="text-h5 gt-xs">
               <span class="q-mr-md"
-                >Upload {{ capsFirstLetters(doc.name) }}</span
+                >Upload {{ capsFirstLetters(doc.alias || doc.name) }}</span
               >
               <q-btn
                 @click="openEditDocDialog"
