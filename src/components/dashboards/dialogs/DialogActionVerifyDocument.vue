@@ -20,7 +20,7 @@
                   amplitude.track('Check - Edit Document Label', {
                     docId: applicantDocument.id,
                     docName: applicantDocument.name,
-                    applicantId: applicantDocument.applicantId,
+                    applicantId: applicantDocument.formId,
                   });
                 }
               "
@@ -464,7 +464,7 @@ const onSubmit = async () => {
       decision: updatedStatus.value,
       docId: props.applicantDocument.id,
       docName: props.applicantDocument.name,
-      applicantId: props.applicantDocument.applicantId,
+      applicantId: props.applicantDocument.formId,
       submissionCount: props.applicantDocument.submissionCount,
       companyId: props.applicantDocument.companyId,
     });
@@ -483,7 +483,7 @@ const onSubmit = async () => {
         decision: updatedStatus.value,
         docId: props.applicantDocument.id,
         docName: props.applicantDocument.name,
-        applicantId: props.applicantDocument.applicantId,
+        applicantId: props.applicantDocument.formId,
         submissionCount: props.applicantDocument.submissionCount,
         companyId: props.applicantDocument.companyId,
       });
@@ -512,7 +512,7 @@ const onSubmit = async () => {
         decision: updatedStatus.value,
         docId: props.applicantDocument.id,
         docName: props.applicantDocument.name,
-        applicantId: props.applicantDocument.applicantId,
+        applicantId: props.applicantDocument.formId,
         submissionCount: props.applicantDocument.submissionCount,
         reason: rejectionReasons,
         message: message.value,
@@ -523,7 +523,7 @@ const onSubmit = async () => {
       decision: updatedStatus.value,
       docId: props.applicantDocument.id,
       docName: props.applicantDocument.name,
-      applicantId: props.applicantDocument.applicantId,
+      applicantId: props.applicantDocument.formId,
       submissionCount: props.applicantDocument.submissionCount,
       companyId: props.applicantDocument.companyId,
       error,

@@ -16,6 +16,20 @@
                 <div class="text-subtitle1 text-grey-8" v-if="applicant.name">
                   {{ applicant.email }}
                 </div>
+                <div
+                  class="flex column"
+                  v-if="
+                    applicant.phoneNumber && applicant.phoneNumber.length > 0
+                  "
+                >
+                  <div
+                    v-for="(number, index) in applicant.phoneNumber"
+                    :key="index"
+                    class="text-subtitle1 text-grey-8"
+                  >
+                    {{ number }}
+                  </div>
+                </div>
               </div>
               <q-btn icon="fas fa-times" color="grey-8" flat v-close-popup />
             </div>

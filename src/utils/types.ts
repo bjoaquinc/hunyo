@@ -107,6 +107,7 @@ export interface Applicant {
     middle: string;
     last: string;
   };
+  phoneNumber?: string[];
   latestMessage?: {
     id: string;
     status: ApplicantDashboardMessageStatus;
