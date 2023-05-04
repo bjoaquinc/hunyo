@@ -127,11 +127,38 @@
             icon="fas fa-person"
             :done="step > 2"
           >
-            <BaseAddEmails
-              :saved-emails="savedEmails"
-              ref="emailsRef"
-              title="Add Applicants"
-              :action-button="false"
+            <q-list separator>
+              <div class="text-h4 text-grey-7 q-mb-md">Added Applicants</div>
+              <q-item
+                @click="editApplicant(applicant)"
+                v-for="applicant in dashboard.newApplicants"
+                :key="applicant.email"
+                clickable
+                class="text-primary text-h5 q-py-md"
+              >
+                <q-item-section avatar side>
+                  <q-icon name="fas fa-user" size="md" />
+                </q-item-section>
+                <q-item-section class="text-grey-7">
+                  {{
+                    applicant.name
+                      ? `${applicant.name.first} ${applicant.name.middle} ${applicant.name.last}`
+                      : applicant.email
+                  }}
+                </q-item-section>
+                <!-- <q-item-section avatar side>
+                  <q-icon name="fas fa-angles-right" size="md" />
+                </q-item-section> -->
+              </q-item>
+            </q-list>
+            <q-btn
+              @click="addApplicant"
+              class="q-my-lg"
+              icon="fas fa-plus"
+              label="Add Applicant"
+              color="primary"
+              size="lg"
+              outline
             />
           </q-step>
 
@@ -166,7 +193,13 @@
                 :loading="isLoading"
                 @click="onNext()"
                 class="q-ml-auto"
-                :label="step === 2 ? 'Send Emails' : 'Next'"
+                :label="
+                  step === 2
+                    ? dashboard.newApplicants.length === 0
+                      ? 'Skip this Step'
+                      : 'Send Emails'
+                    : 'Next'
+                "
                 color="primary"
               />
             </div>
@@ -189,7 +222,7 @@ import {
   watch,
 } from 'vue';
 import { dbDocRefs } from 'src/utils/db';
-import { DraftDashboard } from 'src/utils/types';
+import { ApplicantItem, DraftDashboard } from 'src/utils/types';
 import { useUserStore } from 'src/stores/user-store';
 import {
   getDoc,
@@ -201,7 +234,7 @@ import {
 import { capsFirstLetters } from './helpers';
 import DialogTemplateDocument from 'src/components/create-dashboard/DialogTemplateDocument.vue';
 import DialogDashboardAddDocument from 'src/components/create-dashboard/DialogDashboardDocumentForm.vue';
-import BaseAddEmails from '../BaseAddEmails.vue';
+import DialogDashboardApplicantForm from 'src/components/create-dashboard/DialogDashboardApplicantForm.vue';
 import { useRouter } from 'vue-router';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
@@ -256,7 +289,7 @@ const hasDocs = computed<boolean>(() => {
   }
 });
 
-const q = useQuasar();
+const $q = useQuasar();
 const documentItemStyles = {
   'not submitted': {
     color: 'primary',
@@ -333,9 +366,6 @@ const setDashboard = async (dashboardId: string) => {
             header.value = docData.formContent.header;
             caption.value = docData.formContent.caption;
           }
-          if (docData.newApplicants) {
-            savedEmails.value = docData.savedApplicants;
-          }
           // if (docData.messages) {
           //   message.value = docData.messages.opening;
           // }
@@ -362,7 +392,7 @@ const getLogoURL = async () => {
 
 const openDialogDocument = (key: string) => {
   if (!dashboard.value) return;
-  q.dialog({
+  $q.dialog({
     component: DialogTemplateDocument,
     componentProps: {
       doc: { name: key, ...dashboard.value.docs[key] },
@@ -374,7 +404,7 @@ const openDialogDocument = (key: string) => {
 
 const openDialogAddDocument = () => {
   if (!dashboard.value) return;
-  q.dialog({
+  $q.dialog({
     component: DialogDashboardAddDocument,
     componentProps: {
       dashboardId: props.dashboardId,
@@ -391,7 +421,6 @@ const updateFormContent = async () => {
   await updateDoc(dashboardRef, {
     'formContent.header': header.value,
     'formContent.caption': caption.value,
-    savedApplicants: emails.value,
     messages: {
       opening: message.value,
     },
@@ -400,12 +429,25 @@ const updateFormContent = async () => {
 
 // Step Two: Add Emails
 
-const emailsRef = ref<null | InstanceType<typeof BaseAddEmails>>(null);
-const savedEmails = ref<string[]>([]);
-const emails = computed(() => {
-  if (!emailsRef.value) return [];
-  return emailsRef.value.emails;
-});
+const addApplicant = () => {
+  $q.dialog({
+    component: DialogDashboardApplicantForm,
+    componentProps: {
+      dashboardId: props.dashboardId,
+    },
+  });
+};
+
+const editApplicant = (applicant: ApplicantItem) => {
+  $q.dialog({
+    component: DialogDashboardApplicantForm,
+    componentProps: {
+      dashboardId: props.dashboardId,
+      applicant,
+      applicants: dashboard.value?.newApplicants,
+    },
+  });
+};
 
 // Step Three: Confirm Message
 const message = ref(`Hi,
@@ -445,8 +487,6 @@ const publishDashboard = async () => {
   await updateDoc(dashboardRef, {
     'formContent.header': header.value,
     'formContent.caption': caption.value,
-    newApplicants: emails.value,
-    savedApplicants: [],
     messages: {
       opening: message.value,
     },

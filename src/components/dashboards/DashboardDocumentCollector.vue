@@ -23,16 +23,7 @@
                 </q-item-section>
               </q-item>
 
-              <!-- <q-item clickable v-close-popup>
-                <q-item-section avatar>
-                  <q-icon color="grey-8" name="fas fa-envelope" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>SEND MESSAGE</q-item-label>
-                </q-item-section>
-              </q-item> -->
-
-              <q-item clickable @click="openDialogApplicantsAdd" v-close-popup>
+              <q-item clickable @click="addApplicant" v-close-popup>
                 <q-item-section avatar>
                   <q-icon color="grey-8" name="fas fa-plus" />
                 </q-item-section>
@@ -132,7 +123,7 @@
               @click="openDialogApplicantDocuments(props.row.id)"
               :label="
                 props.row.name
-                  ? `${props.row.name.first} ${props.row.name.last}`
+                  ? `${props.row.name.first} ${props.row.name.middle} ${props.row.name.last}`
                   : props.row.email
               "
               color="primary"
@@ -183,9 +174,15 @@
           <!-- Resend button -->
           <q-td key="resend" :props="props">
             <q-btn
-              v-if="!applicantsResendControl[props.row.id].isResent || props.row.resendLink"
+              v-if="
+                !applicantsResendControl[props.row.id].isResent ||
+                props.row.resendLink
+              "
               @click="resendLink(props.row.id)"
-              :loading="props.row.resendLink || applicantsResendControl[props.row.id].isLoading"
+              :loading="
+                props.row.resendLink ||
+                applicantsResendControl[props.row.id].isLoading
+              "
               label="Resend"
               color="primary"
               class="full-width"
@@ -215,7 +212,7 @@ import Header from './headers/DashboardCollectorHeader.vue';
 import { Applicant, PublishedDashboard, User } from 'src/utils/types';
 import { useUserStore } from 'src/stores/user-store';
 import { DateTime } from 'luxon';
-import DialogApplicantsAdd from './dialogs/DialogApplicantsAdd.vue';
+import DialogDashboardApplicantForm from './dialogs/DialogDashboardApplicantForm.vue';
 import * as amplitude from '@amplitude/analytics-browser';
 import { dbDocRefs } from 'src/utils/db';
 import { updateDoc, deleteField } from '@firebase/firestore';
@@ -325,13 +322,11 @@ const columns: QTableProps['columns'] = [
 
 const selected = ref<ApplicantWithLoader[]>([]);
 
-const openDialogApplicantsAdd = () => {
+const addApplicant = () => {
   $q.dialog({
-    component: DialogApplicantsAdd,
+    component: DialogDashboardApplicantForm,
     componentProps: {
-      companyId,
-      dashboard: props.dashboard,
-      addedEmails: applicants.value.map((applicant) => applicant.email),
+      dashboardId: props.dashboard.id,
     },
   });
 };

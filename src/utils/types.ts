@@ -51,6 +51,20 @@ export interface User {
   hunyoAdmin?: boolean;
 }
 
+export interface ApplicantItem {
+  email: string;
+  name?: {
+    first: string;
+    middle: string;
+    last: string;
+  };
+  phoneNumbers?: {
+    primary: string;
+    secondary: string;
+  };
+  address?: string;
+}
+
 export interface DraftDashboard {
   createdAt: Timestamp;
   createdBy: string;
@@ -63,8 +77,7 @@ export interface DraftDashboard {
     caption: string;
   };
   docs: { [key: string]: DashboardDoc };
-  newApplicants: string[];
-  savedApplicants: string[];
+  newApplicants: ApplicantItem[];
   messages?: {
     opening: string;
   };
@@ -84,8 +97,7 @@ export interface PublishedDashboard {
     caption: string;
   };
   docs: { [key: string]: DashboardDoc };
-  newApplicants: string[];
-  savedApplicants: string[];
+  newApplicants: ApplicantItem[];
   messages: {
     opening: string;
   };
@@ -107,7 +119,11 @@ export interface Applicant {
     middle: string;
     last: string;
   };
-  phoneNumber?: string[];
+  phoneNumbers?: {
+    primary: string;
+    secondary: string;
+  };
+  address?: string;
   latestMessage?: {
     id: string;
     status: ApplicantDashboardMessageStatus;

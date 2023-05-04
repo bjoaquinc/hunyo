@@ -1,5 +1,5 @@
 <template>
-  <q-dialog ref="dialogRef" @hide="onDialogHide" full-width persistent>
+  <q-dialog ref="dialogRef" @hide="onDialogHide" full-width>
     <q-card style="max-width: 900px !important">
       <q-card-section>
         <div class="full-width">
@@ -9,26 +9,30 @@
                 <div class="text-h5">
                   {{
                     applicant.name
-                      ? `${applicant.name?.first} ${applicant.name?.last}`
+                      ? `${applicant.name?.first} ${applicant.name?.middle} ${applicant.name?.last}`
                       : applicant.email
                   }}
                 </div>
                 <div class="text-subtitle1 text-grey-8" v-if="applicant.name">
                   {{ applicant.email }}
                 </div>
-                <div
-                  class="flex column"
-                  v-if="
-                    applicant.phoneNumber && applicant.phoneNumber.length > 0
-                  "
-                >
+                <div class="flex column" v-if="applicant.phoneNumbers">
                   <div
-                    v-for="(number, index) in applicant.phoneNumber"
+                    v-for="(number, index) in Object.values(
+                      applicant.phoneNumbers
+                    )"
                     :key="index"
-                    class="text-subtitle1 text-grey-8"
                   >
-                    {{ number }}
+                    <div v-if="number" class="text-subtitle1 text-grey-8">
+                      {{ number }}
+                    </div>
                   </div>
+                </div>
+                <div
+                  class="text-subtitle1 text-grey-8"
+                  v-if="applicant.address"
+                >
+                  {{ applicant.address }}
                 </div>
               </div>
               <q-btn icon="fas fa-times" color="grey-8" flat v-close-popup />
