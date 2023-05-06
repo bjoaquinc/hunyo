@@ -9,8 +9,9 @@
     transition-hide="slide-down"
   >
     <div class="flex container">
-      <q-img :src="sampleURL" />
+      <q-img :src="sampleURL" @load="showOkButton" />
       <q-btn
+        v-if="showButton"
         class="full-width"
         @click="onOk"
         size="lg"
@@ -34,6 +35,7 @@ const props = defineProps<{
   form: Form & { id: string };
 }>();
 const viewStart = ref(0);
+const showButton = ref(false);
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 
@@ -51,6 +53,10 @@ const onOk = () => {
     timeSpent: TIME_SPENT_SECONDS,
   });
   onDialogOK();
+};
+
+const showOkButton = () => {
+  showButton.value = true;
 };
 
 defineEmits([

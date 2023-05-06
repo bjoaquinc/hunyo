@@ -60,5 +60,6 @@
     },
     "LOGGER_FORMAT": "json",
     "singleProjectMode": true
-  }
+  },
+  "extensions": {}
 }

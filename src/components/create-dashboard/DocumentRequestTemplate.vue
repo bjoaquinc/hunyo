@@ -86,8 +86,8 @@
                   </q-item-section>
                   <q-item-section>{{
                     doc.alias
-                      ? `${capsFirstLetters(doc.alias)} (${capsFirstLetters(
-                          doc.name
+                      ? `${capsFirstLetters(doc.name)} (${capsFirstLetters(
+                          doc.alias
                         )})`
                       : capsFirstLetters(doc.name)
                   }}</q-item-section>
