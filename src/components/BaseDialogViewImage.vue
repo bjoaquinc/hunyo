@@ -16,7 +16,6 @@
         ref="imageRef"
         v-if="contentType.includes('image')"
         class="image-width absolute-center"
-        @error="showError"
         :style="
           angle
             ? isTilted
@@ -91,10 +90,6 @@ const onDialogShow = () => {
       isTilted.value = true;
     }
   }
-};
-
-const showError = (error) => {
-  console.log(error);
 };
 
 defineEmits([

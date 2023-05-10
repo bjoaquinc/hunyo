@@ -1,5 +1,11 @@
 {
   "projects": {
     "default": "hunyo-sending"
+  },
+  "targets": {},
+  "etags": {
+    "hunyo-sending": {
+      "extensionInstances": {}
+    }
   }
 }

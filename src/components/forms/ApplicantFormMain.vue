@@ -160,6 +160,7 @@ import DialogFormDelayedUpdate from './dialogs/DialogFormDelayedUpdate.vue';
 import DialogFormSample from './dialogs/DialogFormSample.vue';
 import { ApplicantDocument } from 'src/utils/new-types';
 import DialogFormRejectionInformation from './dialogs/DialogFormRejectionInformation.vue';
+// import BaseDialogViewImage from '../BaseDialogViewImage.vue';
 
 const props = defineProps<{
   form: Form & { id: string };
@@ -217,6 +218,10 @@ const onDocumentClick = (doc: ApplicantDocument & { id: string }) => {
   if (docStatus === 'delayed') {
     onDelayed(index);
   }
+
+  // if (docStatus === 'accepted') {
+  //   onAccepted(index);
+  // }
 };
 
 const onNotSubmitted = async (index: number) => {
@@ -371,6 +376,26 @@ const onDelayed = (index: number) => {
     }
   });
 };
+
+// const onAccepted = async (index: number) => {
+//   const { company, dashboard, applicant } = props.form;
+//   const doc = props.documents[index];
+//   const storageRef = storageRefs.getFinalDocRef(
+//     company.id,
+//     dashboard.id,
+//     applicant.id,
+//     doc.updatedName || doc.name
+//   );
+//   const ACCEPTED_CONTENT_TYPE = 'application/pdf';
+//   const imgURL = await getDownloadURL(storageRef);
+//   $q.dialog({
+//     component: BaseDialogViewImage,
+//     componentProps: {
+//       imgURL,
+//       contentType: ACCEPTED_CONTENT_TYPE,
+//     },
+//   });
+// };
 </script>
 
 <style lang="sass" scoped>
