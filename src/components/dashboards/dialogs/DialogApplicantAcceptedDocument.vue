@@ -33,7 +33,7 @@
       </q-header>
 
       <q-drawer show-if-above v-model="drawerRight" side="right" bordered>
-        <q-list class="q-pa-md" v-if="documentPages.length > 0 && !isLoading">
+        <q-list class="q-pa-md" v-if="!isReorderingPages">
           <div class="text-h5 q-mb-md">
             Page {{ slide }} of {{ documentPages.length }}
           </div>
@@ -54,15 +54,46 @@
             </q-item-section>
           </q-item>
           <q-separator />
+          <q-item
+            @click="addReorderPageImages"
+            clickable
+            v-ripple
+            class="download-border text-grey-8 q-mt-sm"
+          >
+            <q-item-section>
+              <q-item-label class="text-subtitle1 text-weight-bold"
+                >Reorder Pages</q-item-label
+              >
+            </q-item-section>
+            <q-item-section avatar side>
+              <q-icon name="fas fa-reorder" />
+            </q-item-section>
+            <q-inner-loading :showing="openingReorder" />
+          </q-item>
         </q-list>
+        <div class="q-ma-md" v-else>
+          <div class="text-h5 q-mb-md">Reordering Pages</div>
+          <q-btn
+            @click="isReorderingPages = false"
+            label="Done"
+            size="lg"
+            class="q-mx-md full-width"
+            color="primary"
+          />
+          <q-btn
+            @click="clearReorderingPages"
+            label="Cancel"
+            size="lg"
+            class="q-mx-md q-mt-sm full-width"
+            color="primary"
+            outline
+          />
+        </div>
       </q-drawer>
 
       <q-page-container>
         <q-page class="bg-white">
-          <div
-            class="bg-white full-width"
-            style="position: absolute; top: 0; bottom: 0"
-          >
+          <div v-if="!isReorderingPages" class="bg-white full-width">
             <q-btn
               v-if="slide > 1"
               @click="slide--"
@@ -122,6 +153,43 @@
               />
             </div>
           </div>
+          <!-- Reorder Documents UI -->
+          <div class="bg-white full-width q-mt-md" v-else>
+            <div>
+              <draggable
+                class="row q-col-gutter-md q-px-md q-pt-md"
+                v-bind="dragOptions"
+                v-model="reorderPageImages"
+                item-key="id"
+                @start="dragStart"
+                @end="dragEnd"
+              >
+                <template #item="{ element, index }">
+                  <div
+                    @click="selectedDragItemIndex = index"
+                    class="col-3"
+                    :class="
+                      selectedDragItemIndex === index || element.isDragging
+                        ? 'chosen'
+                        : ''
+                    "
+                  >
+                    <q-img
+                      :src="element.src"
+                      :style="{
+                        boxShadow: `rgba(0, 0, 0, 0.35) 0px 5px 15px`,
+                      }"
+                    />
+                    <div class="full-width flex" v-if="!element.isDragging">
+                      <q-avatar class="q-mx-auto" text-color="grey-8">{{
+                        index + 1
+                      }}</q-avatar>
+                    </div>
+                  </div>
+                </template>
+              </draggable>
+            </div>
+          </div>
         </q-page>
       </q-page-container>
     </q-layout>
@@ -142,6 +210,11 @@ import {
 } from 'firebase/firestore';
 import { getDownloadURL } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
+import draggable from 'vuedraggable';
+import * as PDFJS from 'pdfjs-dist';
+import workerSrc from 'pdfjs-dist/build/pdf.worker.entry';
+
+PDFJS.GlobalWorkerOptions.workerSrc = workerSrc;
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const drawerRight = ref(true);
@@ -154,11 +227,30 @@ const documentPages = ref<
 >([]);
 const finalDocumentURL = ref('');
 const unsubDocumentPages = ref<Unsubscribe | null>(null);
+const isReorderingPages = ref(false);
+const reorderPageImages = ref<
+  {
+    src: string;
+    isDragging: boolean;
+    pageId: string;
+  }[]
+>([]);
+const selectedDragItemIndex = ref<number | null>(null);
+const openingReorder = ref(false);
 const isLoading = ref(false);
 
 const props = defineProps<{
   applicantDocument: ApplicantDocument & { id: string };
 }>();
+
+const dragOptions = {
+  animation: 250,
+  group: 'people',
+  disabled: false,
+  ghostClass: 'ghost',
+  dragClass: 'drag',
+  chosenClass: 'chosen',
+};
 
 onMounted(async () => {
   const pagesRef = dbColRefs.getPagesRef(props.applicantDocument.companyId);
@@ -243,6 +335,61 @@ onUnmounted(() => {
   unsubDocumentPages.value?.();
 });
 
+const addReorderPageImages = async () => {
+  openingReorder.value = true;
+  try {
+    for (const page of documentPages.value) {
+      // Get pdf page and viewport
+      const loadingTask = PDFJS.getDocument(page.url);
+      const pdf = await loadingTask.promise;
+      const pdfPage = await pdf.getPage(1);
+      const scale = 1;
+      const viewport = pdfPage.getViewport({ scale });
+      // create canvas
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      if (!context) return;
+      const renderContext = {
+        canvasContext: context,
+        viewport,
+      };
+      await pdfPage.render(renderContext).promise;
+      const imageURL = canvas.toDataURL();
+      reorderPageImages.value.push({
+        src: imageURL,
+        isDragging: false,
+        pageId: page.id,
+      });
+    }
+    isReorderingPages.value = true;
+  } catch (error) {
+    console.log(error);
+  } finally {
+    openingReorder.value = false;
+  }
+};
+
+const dragStart = (e: { oldIndex: number }) => {
+  selectedDragItemIndex.value = null;
+  const index = e.oldIndex;
+  console.log('drag start');
+  reorderPageImages.value[index].isDragging = true;
+};
+
+const dragEnd = (e: { newIndex: number; oldIndex: number }) => {
+  const index = e.newIndex;
+  reorderPageImages.value[index].isDragging = false;
+  selectedDragItemIndex.value = index;
+};
+
+const clearReorderingPages = () => {
+  reorderPageImages.value = [];
+  selectedDragItemIndex.value = null;
+  isReorderingPages.value = false;
+};
+
 defineEmits([
   // REQUIRED; need to specify some events that your
   // component will emit through useDialogPluginComponent()
@@ -262,4 +409,15 @@ defineEmits([
 
 .download-border
   border: 1px solid $primary
+
+.ghost
+  opacity: 0.3
+.drag
+  opacity: 1
+  background: #7b95a3
+.chosen
+  opacity: 1
+  background: rgba(165,55,253, 0.7)
+  background-clip: content-box
+  border-radius: 0 0 25px 35px
 </style>
