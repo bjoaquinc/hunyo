@@ -46,3 +46,6 @@ storage.rules
 
 # Firebase cached files
 .firebase/
+
+# Cors file
+cors.json

@@ -57,6 +57,7 @@
           <q-separator />
           <q-item
             @click="addReorderPageImages"
+            v-if="documentPages.length > 1"
             clickable
             v-ripple
             class="download-border text-grey-8 q-mt-sm"
@@ -388,37 +389,49 @@ onUnmounted(() => {
 const addReorderPageImages = async () => {
   openingReorder.value = true;
   try {
-    for (const page of documentPages.value) {
-      // Get pdf page and viewport
-      const loadingTask = PDFJS.getDocument(page.url);
-      const pdf = await loadingTask.promise;
-      const pdfPage = await pdf.getPage(1);
-      const scale = 1;
-      const viewport = pdfPage.getViewport({ scale });
-      // create canvas
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      if (!context) return;
-      const renderContext = {
-        canvasContext: context,
-        viewport,
-      };
-      await pdfPage.render(renderContext).promise;
-      const imageURL = canvas.toDataURL();
-      reorderPageImages.value.push({
-        src: imageURL,
-        isDragging: false,
-        pageId: page.id,
-      });
-    }
+    const promises: Promise<{
+      src: string;
+      isDragging: boolean;
+      pageId: string;
+    }>[] = [];
+    documentPages.value.forEach((page) => {
+      const promise = convertPDFToImage(page);
+      promises.push(promise);
+    });
+    reorderPageImages.value = await Promise.all(promises);
     showReorderPages.value = true;
   } catch (error) {
     console.log(error);
   } finally {
     openingReorder.value = false;
   }
+};
+
+const convertPDFToImage = async (
+  page: ApplicantPage & { id: string; url: string }
+) => {
+  // Get pdf page and viewport
+  const loadingTask = PDFJS.getDocument(page.url);
+  const pdf = await loadingTask.promise;
+  const pdfPage = await pdf.getPage(1);
+  const scale = 1;
+  const viewport = pdfPage.getViewport({ scale });
+  // create canvas
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const renderContext = {
+    canvasContext: context as CanvasRenderingContext2D,
+    viewport,
+  };
+  await pdfPage.render(renderContext).promise;
+  const imageURL = canvas.toDataURL();
+  return {
+    src: imageURL,
+    isDragging: false,
+    pageId: page.id,
+  };
 };
 
 const dragStart = (e: { oldIndex: number }) => {
