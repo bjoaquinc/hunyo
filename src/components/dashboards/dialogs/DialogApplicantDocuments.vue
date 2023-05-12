@@ -213,7 +213,7 @@ const onDocumentClick = (docId: string) => {
   );
   const doc = applicantDocuments.value[docIndex];
   if (doc.status === 'accepted') {
-    openDialogApplicantPages(doc);
+    openApplicantAcceptedDoc(doc);
   }
 
   if (doc.status === 'admin-checked') {
@@ -239,11 +239,13 @@ const onDocumentClick = (docId: string) => {
   }
 };
 
-const openDialogApplicantPages = (doc: ApplicantDocument & { id: string }) => {
+const openApplicantAcceptedDoc = (doc: ApplicantDocument & { id: string }) => {
+  const { id: docId, companyId } = doc;
   $q.dialog({
     component: DialogApplicantPages,
     componentProps: {
-      applicantDocument: doc,
+      docId,
+      companyId,
     },
   });
 };

@@ -45,6 +45,7 @@ export interface ApplicantDocument {
   totalPages: number;
   submissionCount: number;
   isUpdating: boolean;
+  restitchDocument?: boolean;
   delayedUntil?: Timestamp;
   rejection?: {
     reasons: RejectionReasons[];

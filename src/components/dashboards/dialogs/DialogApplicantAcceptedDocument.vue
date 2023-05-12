@@ -12,7 +12,7 @@
             dense
             class="q-ml-sm"
           />
-          <div class="text-h5 q-ml-auto">
+          <div v-if="applicantDocument" class="text-h5 q-ml-auto">
             {{
               applicantDocument.updatedName
                 ? applicantDocument.updatedName
@@ -33,7 +33,7 @@
       </q-header>
 
       <q-drawer show-if-above v-model="drawerRight" side="right" bordered>
-        <q-list class="q-pa-md" v-if="!isReorderingPages">
+        <q-list class="q-pa-md" v-if="!showReorderPages">
           <div class="text-h5 q-mb-md">
             Page {{ slide }} of {{ documentPages.length }}
           </div>
@@ -52,6 +52,7 @@
             <q-item-section avatar side>
               <q-icon name="fas fa-arrow-down" />
             </q-item-section>
+            <q-inner-loading :showing="applicantDocument?.restitchDocument" />
           </q-item>
           <q-separator />
           <q-item
@@ -62,7 +63,7 @@
           >
             <q-item-section>
               <q-item-label class="text-subtitle1 text-weight-bold"
-                >Reorder Pages</q-item-label
+                >Reorder Pages (Beta)</q-item-label
               >
             </q-item-section>
             <q-item-section avatar side>
@@ -74,7 +75,8 @@
         <div class="q-ma-md" v-else>
           <div class="text-h5 q-mb-md">Reordering Pages</div>
           <q-btn
-            @click="isReorderingPages = false"
+            :loading="isReorderingPages"
+            @click="reorderPages"
             label="Done"
             size="lg"
             class="q-mx-md full-width"
@@ -93,7 +95,7 @@
 
       <q-page-container>
         <q-page class="bg-white">
-          <div v-if="!isReorderingPages" class="bg-white full-width">
+          <div v-if="!showReorderPages" class="bg-white full-width">
             <q-btn
               v-if="slide > 1"
               @click="slide--"
@@ -119,7 +121,9 @@
               style="max-height: 100%; overflow: auto !important"
             >
               <q-carousel
-                v-if="documentPages.length > 0 && !isLoading"
+                v-if="
+                  applicantDocument && documentPages.length > 0 && !isLoading
+                "
                 style="height: 100%; width: 80%"
                 animated
                 v-model="slide"
@@ -200,13 +204,14 @@
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
-import { dbColRefs } from 'src/utils/db';
+import { dbColRefs, dbDocRefs } from 'src/utils/db';
 import {
   onSnapshot,
   query,
   where,
   orderBy,
   Unsubscribe,
+  updateDoc,
 } from 'firebase/firestore';
 import { getDownloadURL } from '@firebase/storage';
 import { storageRefs } from 'src/utils/storage';
@@ -219,15 +224,19 @@ PDFJS.GlobalWorkerOptions.workerSrc = workerSrc;
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const drawerRight = ref(true);
 const slide = ref(1);
+const applicantDocument = ref<(ApplicantDocument & { id: string }) | null>(
+  null
+);
+const unsubApplicantDocument = ref<Unsubscribe | null>(null);
 const documentPages = ref<
   (ApplicantPage & {
     id: string;
     url: string;
   })[]
 >([]);
-const finalDocumentURL = ref('');
 const unsubDocumentPages = ref<Unsubscribe | null>(null);
-const isReorderingPages = ref(false);
+const finalDocumentURL = ref('');
+const showReorderPages = ref(false);
 const reorderPageImages = ref<
   {
     src: string;
@@ -238,9 +247,11 @@ const reorderPageImages = ref<
 const selectedDragItemIndex = ref<number | null>(null);
 const openingReorder = ref(false);
 const isLoading = ref(false);
+const isReorderingPages = ref(false);
 
 const props = defineProps<{
-  applicantDocument: ApplicantDocument & { id: string };
+  docId: string;
+  companyId: string;
 }>();
 
 const dragOptions = {
@@ -253,66 +264,104 @@ const dragOptions = {
 };
 
 onMounted(async () => {
-  const pagesRef = dbColRefs.getPagesRef(props.applicantDocument.companyId);
-  const q = query(
-    pagesRef,
-    where('docId', '==', props.applicantDocument.id),
-    where('submissionCount', '==', props.applicantDocument.submissionCount),
-    orderBy('pageNumber', 'asc')
-  );
-  await new Promise<void>((resolve, reject) => {
-    let runOnce = () => {
-      runOnce = () => {
-        return;
+  try {
+    const { companyId, docId } = props;
+    // Get document
+    const docRef = dbDocRefs.getDocumentRef(companyId, docId);
+    await new Promise<void>((resolve, reject) => {
+      let resolveOnce = () => {
+        resolveOnce = () => {
+          return;
+        };
+        resolve();
       };
-      resolve();
-    };
-    unsubDocumentPages.value = onSnapshot(
-      q,
-      async (snapshot) => {
-        documentPages.value = await Promise.all(
-          snapshot.docs.map(async (pageSnap) => {
-            const page = pageSnap.data();
-            const { companyId, dashboardId, applicantId, requestedFormat } =
-              props.applicantDocument;
-            const fileName = `${page.name}.${requestedFormat}`;
-            let url = '';
-            if (page.submittedFormat.includes('image')) {
-              const storageRef = storageRefs.getFixedDocRef(
-                companyId,
-                dashboardId,
-                applicantId,
-                fileName
-              );
-              url = await getDownloadURL(storageRef);
-            } else {
-              const storageRef = storageRefs.getOriginalDocRef(
-                companyId,
-                dashboardId,
-                applicantId,
-                fileName
-              );
-              url = await getDownloadURL(storageRef);
-            }
-            return {
-              id: pageSnap.id,
-              url,
-              ...page,
+      unsubApplicantDocument.value = onSnapshot(
+        docRef,
+        async (docSnap) => {
+          const docData = docSnap.data();
+          if (docData) {
+            applicantDocument.value = {
+              id: docSnap.id,
+              ...docData,
             };
-          })
-        );
-        runOnce();
-      },
-      (err) => {
-        console.log(err);
-        reject(err);
-      }
+            getFinalDocumentURL();
+          }
+          resolveOnce();
+        },
+        reject
+      );
+    });
+
+    if (!applicantDocument.value) {
+      throw new Error('No document could be loaded');
+    }
+
+    const { submissionCount } = applicantDocument.value;
+
+    // Get document Pages
+    const pagesRef = dbColRefs.getPagesRef(companyId);
+    const q = query(
+      pagesRef,
+      where('docId', '==', docId),
+      where('submissionCount', '==', submissionCount),
+      orderBy('pageNumber', 'asc')
     );
-  });
-  await getFinalDocumentURL();
+    await new Promise<void>((resolve, reject) => {
+      let runOnce = () => {
+        runOnce = () => {
+          return;
+        };
+        resolve();
+      };
+      unsubDocumentPages.value = onSnapshot(
+        q,
+        async (snapshot) => {
+          documentPages.value = await Promise.all(
+            snapshot.docs.map(async (pageSnap) => {
+              const page = pageSnap.data();
+              const { dashboardId, applicantId, requestedFormat } =
+                applicantDocument.value as ApplicantDocument & { id: string };
+              const fileName = `${page.name}.${requestedFormat}`;
+              let url = '';
+              if (page.submittedFormat.includes('image')) {
+                const storageRef = storageRefs.getFixedDocRef(
+                  companyId,
+                  dashboardId,
+                  applicantId,
+                  fileName
+                );
+                url = await getDownloadURL(storageRef);
+              } else {
+                const storageRef = storageRefs.getOriginalDocRef(
+                  companyId,
+                  dashboardId,
+                  applicantId,
+                  fileName
+                );
+                url = await getDownloadURL(storageRef);
+              }
+              return {
+                id: pageSnap.id,
+                url,
+                ...page,
+              };
+            })
+          );
+          runOnce();
+        },
+        (err) => {
+          console.log(err);
+          reject(err);
+        }
+      );
+    });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 const getFinalDocumentURL = async () => {
+  if (!applicantDocument.value) return;
   const {
     companyId,
     dashboardId,
@@ -320,7 +369,7 @@ const getFinalDocumentURL = async () => {
     updatedName,
     name,
     requestedFormat,
-  } = props.applicantDocument;
+  } = applicantDocument.value;
   const docName = updatedName ? updatedName : `${name}.${requestedFormat}`;
   const finalDocStorageRef = storageRefs.getFinalDocRef(
     companyId,
@@ -332,6 +381,7 @@ const getFinalDocumentURL = async () => {
 };
 
 onUnmounted(() => {
+  unsubApplicantDocument.value?.();
   unsubDocumentPages.value?.();
 });
 
@@ -363,7 +413,7 @@ const addReorderPageImages = async () => {
         pageId: page.id,
       });
     }
-    isReorderingPages.value = true;
+    showReorderPages.value = true;
   } catch (error) {
     console.log(error);
   } finally {
@@ -374,7 +424,6 @@ const addReorderPageImages = async () => {
 const dragStart = (e: { oldIndex: number }) => {
   selectedDragItemIndex.value = null;
   const index = e.oldIndex;
-  console.log('drag start');
   reorderPageImages.value[index].isDragging = true;
 };
 
@@ -387,7 +436,35 @@ const dragEnd = (e: { newIndex: number; oldIndex: number }) => {
 const clearReorderingPages = () => {
   reorderPageImages.value = [];
   selectedDragItemIndex.value = null;
-  isReorderingPages.value = false;
+  showReorderPages.value = false;
+};
+
+const reorderPages = async () => {
+  isReorderingPages.value = true;
+  try {
+    const { companyId, docId } = props;
+    // Update page number on all pages
+    const promises: Promise<void>[] = [];
+    reorderPageImages.value.forEach((page, index) => {
+      const pageRef = dbDocRefs.getPageRef(companyId, page.pageId);
+      const NEW_PAGE_NUMBER = index + 1;
+      const promise = updateDoc(pageRef, {
+        pageNumber: NEW_PAGE_NUMBER,
+      });
+      promises.push(promise);
+    });
+    await Promise.all(promises);
+    // Update doc to restitch pages
+    const docRef = dbDocRefs.getDocumentRef(companyId, docId);
+    await updateDoc(docRef, {
+      restitchDocument: true,
+    });
+    clearReorderingPages();
+  } catch (error) {
+    console.log(error);
+  } finally {
+    isReorderingPages.value = false;
+  }
 };
 
 defineEmits([
