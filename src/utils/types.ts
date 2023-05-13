@@ -30,6 +30,7 @@ export interface Company {
   name: string;
   users: string[];
   logo?: string;
+  messageTypes: MessageType[];
 }
 
 export interface User {
@@ -180,17 +181,6 @@ export interface Form {
   isDeleted?: boolean;
 }
 
-// export interface UpdatedForm extends Omit<Form, 'applicant'> {
-//   applicant: {
-//     id: string;
-//     status: ApplicantStatus;
-//     name: {
-//       first: string;
-//       last: string;
-//     };
-//   };
-// }
-
 export interface AcceptedPage {
   createdAt: Timestamp;
   applicantId: string;
@@ -233,8 +223,26 @@ export interface DashboardDoc {
   docNumber: number;
 }
 
+type MessageType = 'sms' | 'email';
+
 export interface Message {
   createdAt: Timestamp;
+  messageTypes: MessageType[];
+  emailData?: EmailData | null;
+  smsData?: SMSData | null;
+  updatedAt?: Timestamp;
+}
+
+type SMSStatus = 'Pending' | 'Sent' | 'Failed' | 'Refunded';
+
+export interface SMSData {
+  phoneNumber: string;
+  message: string;
+  senderName?: string;
+  status?: SMSStatus;
+}
+
+export interface EmailData {
   subject: string;
   recipients: {
     email: string;
@@ -243,8 +251,7 @@ export interface Message {
   body: string;
   fromName?: string;
   metadata?: MessageMetadata;
-  template?: SendApplicantDocumentRequestTemplate;
-  updatedAt?: Timestamp;
+  template?: EmailTemplate;
   messageResponseData?: {
     id: string;
     status: string;
@@ -257,15 +264,29 @@ export interface Message {
   };
 }
 
+export type EmailTemplate =
+  | SendApplicantDocumentRequestTemplate
+  | SendTeamInvite;
+// | SendApplicantDocumentRejectionTemplate;
+
 export interface SendApplicantDocumentRequestTemplate {
   name: 'Applicant Documents Request';
   data: {
     formLink: string;
     companyName: string;
     companyDeadline: string;
+    applicantName?: string;
   };
 }
 
+export interface SendTeamInvite {
+  name: 'Team Invite Message';
+  data: {
+    teamMemberName: string;
+    companyName: string;
+    inviteLink: string;
+  };
+}
 export interface MessageMetadata {
   applicantId: string;
   dashboardId: string;

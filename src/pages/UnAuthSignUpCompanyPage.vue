@@ -283,6 +283,7 @@ const createCompany = async (
     name: companyName.value,
     users: [userId],
     logo: logoName,
+    messageTypes: ['email'],
   });
   const companyId = docRef.id;
   return companyId;
