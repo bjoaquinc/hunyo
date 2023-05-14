@@ -1,7 +1,12 @@
 <template>
-  <q-page v-if="$q.platform.is.mobile">
-    <ApplicantFormMain
-      v-if="isReady && form"
+  <q-page>
+    <ApplicantFormMainMobile
+      v-if="isReady && form && $q.platform.is.mobile"
+      :form="form"
+      :documents="documents"
+    />
+    <ApplicantFormMainDesktop
+      v-else-if="isReady && form && $q.platform.is.desktop"
       :form="form"
       :documents="documents"
     />
@@ -9,7 +14,7 @@
       <q-spinner-pie size="80px" color="primary" />
     </div>
   </q-page>
-  <q-page v-else>
+  <!-- <q-page v-else>
     <q-card
       class="card-container absolute-center bg-primary q-pa-xl"
       style="width: 600px; max-width: 100vw"
@@ -28,7 +33,7 @@
         </div>
       </q-card-section>
     </q-card>
-  </q-page>
+  </q-page> -->
 </template>
 
 <script setup lang="ts">
@@ -42,9 +47,10 @@ import {
 import * as amplitude from '@amplitude/analytics-browser';
 import { getDownloadURL } from '@firebase/storage';
 import { useQuasar } from 'quasar';
-import ApplicantFormMain from 'src/components/forms/ApplicantFormMain.vue';
-import DialogFormName from 'src/components/forms/dialogs/DialogFormName.vue';
-// import DialogFormReminder from 'src/components/forms/dialogs/DialogFormReminder.vue';
+import ApplicantFormMainMobile from 'src/components/forms/ApplicantFormMainMobile.vue';
+import ApplicantFormMainDesktop from 'src/components/forms/ApplicantFormMainDesktop.vue';
+import DialogFormName from 'src/components/forms/mobile/DialogFormName.vue';
+// import DialogFormReminder from 'src/components/forms/mobile/DialogFormReminder.vue';
 import { dbDocRefs, dbColRefs } from 'src/utils/db';
 import { storageRefs } from 'src/utils/storage';
 import { Form } from 'src/utils/types';

@@ -33,7 +33,7 @@ export const documentStatusStyles = {
   },
   rejected: {
     bgColor: 'negative',
-    textColor: 'white',
+    textColor: 'negative',
     actionIcon: 'fas fa-chevron-right',
     actionLabel: 'Rejected. Resubmit now',
     mobileLabel: 'Rejected',
@@ -51,7 +51,7 @@ export const documentStatusStyles = {
     textColor: 'grey-8',
     actionIcon: 'fas fa-check',
     actionLabel: 'Submitted',
-    mobileLabel: 'Uploaded',
+    mobileLabel: 'Submitted',
     clickable: false,
     bgColor: null,
   },

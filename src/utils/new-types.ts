@@ -9,8 +9,7 @@ export type DocumentStatus =
   | 'submitted'
   | 'admin-checked'
   | 'accepted'
-  | 'rejected'
-  | 'not-applicable';
+  | 'rejected';
 // export type PageStatus =
 //   | 'submitted'
 //   | 'admin-checked'

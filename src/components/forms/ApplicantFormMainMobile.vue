@@ -153,14 +153,13 @@ import { Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
 import { DateTime } from 'luxon';
-import DialogFormSubmitDocImage from './dialogs/DialogFormSubmitDocImage.vue';
-import DialogFormDocumentAvailability from './dialogs/DialogFormDocumentAvailability.vue';
-import DialogFormScheduleSubmission from './dialogs/DialogFormScheduleSubmission.vue';
-import DialogFormDelayedUpdate from './dialogs/DialogFormDelayedUpdate.vue';
-import DialogFormSample from './dialogs/DialogFormSample.vue';
+import DialogFormSubmitDocImage from './mobile/DialogFormSubmitDocImage.vue';
+import DialogFormDocumentAvailability from './mobile/DialogFormDocumentAvailability.vue';
+import DialogFormScheduleSubmission from './mobile/DialogFormScheduleSubmission.vue';
+import DialogFormDelayedUpdate from './mobile/DialogFormDelayedUpdate.vue';
+import DialogFormSample from './mobile/DialogFormSample.vue';
 import { ApplicantDocument } from 'src/utils/new-types';
-import DialogFormRejectionInformation from './dialogs/DialogFormRejectionInformation.vue';
-// import BaseDialogViewImage from '../BaseDialogViewImage.vue';
+import DialogFormRejectionInformation from './mobile/DialogFormRejectionInformation.vue';
 
 const props = defineProps<{
   form: Form & { id: string };
