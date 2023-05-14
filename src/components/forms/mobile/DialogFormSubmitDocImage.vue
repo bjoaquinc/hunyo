@@ -38,7 +38,7 @@
                 ref="imageInputRef"
                 type="file"
                 accept="image/*"
-                capture="environment"
+                :capture="company.options.imageOnly ? 'environment' : false"
               />
             </div>
           </div>
@@ -162,10 +162,10 @@ import { getDownloadURL, getMetadata } from '@firebase/storage';
 import { QDialog, useDialogPluginComponent } from 'quasar';
 import { storageRefs } from 'src/utils/storage';
 import { ref, onMounted, computed } from 'vue';
-import { Form } from 'src/utils/types';
+import { Company, Form } from 'src/utils/types';
 import { useQuasar } from 'quasar';
 import draggable from 'vuedraggable';
-import DialogFormSubmitDocPreview from './DialogFormSubmitDocPreview.vue';
+import DialogFormSubmitDocPreview from '../DialogFormSubmitDocPreview.vue';
 import DialogApplicantCameraImageVue from './DialogFormImageRotate.vue';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
 import { ApplicantDocument } from 'src/utils/new-types';
@@ -176,6 +176,7 @@ const props = defineProps<{
   doc: ApplicantDocument & { id: string };
   index: number;
   form: Form & { id: string };
+  company: Company;
 }>();
 const drag = ref(false);
 const isDraggable = ref(false);
@@ -336,6 +337,7 @@ const openDialogFormSubmitDocPreview = async () => {
       componentProps: {
         doc: props.doc,
         form: props.form,
+        company: props.company,
         uploadedFiles: uploadedFiles.value,
       },
     }).onOk(resolve);

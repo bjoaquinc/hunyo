@@ -11,11 +11,11 @@
       <q-form @submit.prevent="onSubmit" greedy v-if="!isLoading">
         <q-card-section>
           <div class="flex justify-between q-mt-sm no-wrap">
-            <div class="text-h5 gt-xs">
-              These are the pages/documents you are submitting in this order
+            <div class="text-h4 gt-xs">
+              These are the pages/documents you are submitting
             </div>
             <div class="text-h6 lt-sm">
-              These are the pages/documents you are submitting in this order
+              These are the pages/documents you are submitting
             </div>
             <q-btn v-close-popup icon="fas fa-times" flat dense />
           </div>
@@ -46,11 +46,11 @@
                     flat
                     dense
                     style="max-width: 100% !important"
-                    class="gt-xs text-body1"
+                    class="gt-xs"
                     color="primary"
                     size="md"
                   >
-                    <div class="text-left ellipsis">
+                    <div class="text-left ellipsis text-h6">
                       {{ uploadedFile.file.name }}
                     </div>
                   </q-btn>
@@ -97,13 +97,16 @@
           <q-btn
             label="Submit Now"
             class="full-width"
+            size="lg"
             type="submit"
             color="primary"
+            unelevated
           />
           <q-btn
             v-close-popup
             outline
-            class="full-width q-mt-md"
+            class="full-width q-mt-sm"
+            size="lg"
             label="Cancel"
             type="reset"
             color="primary"
@@ -143,13 +146,19 @@ import {
 } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
-import { ApplicantDocument, ApplicantPage } from 'src/utils/new-types';
+import {
+  ApplicantDocument,
+  ApplicantPage,
+  DocumentStatus,
+} from 'src/utils/new-types';
+import { Company } from 'src/utils/types';
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 const $q = useQuasar();
 const props = defineProps<{
   doc: ApplicantDocument & { id: string };
   form: Form & { id: string };
+  company: Company;
   uploadedFiles: UploadedFile[];
 }>();
 
@@ -234,9 +243,6 @@ const uploadFilesToStorage = async () => {
 const uploadFileToStorage = async (file: UploadedFile, pageNumber: number) => {
   const applicantName = `${props.form.applicant.name?.first} ${props.form.applicant.name?.middle} ${props.form.applicant.name?.last}`;
   const fileName = applicantName + '-' + props.doc.name + '-' + uid();
-  // if (props.uploadedFiles.length <= 1) {
-  //   fileName = applicantName + '-' + props.doc.name;
-  // }
   const format = props.doc.requestedFormat;
   const formId = props.form.id;
   const docId = props.doc.id;
@@ -248,6 +254,7 @@ const uploadFileToStorage = async (file: UploadedFile, pageNumber: number) => {
   const contentType = file.file.type;
   const contentSize = file.file.size;
   const CONVERT_TO_KILOBYTES = 0.001;
+  const FIX_IMAGE_OPTION = props.company.options.adminCheck.toString();
 
   const customMetadata: { [key: string]: string } = {
     companyId,
@@ -257,6 +264,7 @@ const uploadFileToStorage = async (file: UploadedFile, pageNumber: number) => {
     docId,
     pageId,
     format,
+    fixImage: FIX_IMAGE_OPTION,
   };
 
   if (file.angle !== undefined) {
@@ -334,10 +342,29 @@ const createApplicantPages = async (
 
 const updateApplicantDocument = async () => {
   const docRef = dbDocRefs.getDocumentRef(props.doc.companyId, props.doc.id);
-  const UPDATED_DOC_STATUS = 'submitted';
+
+  // See if document goes to admin or straight to company/user;
+  let UPDATED_DOC_STATUS: DocumentStatus;
+  if (props.company.options.adminCheck) {
+    UPDATED_DOC_STATUS = 'submitted';
+  } else {
+    UPDATED_DOC_STATUS = 'admin-checked';
+  }
+
+  // Update document name;
+  const applicantName = props.form.applicant.name;
+  const docName = props.doc.name;
+  let UPDATED_DOC_NAME: string;
+  if (applicantName) {
+    const {first, middle, last} = applicantName;
+    UPDATED_DOC_NAME = `${docName}_${first}_${middle}_${last}.pdf`
+  } else {
+    UPDATED_DOC_NAME = docName;
+  }
   const TOTAL_PAGES = props.uploadedFiles.length;
   await updateDoc(docRef, {
     status: UPDATED_DOC_STATUS,
+    updatedName: UPDATED_DOC_NAME,
     totalPages: TOTAL_PAGES,
     deviceSubmitted: $q.platform.is.mobile ? 'mobile' : 'desktop',
     submissionCount: updatedSubmissionCount.value,

@@ -31,6 +31,11 @@ export interface Company {
   users: string[];
   logo?: string;
   messageTypes: MessageType[];
+  options: {
+    adminCheck: boolean;
+    mobileOnly: boolean;
+    imageOnly: boolean;
+  };
 }
 
 export interface User {

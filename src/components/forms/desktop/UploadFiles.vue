@@ -53,7 +53,8 @@
           </q-item-section>
         </q-item>
         <q-btn
-          label="Submit Now"
+          @click="submitDocs"
+          label="Confirm Documents"
           class="full-width q-mt-md"
           size="lg"
           color="primary"
@@ -68,14 +69,25 @@
 import { ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
+import DialogFormSubmitDocPreview from '../DialogFormSubmitDocPreview.vue';
 import { ApplicantDocument } from 'src/utils/new-types';
+import { Company, Form } from 'src/utils/types';
+
+interface UploadedFile {
+  name: string;
+  file: File;
+  downloadURL: string;
+  angle?: 0 | 90 | 180 | 270;
+}
 
 const props = defineProps<{
   doc: ApplicantDocument & { id: string };
+  form: Form & { id: string };
+  company: Company;
 }>();
 const $q = useQuasar();
 const files = ref<FileList | null>(null);
-const uploadedFiles = ref<File[]>([]);
+const uploadedFiles = ref<UploadedFile[]>([]);
 
 onMounted(() => {
   console.log(props);
@@ -84,7 +96,13 @@ onMounted(() => {
 const addFiles = (value: FileList) => {
   console.log(value);
   for (const file of value) {
-    uploadedFiles.value.push(file);
+    const downloadURL = URL.createObjectURL(file);
+    const uploadedFile: UploadedFile = {
+      name: file.name,
+      file,
+      downloadURL,
+    };
+    uploadedFiles.value.push(uploadedFile);
   }
   files.value = null;
 };
@@ -94,14 +112,32 @@ const removeFile = (index: number) => {
 };
 
 const viewUpload = (index: number) => {
-  const file = uploadedFiles.value[index];
-  const Url = URL.createObjectURL(file);
+  const uploadedFile = uploadedFiles.value[index];
+  const { file, downloadURL } = uploadedFile;
   $q.dialog({
     component: BaseDialogViewImage,
     componentProps: {
-      imgURL: Url,
+      imgURL: downloadURL,
       contentType: file.type,
     },
+  });
+};
+
+const submitDocs = () => {
+  $q.dialog({
+    component: DialogFormSubmitDocPreview,
+    componentProps: {
+      doc: props.doc,
+      form: props.form,
+      company: props.company,
+      uploadedFiles: uploadedFiles.value,
+    },
+  }).onOk(() => {
+    $q.notify({
+      type: 'positive',
+      message: `Successfully submitted ${props.doc.name}!`,
+      position: 'top',
+    });
   });
 };
 </script>

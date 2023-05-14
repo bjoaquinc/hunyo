@@ -26,57 +26,11 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none">
-        <!-- <q-list class="gt-xs" separator>
-          <q-item
-            @click="onDocumentClick(doc)"
-            class="text-h6 q-py-md rounded-borders"
-            :class="
-              documentStatusStyles[doc.status].bgColor
-                ? `bg-${documentStatusStyles[doc.status].bgColor}`
-                : ''
-            "
-            v-for="(doc, index) in documents"
-            :key="index"
-            :clickable="documentStatusStyles[doc.status].clickable"
-            :v-ripple="documentStatusStyles[doc.status].clickable"
-          >
-            <q-item-section avatar>
-              <q-icon
-                name="fas fa-file"
-                :color="documentStatusStyles[doc.status].textColor"
-              />
-            </q-item-section>
-            <q-item-section
-              :class="`text-${documentStatusStyles[doc.status].textColor}`"
-              >{{ doc.name }}
-            </q-item-section>
-            <q-item-section class="text-subtitle1 text-grey-8">
-              <div
-                class="q-ml-auto flex items-center"
-                :class="`text-${documentStatusStyles[doc.status].textColor}`"
-              >
-                {{ documentStatusStyles[doc.status].actionLabel
-                }}<q-icon
-                  v-if="documentStatusStyles[doc.status].actionIcon"
-                  :name="(documentStatusStyles[doc.status].actionIcon as string)"
-                  class="q-ml-md"
-                  size="sm"
-                />
-              </div>
-            </q-item-section>
-          </q-item>
-          <q-separator />
-        </q-list> -->
         <q-list v-if="requiredDocs.length > 0" class="lt-sm" separator>
           <div class="text-h6 text-grey-8">Required</div>
           <q-item
             @click="onDocumentClick(doc)"
             class="text-subtitle1 q-py-md"
-            :class="
-              documentStatusStyles[doc.status].bgColor
-                ? `bg-${documentStatusStyles[doc.status].bgColor}`
-                : ''
-            "
             v-for="(doc, index) in requiredDocs"
             :key="index"
             :clickable="documentStatusStyles[doc.status].clickable"
@@ -159,10 +113,12 @@ import DialogFormScheduleSubmission from './mobile/DialogFormScheduleSubmission.
 import DialogFormDelayedUpdate from './mobile/DialogFormDelayedUpdate.vue';
 import DialogFormSample from './mobile/DialogFormSample.vue';
 import { ApplicantDocument } from 'src/utils/new-types';
+import { Company } from 'src/utils/types';
 import DialogFormRejectionInformation from './mobile/DialogFormRejectionInformation.vue';
 
 const props = defineProps<{
   form: Form & { id: string };
+  company: Company;
   documents: (ApplicantDocument & { id: string })[];
 }>();
 const requiredDocs = computed(() => {
@@ -240,6 +196,7 @@ const onNotSubmitted = async (index: number) => {
         componentProps: {
           doc: props.documents[index],
           form: props.form,
+          company: props.company,
           index,
         },
       }).onOk(() => {
@@ -321,6 +278,7 @@ const onRejected = (index: number) => {
       componentProps: {
         doc: props.documents[index],
         form: props.form,
+        company: props.company,
         index,
       },
     }).onOk(() => {
@@ -347,6 +305,7 @@ const onDelayed = (index: number) => {
         componentProps: {
           doc: props.documents[index],
           form: props.form,
+          company: props.company,
           index,
         },
       });

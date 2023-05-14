@@ -1,18 +1,43 @@
 <template>
   <q-page>
     <ApplicantFormMainMobile
-      v-if="isReady && form && $q.platform.is.mobile"
+      v-if="form && company && $q.platform.is.mobile"
       :form="form"
+      :company="company"
       :documents="documents"
     />
     <ApplicantFormMainDesktop
-      v-else-if="isReady && form && $q.platform.is.desktop"
+      v-else-if="form && company && !company.options.mobileOnly"
       :form="form"
+      :company="company"
       :documents="documents"
     />
-    <div v-else class="absolute-center">
+    <q-card
+      v-else-if="company && company.options.mobileOnly"
+      class="card-container absolute-center bg-primary q-pa-xl"
+      style="width: 600px; max-width: 100vw"
+    >
+      <q-card-section class="flex">
+        <q-icon
+          name="fas fa-mobile-screen-button"
+          class="q-mx-auto"
+          size="7rem"
+          color="white"
+        />
+      </q-card-section>
+      <q-card-section>
+        <div class="text-h4 text-white text-center">
+          Please use your mobile phone to view requirements
+        </div>
+      </q-card-section>
+    </q-card>
+    <q-inner-loading
+      class="absolute-center"
+      :class="$q.platform.is.mobile ? '' : 'bg-grey-1'"
+      :showing="!isReady"
+    >
       <q-spinner-pie size="80px" color="primary" />
-    </div>
+    </q-inner-loading>
   </q-page>
   <!-- <q-page v-else>
     <q-card
@@ -43,6 +68,7 @@ import {
   query,
   Unsubscribe,
   where,
+  getDoc,
 } from '@firebase/firestore';
 import * as amplitude from '@amplitude/analytics-browser';
 import { getDownloadURL } from '@firebase/storage';
@@ -53,7 +79,7 @@ import DialogFormName from 'src/components/forms/mobile/DialogFormName.vue';
 // import DialogFormReminder from 'src/components/forms/mobile/DialogFormReminder.vue';
 import { dbDocRefs, dbColRefs } from 'src/utils/db';
 import { storageRefs } from 'src/utils/storage';
-import { Form } from 'src/utils/types';
+import { Company, Form } from 'src/utils/types';
 import { ApplicantDocument } from 'src/utils/new-types';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { signInAnonymously, getAuth } from 'firebase/auth';
@@ -68,6 +94,7 @@ const router = useRouter();
 const unsubForm = ref<Unsubscribe | null>(null);
 const authStore = useAuthStore();
 const form = ref<(Form & { id: string }) | null>(null);
+const company = ref<Company | null>(null);
 const documents = ref<(ApplicantDocument & { id: string })[]>([]);
 const unsubDocs = ref<Unsubscribe | null>(null);
 const isReady = ref(false);
@@ -77,6 +104,7 @@ onMounted(async () => {
   try {
     await setApplicantAuth();
     await setForm();
+    await setCompany();
     amplitude.setUserId(form.value?.id);
     if (form.value && form.value.company.logo) {
       logoURL.value = await getLogoURL(form.value.company.logo);
@@ -120,6 +148,16 @@ const setForm = async () => {
       reject
     );
   });
+};
+
+const setCompany = async () => {
+  if (!form.value) return;
+  const { company: formCompany } = form.value;
+  const companyRef = dbDocRefs.getCompanyRef(formCompany.id);
+  const companySnap = await getDoc(companyRef);
+  if (companySnap.exists()) {
+    company.value = companySnap.data();
+  }
 };
 
 const setDocuments = async () => {

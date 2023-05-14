@@ -27,7 +27,11 @@
           } text-white`"
           :active="doc.id === selectedDocId"
           class="text-h6 q-py-md"
-          :class="`text-${documentStatusStyles[doc.status].textColor}`"
+          :class="
+            doc.id === selectedDocId
+              ? ''
+              : `text-${documentStatusStyles[doc.status].textColor}`
+          "
           clickable
           v-for="doc in requiredDocs"
           :key="doc.id"
@@ -53,7 +57,12 @@
           v-show="selectedDocId"
         >
           <q-tab-panel :name="doc.id" v-for="doc in documents" :key="doc.id">
-            <component :is="pages[doc.status]" :doc="doc" />
+            <component
+              :is="pages[doc.status]"
+              :doc="doc"
+              :form="form"
+              :company="company"
+            />
           </q-tab-panel>
         </q-tab-panels>
         <SelectRequirement v-show="!selectedDocId" />
@@ -67,7 +76,7 @@
 import { documentStatusStyles } from './styles';
 // import { useQuasar } from 'quasar';
 import { onMounted, ref, computed } from 'vue';
-import { Form } from 'src/utils/types';
+import { Company, Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
 // import { DateTime } from 'luxon';
@@ -91,6 +100,7 @@ const leftDrawerOpen = ref(true);
 const props = defineProps<{
   form: Form & { id: string };
   documents: (ApplicantDocument & { id: string })[];
+  company: Company;
 }>();
 const requiredDocs = computed(() => {
   return props.documents.filter((doc) => doc.isRequired);
