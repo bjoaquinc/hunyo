@@ -60,7 +60,7 @@
           <q-btn
             @click="submitDocs"
             label="Confirm Documents"
-            class="full-width q-mt-md"
+            class="full-width q-mt-md q-mb-lg"
             size="lg"
             color="primary"
           />

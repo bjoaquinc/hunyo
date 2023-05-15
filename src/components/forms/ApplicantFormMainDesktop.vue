@@ -20,6 +20,7 @@
         </div>
         <q-separator class="q-mt-md" />
         <q-item
+          @click="selectedDocId = doc.id"
           :active-class="`bg-${
             documentStatusStyles[doc.status].textColor
           } text-white`"
@@ -105,6 +106,17 @@ const requiredDocs = computed(() => {
   return props.documents.filter((doc) => doc.isRequired);
 });
 const selectedDocId = ref<string | null>(null);
+
+// type PageComponent =
+//   | typeof UploadFiles
+//   | typeof DocumentAccepted
+//   | typeof DocumentSubmitted;
+
+// const pages = {
+//   accepted: DocumentAccepted,
+//   upload: UploadFiles,
+//   submitted: DocumentSubmitted,
+// };
 
 onMounted(async () => {
   // Set Logo

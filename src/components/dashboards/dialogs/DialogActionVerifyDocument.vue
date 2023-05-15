@@ -171,7 +171,7 @@
           </q-list>
         </q-form>
         <div
-          class="text-body1 q-mt-md text-negative q-px-sm"
+          class="text-body1 q-mt-md q-mb-lg text-negative q-px-sm"
           v-if="showWarningMessage"
         >
           <div class="q-mt-md text-center">
