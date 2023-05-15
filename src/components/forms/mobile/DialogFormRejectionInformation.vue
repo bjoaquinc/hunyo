@@ -71,7 +71,7 @@ import { ref } from 'vue';
 import { ApplicantDocumentWithRejection } from 'src/utils/new-types';
 import * as amplitude from '@amplitude/analytics-browser';
 import { Form } from 'src/utils/types';
-import { rejectionLabels } from '../helpers.ts';
+import { rejectionLabels } from '../helpers';
 
 const props = defineProps<{
   doc: ApplicantDocumentWithRejection & { id: string };
