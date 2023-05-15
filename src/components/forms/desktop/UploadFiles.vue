@@ -1,68 +1,73 @@
 <template>
-  <!-- <q-page> -->
-  <div class="full-width flex">
-    <div class="q-mx-auto q-mt-xl" style="max-width: 680px">
-      <!-- <div class="text-h5">Upload your Identity Document</div> -->
-      <q-file
-        v-model="files"
-        @update:model-value="
-          (value) => {
-            addFiles(value);
-          }
-        "
-        class="upload-button q-mt-lg"
-        input-style="padding: 150px 250px"
-        :item-aligned="true"
-        accept="image/*, application/pdf"
-        multiple
-        rounded
-        filled
-      >
-        <template v-slot:default>
-          <div class="absolute-center flex column text-grey-8 text-h4">
-            <q-icon
-              name="fas fa-cloud-arrow-up"
-              class="q-mx-auto"
-              size="140px"
-            />
-            <div class="q-mt-md">Upload a file</div>
+  <q-page>
+    <div class="full-width flex">
+      <div class="q-mx-auto q-mt-xl" style="max-width: 680px">
+        <!-- <div class="text-h5">Upload your Identity Document</div> -->
+        <q-file
+          v-model="files"
+          @update:model-value="
+            (value) => {
+              addFiles(value);
+            }
+          "
+          class="upload-button q-mt-lg"
+          input-style="padding: 150px 250px"
+          :item-aligned="true"
+          accept="image/*, application/pdf"
+          multiple
+          rounded
+          filled
+        >
+          <template v-slot:default>
+            <div class="absolute-center flex column text-grey-8 text-h4">
+              <q-icon
+                name="fas fa-cloud-arrow-up"
+                class="q-mx-auto"
+                size="140px"
+              />
+              <div class="q-mt-md">Upload a file</div>
+            </div>
+          </template>
+        </q-file>
+        <q-list v-if="uploadedFiles.length > 0">
+          <div class="text-h4 q-mt-xl q-mb-md">
+            Uploaded Documents ({{ uploadedFiles.length }})
           </div>
-        </template>
-      </q-file>
-      <q-list v-if="uploadedFiles.length > 0">
-        <div class="text-h4 q-mt-xl q-mb-md">
-          Uploaded Documents ({{ uploadedFiles.length }})
-        </div>
-        <q-item v-for="(file, index) in uploadedFiles" :key="index">
-          <q-item-section>
-            <q-btn
-              @click="viewUpload(index)"
-              color="primary"
-              class="text-h5"
-              style="max-width: 100%"
-              align="left"
-              dense
-              flat
-              no-caps
-            >
-              <div class="ellipsis">{{ file.name }}</div>
-            </q-btn>
-          </q-item-section>
-          <q-item-section side>
-            <q-btn @click="removeFile(index)" icon="fas fa-times" flat dense />
-          </q-item-section>
-        </q-item>
-        <q-btn
-          @click="submitDocs"
-          label="Confirm Documents"
-          class="full-width q-mt-md"
-          size="lg"
-          color="primary"
-        />
-      </q-list>
+          <q-item v-for="(file, index) in uploadedFiles" :key="index">
+            <q-item-section>
+              <q-btn
+                @click="viewUpload(index)"
+                color="primary"
+                class="text-h5"
+                style="max-width: 100%"
+                align="left"
+                dense
+                flat
+                no-caps
+              >
+                <div class="ellipsis">{{ file.name }}</div>
+              </q-btn>
+            </q-item-section>
+            <q-item-section side>
+              <q-btn
+                @click="removeFile(index)"
+                icon="fas fa-times"
+                flat
+                dense
+              />
+            </q-item-section>
+          </q-item>
+          <q-btn
+            @click="submitDocs"
+            label="Confirm Documents"
+            class="full-width q-mt-md"
+            size="lg"
+            color="primary"
+          />
+        </q-list>
+      </div>
     </div>
-  </div>
-  <!-- </q-page> -->
+  </q-page>
 </template>
 
 <script setup lang="ts">
@@ -138,8 +143,13 @@ const submitDocs = () => {
       message: `Successfully submitted ${props.doc.name}!`,
       position: 'top',
     });
+    emit('changePage', props.doc.id, 'submitted');
   });
 };
+
+const emit = defineEmits<{
+  (e: 'changePage', id: string, page: string): void;
+}>();
 </script>
 
 <style lang="sass" scoped>

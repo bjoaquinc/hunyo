@@ -2,7 +2,7 @@
   <q-page>
     <div class="absolute-center text-h4 text-grey-7 text-center">
       <q-icon name="fas fa-file-circle-check" color="positive" size="200px" />
-      <div class="q-pt-lg">{{ doc.name }} has been accepted!</div>
+      <div class="q-pt-lg">{{ doc.name }} accepted!</div>
     </div>
   </q-page>
 </template>

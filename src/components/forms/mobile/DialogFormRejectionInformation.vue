@@ -71,14 +71,7 @@ import { ref } from 'vue';
 import { ApplicantDocumentWithRejection } from 'src/utils/new-types';
 import * as amplitude from '@amplitude/analytics-browser';
 import { Form } from 'src/utils/types';
-
-const rejectionLabels: { [key: string]: string } = {
-  'wrong-document': 'You uploaded the wrong document',
-  'edges-not-visible': 'The edges of the document are not visible',
-  blurry: 'The image is blurry',
-  'too-dark': 'The image is too dark',
-  other: 'See below',
-};
+import { rejectionLabels } from '../helpers.ts';
 
 const props = defineProps<{
   doc: ApplicantDocumentWithRejection & { id: string };

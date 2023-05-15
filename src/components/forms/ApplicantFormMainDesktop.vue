@@ -7,19 +7,18 @@
       :width="500"
       bordered
     >
-      <q-list separator v-model="selectedDocId">
-        <!-- <div class="full-width flex justify-center"> -->
+      <q-list separator v-model="selectedDocId" class="q-pa-md">
         <q-img
           :src="logoURL"
           v-if="logoURL"
           class="q-ma-md"
           style="max-width: 300px"
         />
-        <!-- </div> -->
-        <div class="text-h5 q-pa-md">
-          Requirements ({{ requiredDocs.length }})
+        <div class="text-h5 q-px-md">Deadline: {{ formattedDeadline }}</div>
+        <div class="text-h5 q-mt-md q-px-md">
+          Submit the Requirements below ({{ requiredDocs.length }})
         </div>
-        <q-separator class="q-px-md" />
+        <q-separator class="q-mt-md" />
         <q-item
           @click="onDocumentClick(doc)"
           :active-class="`bg-${
@@ -48,25 +47,27 @@
     </q-drawer>
 
     <q-page-container>
-      <q-page>
-        <q-tab-panels
-          animated
-          v-model="selectedDocId"
-          class="bg-grey-1"
-          keep-alive
-          v-show="selectedDocId"
-        >
-          <q-tab-panel :name="doc.id" v-for="doc in documents" :key="doc.id">
+      <!-- <q-page> -->
+      <q-tab-panels
+        animated
+        v-model="selectedDocId"
+        class="bg-grey-1"
+        keep-alive
+        v-show="selectedDocId"
+      >
+        <q-tab-panel :name="doc.id" v-for="doc in documents" :key="doc.id">
+          <Transition name="fade" mode="out-in">
             <component
-              :is="pages[doc.status]"
+              :is="setPage(doc)"
               :doc="doc"
               :form="form"
               :company="company"
             />
-          </q-tab-panel>
-        </q-tab-panels>
-        <SelectRequirement v-show="!selectedDocId" />
-      </q-page>
+          </Transition>
+        </q-tab-panel>
+      </q-tab-panels>
+      <SelectRequirement v-show="!selectedDocId" />
+      <!-- </q-page> -->
     </q-page-container>
   </q-layout>
 </template>
@@ -79,33 +80,76 @@ import { onMounted, ref, computed } from 'vue';
 import { Company, Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
-// import { DateTime } from 'luxon';
+import { DateTime } from 'luxon';
 import UploadFiles from './desktop/UploadFiles.vue';
 import SelectRequirement from './desktop/SelectRequirement.vue';
 import DocumentAccepted from './desktop/DocumentAccepted.vue';
 import DocumentSubmitted from './desktop/DocumentSubmitted.vue';
 import { ApplicantDocument } from 'src/utils/new-types';
-// import DialogFormRejectionInformation from './mobile/DialogFormRejectionInformation.vue';
-// type ValueOf<T> = T[keyof T];
+import DocumentRejectFlow from './desktop/DocumentRejectFlow.vue';
 
-const pages = {
-  'not-submitted': UploadFiles,
-  accepted: DocumentAccepted,
-  rejected: null,
-  delayed: null,
-  submitted: DocumentSubmitted,
-  'admin-checked': DocumentSubmitted,
-};
 const leftDrawerOpen = ref(true);
 const props = defineProps<{
   form: Form & { id: string };
   documents: (ApplicantDocument & { id: string })[];
   company: Company;
 }>();
+const formattedDeadline = computed(() => {
+  const deadline = props.form.dashboard.deadline.toMillis();
+  return DateTime.fromMillis(deadline).toLocaleString({
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+});
 const requiredDocs = computed(() => {
   return props.documents.filter((doc) => doc.isRequired);
 });
 const selectedDocId = ref<string | null>(null);
+
+// type PageComponent =
+//   | typeof UploadFiles
+//   | typeof DocumentAccepted
+//   | typeof DocumentSubmitted;
+
+// const pages = {
+//   accepted: DocumentAccepted,
+//   upload: UploadFiles,
+//   submitted: DocumentSubmitted,
+// };
+
+onMounted(async () => {
+  // Set Logo
+  const logo = props.form.company.logo;
+  if (logo) {
+    const logoRef = storageRefs.getLogoRef(logo);
+    logoURL.value = await getDownloadURL(logoRef);
+  }
+});
+
+const setPage = (doc: ApplicantDocument & { id: string }) => {
+  if (doc.status === 'accepted') {
+    return DocumentAccepted;
+  }
+
+  if (doc.status === 'admin-checked' || doc.status === 'submitted') {
+    return DocumentSubmitted;
+  }
+
+  if (doc.status === 'rejected' && doc.rejection) {
+    return DocumentRejectFlow;
+  }
+
+  if (doc.status === 'not-submitted') {
+    if (doc.sample) {
+      // Return Sample Page
+      return null;
+    } else {
+      return UploadFiles;
+    }
+  }
+  return null;
+};
 
 // const ifAvailableDocs = computed(() => {
 //   return props.documents.filter((doc) => !doc.isRequired);
@@ -123,14 +167,6 @@ const selectedDocId = ref<string | null>(null);
 
 // const $q = useQuasar();
 const logoURL = ref('');
-
-onMounted(async () => {
-  const logo = props.form.company.logo;
-  if (logo) {
-    const logoRef = storageRefs.getLogoRef(logo);
-    logoURL.value = await getDownloadURL(logoRef);
-  }
-});
 
 const onDocumentClick = (doc: ApplicantDocument & { id: string }) => {
   selectedDocId.value = doc.id;

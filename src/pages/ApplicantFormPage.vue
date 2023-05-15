@@ -1,13 +1,15 @@
 <template>
   <q-page>
     <ApplicantFormMainMobile
-      v-if="form && company && $q.platform.is.mobile"
+      v-if="form && company && $q.platform.is.mobile && !$q.platform.is.ipad"
       :form="form"
       :company="company"
       :documents="documents"
     />
     <ApplicantFormMainDesktop
-      v-else-if="form && company && !company.options.mobileOnly"
+      v-else-if="
+        form && company && !company.options.mobileOnly && documents.length > 0
+      "
       :form="form"
       :company="company"
       :documents="documents"
@@ -31,11 +33,7 @@
         </div>
       </q-card-section>
     </q-card>
-    <q-inner-loading
-      class="absolute-center"
-      :class="$q.platform.is.mobile ? '' : 'bg-grey-1'"
-      :showing="!isReady"
-    >
+    <q-inner-loading class="absolute-center transparent" :showing="!isReady">
       <q-spinner-pie size="80px" color="primary" />
     </q-inner-loading>
   </q-page>
