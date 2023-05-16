@@ -20,9 +20,16 @@
         <q-page-container>
           <q-page class="bg-black flex items-stretch">
             <iframe
+              v-if="contentType === 'application/pdf'"
               class="full-width"
               :src="props.imgURL + '#view=FitH&navpanes=0'"
               type="application/pdf"
+            />
+            <q-img
+              v-else
+              :src="props.imgURL"
+              class="full-width"
+              fit="contain"
             />
           </q-page>
         </q-page-container>
