@@ -9,8 +9,8 @@
     >
       <q-list separator v-model="selectedDocId" class="q-pa-md">
         <q-img
-          :src="logoURL"
-          v-if="logoURL"
+          :src="logoUrl"
+          v-if="logoUrl"
           class="q-ma-md"
           style="max-width: 300px"
         />
@@ -55,7 +55,12 @@
         keep-alive
         v-show="selectedDocId"
       >
-        <q-tab-panel :name="doc.id" v-for="doc in documents" :key="doc.id">
+        <q-tab-panel
+          :name="doc.id"
+          v-for="doc in documents"
+          class="q-pa-none"
+          :key="doc.id"
+        >
           <Transition name="fade" mode="out-in">
             <component
               :is="setPage(doc)"
@@ -76,10 +81,8 @@
 // import * as amplitude from '@amplitude/analytics-browser';
 import { documentStatusStyles } from './styles';
 // import { useQuasar } from 'quasar';
-import { onMounted, ref, computed } from 'vue';
+import { ref, computed } from 'vue';
 import { Company, Form } from 'src/utils/types';
-import { storageRefs } from 'src/utils/storage';
-import { getDownloadURL } from '@firebase/storage';
 import { DateTime } from 'luxon';
 import UploadFiles from './desktop/UploadFiles.vue';
 import SelectRequirement from './desktop/SelectRequirement.vue';
@@ -93,6 +96,7 @@ const props = defineProps<{
   form: Form & { id: string };
   documents: (ApplicantDocument & { id: string })[];
   company: Company;
+  logoUrl: string;
 }>();
 const formattedDeadline = computed(() => {
   const deadline = props.form.dashboard.deadline.toMillis();
@@ -118,15 +122,6 @@ const selectedDocId = ref<string | null>(null);
 //   submitted: DocumentSubmitted,
 // };
 
-onMounted(async () => {
-  // Set Logo
-  const logo = props.form.company.logo;
-  if (logo) {
-    const logoRef = storageRefs.getLogoRef(logo);
-    logoURL.value = await getDownloadURL(logoRef);
-  }
-});
-
 const setPage = (doc: ApplicantDocument & { id: string }) => {
   if (doc.status === 'accepted') {
     return DocumentAccepted;
@@ -150,7 +145,6 @@ const setPage = (doc: ApplicantDocument & { id: string }) => {
   }
   return null;
 };
-const logoURL = ref('');
 </script>
 
 <style lang="sass" scoped></style>

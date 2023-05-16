@@ -32,7 +32,13 @@
         </q-toolbar>
       </q-header>
 
-      <q-drawer show-if-above v-model="drawerRight" side="right" bordered>
+      <q-drawer
+        show-if-above
+        v-model="drawerRight"
+        side="right"
+        v-if="!isLoading"
+        bordered
+      >
         <q-list class="q-pa-md" v-if="!showReorderPages">
           <div class="text-h5 q-mb-md">
             Page {{ slide }} of {{ documentPages.length }}
@@ -95,71 +101,69 @@
       </q-drawer>
 
       <q-page-container>
-        <q-page class="bg-white">
-          <div v-if="!showReorderPages" class="bg-white full-width">
-            <q-btn
-              v-if="slide > 1"
-              @click="slide--"
-              outline
-              round
-              class="nav-left"
-              color="primary"
-              icon="fas fa-chevron-left"
-              size="lg"
-            />
-            <q-btn
-              v-if="slide < documentPages.length"
-              @click="slide++"
-              outline
-              round
-              class="nav-right"
-              color="primary"
-              icon="fas fa-chevron-right"
-              size="lg"
-            />
-            <div
-              class="q-pa-md flex justify-center"
-              style="max-height: 100%; overflow: auto !important"
+        <q-page v-if="!showReorderPages" class="bg-white flex items-stretch">
+          <div
+            class="q-px-md flex justify-center full-width"
+            style="max-height: 100%; overflow: auto !important"
+          >
+            <q-carousel
+              v-if="applicantDocument && documentPages.length > 0 && !isLoading"
+              style="height: 100%; width: 80%"
+              animated
+              v-model="slide"
+              control-color="primary"
+              transition-prev="slide-right"
+              transition-next="slide-left"
             >
-              <q-carousel
-                v-if="
-                  applicantDocument && documentPages.length > 0 && !isLoading
-                "
-                style="height: 100%; width: 80%"
-                animated
-                v-model="slide"
-                control-color="primary"
-                transition-prev="slide-right"
-                transition-next="slide-left"
+              <q-carousel-slide
+                :name="index + 1"
+                class="column no-wrap flex-center"
+                v-for="(page, index) in documentPages"
+                :key="index"
               >
-                <q-carousel-slide
-                  :name="index + 1"
-                  class="column no-wrap flex-center"
-                  v-for="(page, index) in documentPages"
-                  :key="index"
-                >
-                  <q-img
-                    v-if="applicantDocument.requestedFormat === 'jpeg'"
-                    :src="documentPages[index].url"
-                  />
-                  <embed
-                    v-else
-                    :src="documentPages[index].url"
-                    type="application/pdf"
-                    style="width: 100%; height: 85vh"
-                  />
-                </q-carousel-slide>
-              </q-carousel>
-              <q-spinner-pie
-                class="absolute-center"
-                color="primary"
-                v-else
-                size="100px"
-              />
-            </div>
+                <q-img
+                  v-if="applicantDocument.requestedFormat === 'jpeg'"
+                  :src="documentPages[index].url"
+                />
+                <iframe
+                  v-else
+                  :src="documentPages[index].url"
+                  type="application/pdf"
+                  style="height: 100% !important; width: 100% !important"
+                />
+              </q-carousel-slide>
+            </q-carousel>
+            <q-spinner-pie
+              class="absolute-center"
+              color="primary"
+              v-else
+              size="100px"
+            />
           </div>
-          <!-- Reorder Documents UI -->
-          <div class="bg-white full-width q-mt-md" v-else>
+          <q-btn
+            v-if="slide > 1"
+            @click="slide--"
+            outline
+            round
+            class="nav-left"
+            color="primary"
+            icon="fas fa-chevron-left"
+            size="lg"
+          />
+          <q-btn
+            v-if="slide < documentPages.length"
+            @click="slide++"
+            outline
+            round
+            class="nav-right"
+            color="primary"
+            icon="fas fa-chevron-right"
+            size="lg"
+          />
+        </q-page>
+        <!-- Reorder Documents UI -->
+        <q-page class="bg-white flex items-stretch" v-else>
+          <div class="bg-white full-width q-mt-md">
             <div>
               <draggable
                 class="row q-col-gutter-md q-px-md q-pt-md"
@@ -247,7 +251,7 @@ const reorderPageImages = ref<
 >([]);
 const selectedDragItemIndex = ref<number | null>(null);
 const openingReorder = ref(false);
-const isLoading = ref(false);
+const isLoading = ref(true);
 const isReorderingPages = ref(false);
 
 const props = defineProps<{
@@ -358,6 +362,8 @@ onMounted(async () => {
     });
   } catch (error) {
     console.log(error);
+  } finally {
+    isLoading.value = false;
   }
 });
 
@@ -450,6 +456,7 @@ const clearReorderingPages = () => {
   reorderPageImages.value = [];
   selectedDragItemIndex.value = null;
   showReorderPages.value = false;
+  slide.value = 1;
 };
 
 const reorderPages = async () => {
@@ -491,11 +498,11 @@ defineEmits([
 .nav-left
   position: absolute
   top: calc(50% - 25.7px)
-  left: 44px
+  left: 5%
 .nav-right
   position: absolute
   top: calc(50% - 25.7px)
-  right: 60px
+  right: 5%
 
 .download-border
   border: 1px solid $primary

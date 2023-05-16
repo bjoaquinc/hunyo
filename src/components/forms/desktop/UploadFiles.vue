@@ -1,7 +1,7 @@
 <template>
   <q-page>
     <div class="full-width flex">
-      <div class="q-mx-auto q-mt-xl" style="max-width: 680px">
+      <div class="q-mx-auto q-mt-lg" style="max-width: 680px">
         <!-- <div class="text-h5">Upload your Identity Document</div> -->
         <q-file
           v-model="files"

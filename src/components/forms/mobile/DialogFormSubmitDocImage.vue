@@ -33,12 +33,22 @@
                 color="primary"
               />
               <input
+                v-if="company.options.imageOnly"
                 @change="onFileChange"
                 style="display: none"
                 ref="imageInputRef"
                 type="file"
                 accept="image/*"
-                :capture="company.options.imageOnly ? 'environment' : false"
+                capture="environment"
+              />
+              <input
+                v-else
+                @change="onFileListChange"
+                style="display: none"
+                ref="imageInputRef"
+                type="file"
+                accept="application/pdf, image/*"
+                multiple
               />
             </div>
           </div>
@@ -168,6 +178,7 @@ import draggable from 'vuedraggable';
 import DialogFormSubmitDocPreview from '../DialogFormSubmitDocPreview.vue';
 import DialogApplicantCameraImageVue from './DialogFormImageRotate.vue';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
+import DialogViewFile from './DialogViewFile.vue';
 import { ApplicantDocument } from 'src/utils/new-types';
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
@@ -214,6 +225,19 @@ const onFileChange = (e: Event) => {
   if (!target.files) return;
   const file = target.files[0];
   const IMAGE_URL = URL.createObjectURL(file);
+  // const contentType = file.type;
+
+  // if (contentType === 'application/pdf') {
+  //   // TODO: Handle PDF upload
+  //   const uploadedFile = {
+  //     name: file.name,
+  //     file: file,
+  //     downloadURL: IMAGE_URL,
+  //     isDragging: false,
+  //   };
+  //   uploadedFiles.value.push(uploadedFile);
+  // } else {
+  // Hand image upload
   $q.dialog({
     component: DialogApplicantCameraImageVue,
     componentProps: {
@@ -248,6 +272,25 @@ const onFileChange = (e: Event) => {
         rotated: angle ? true : false,
       });
     });
+  // }
+};
+
+const onFileListChange = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  if (!target.files || target.files.length < 1) {
+    return console.log('No files in input');
+  }
+  const files = target.files;
+  for (const file of files) {
+    const FILE_URL = URL.createObjectURL(file);
+    const uploadedFile = {
+      name: file.name,
+      file: file,
+      downloadURL: FILE_URL,
+      isDragging: false,
+    };
+    uploadedFiles.value.push(uploadedFile);
+  }
 };
 
 onMounted(async () => {
@@ -355,14 +398,25 @@ const openBaseDialogViewImage = (
     docName: props.doc.name,
     numberOfPages: uploadedFiles.value.length,
   });
-  $q.dialog({
-    component: BaseDialogViewImage,
-    componentProps: {
-      angle,
-      imgURL,
-      contentType,
-    },
-  });
+  if (!props.company.options.imageOnly) {
+    $q.dialog({
+      component: DialogViewFile,
+      componentProps: {
+        angle,
+        imgURL,
+        contentType,
+      },
+    });
+  } else {
+    $q.dialog({
+      component: BaseDialogViewImage,
+      componentProps: {
+        angle,
+        imgURL,
+        contentType,
+      },
+    });
+  }
 };
 
 defineEmits([

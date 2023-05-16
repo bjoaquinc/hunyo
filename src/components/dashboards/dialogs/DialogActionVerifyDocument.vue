@@ -187,70 +187,65 @@
       </q-drawer>
 
       <q-page-container>
-        <q-page class="bg-white">
+        <q-page class="bg-white flex items-stretch">
           <div
-            class="bg-white full-width"
-            style="position: absolute; top: 0; bottom: 0"
+            class="q-px-md flex justify-center full-width"
+            style="max-height: 100%; overflow: auto !important"
           >
-            <q-btn
-              v-if="slide > 1"
-              @click="swipePage('left')"
-              outline
-              round
-              class="nav-left"
-              color="primary"
-              icon="fas fa-chevron-left"
-              size="lg"
-            />
-            <q-btn
-              v-if="slide < documentPages.length"
-              @click="swipePage('right')"
-              outline
-              round
-              class="nav-right"
-              color="primary"
-              icon="fas fa-chevron-right"
-              size="lg"
-            />
-            <div
-              class="q-pa-md flex justify-center"
-              style="max-height: 100%; overflow: auto !important"
+            <q-carousel
+              v-if="documentPages.length > 0"
+              style="height: 100%; width: 80%"
+              animated
+              v-model="slide"
+              control-color="primary"
+              transition-prev="slide-right"
+              transition-next="slide-left"
             >
-              <q-carousel
-                v-if="documentPages.length > 0"
-                style="height: 100%; width: 80%"
-                animated
-                v-model="slide"
-                control-color="primary"
-                transition-prev="slide-right"
-                transition-next="slide-left"
+              <q-carousel-slide
+                :name="index + 1"
+                class="column no-wrap flex-center"
+                v-for="(page, index) in documentPages"
+                :key="index"
               >
-                <q-carousel-slide
-                  :name="index + 1"
-                  class="column no-wrap flex-center"
-                  v-for="(page, index) in documentPages"
-                  :key="index"
-                >
-                  <q-img
-                    v-if="applicantDocument.requestedFormat === 'jpeg'"
-                    :src="documentPages[index].url"
-                  />
-                  <embed
-                    v-else
-                    :src="documentPages[index].url"
-                    type="application/pdf"
-                    style="width: 100%; height: 85vh"
-                  />
-                </q-carousel-slide>
-              </q-carousel>
-              <q-spinner-pie
-                class="absolute-center"
-                color="primary"
-                v-else
-                size="100px"
-              />
-            </div>
+                <q-img
+                  v-if="applicantDocument.requestedFormat === 'jpeg'"
+                  :src="documentPages[index].url"
+                />
+                <iframe
+                  v-else
+                  :src="documentPages[index].url"
+                  type="application/pdf"
+                  style="height: 100% !important; width: 100% !important"
+                />
+              </q-carousel-slide>
+            </q-carousel>
+            <q-spinner-pie
+              class="absolute-center"
+              color="primary"
+              v-else
+              size="100px"
+            />
           </div>
+          <q-btn
+            v-if="slide > 1"
+            @click="swipePage('left')"
+            outline
+            round
+            class="nav-left"
+            color="primary"
+            icon="fas fa-chevron-left"
+            size="lg"
+          />
+          <q-btn
+            v-if="slide < documentPages.length"
+            @click="swipePage('right')"
+            outline
+            round
+            class="nav-right"
+            color="primary"
+            icon="fas fa-chevron-right"
+            size="lg"
+          />
         </q-page>
       </q-page-container>
     </q-layout>
@@ -595,11 +590,11 @@ defineEmits([
 .nav-left
   position: absolute
   top: calc(50% - 25.7px)
-  left: 44px
+  left: 5%
 .nav-right
   position: absolute
   top: calc(50% - 25.7px)
-  right: 60px
+  right: 5%
 
 .download-border
   border: 1px solid $grey-8

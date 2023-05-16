@@ -5,6 +5,7 @@
       :form="form"
       :company="company"
       :documents="documents"
+      :logo-url="logoURL"
     />
     <ApplicantFormMainDesktop
       v-else-if="
@@ -13,6 +14,7 @@
       :form="form"
       :company="company"
       :documents="documents"
+      :logo-url="logoURL"
     />
     <q-card
       v-else-if="company && company.options.mobileOnly"

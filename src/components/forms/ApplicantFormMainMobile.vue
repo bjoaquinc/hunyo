@@ -3,9 +3,9 @@
     <q-card class="my-card text-grey-8">
       <q-card-section>
         <q-img
-          :src="logoURL"
+          :src="logoUrl"
           :class="$q.platform.is.mobile ? 'q-mt-lg' : ''"
-          v-if="logoURL"
+          v-if="logoUrl"
           style="max-width: 200px"
         />
 
@@ -102,7 +102,7 @@
 import * as amplitude from '@amplitude/analytics-browser';
 import { documentStatusStyles } from './styles';
 import { useQuasar } from 'quasar';
-import { onMounted, ref, computed } from 'vue';
+import { computed } from 'vue';
 import { Form } from 'src/utils/types';
 import { storageRefs } from 'src/utils/storage';
 import { getDownloadURL } from '@firebase/storage';
@@ -120,6 +120,7 @@ const props = defineProps<{
   form: Form & { id: string };
   company: Company;
   documents: (ApplicantDocument & { id: string })[];
+  logoUrl: string;
 }>();
 const requiredDocs = computed(() => {
   return props.documents.filter((doc) => doc.isRequired);
@@ -140,15 +141,6 @@ const deadline = computed(() => {
 });
 
 const $q = useQuasar();
-const logoURL = ref('');
-
-onMounted(async () => {
-  const logo = props.form.company.logo;
-  if (logo) {
-    const logoRef = storageRefs.getLogoRef(logo);
-    logoURL.value = await getDownloadURL(logoRef);
-  }
-});
 
 const onDocumentClick = (doc: ApplicantDocument & { id: string }) => {
   const index = props.documents.findIndex((d) => d.id === doc.id);

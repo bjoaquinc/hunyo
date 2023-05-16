@@ -146,6 +146,7 @@ import {
 } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
 import BaseDialogViewImage from 'src/components/BaseDialogViewImage.vue';
+import DialogViewFile from './mobile/DialogViewFile.vue';
 import {
   ApplicantDocument,
   ApplicantPage,
@@ -356,8 +357,8 @@ const updateApplicantDocument = async () => {
   const docName = props.doc.name;
   let UPDATED_DOC_NAME: string;
   if (applicantName) {
-    const {first, middle, last} = applicantName;
-    UPDATED_DOC_NAME = `${docName}_${first}_${middle}_${last}.pdf`
+    const { first, middle, last } = applicantName;
+    UPDATED_DOC_NAME = `${docName}_${first}_${middle}_${last}.pdf`;
   } else {
     UPDATED_DOC_NAME = docName;
   }
@@ -377,14 +378,25 @@ const openBaseDialogViewImage = (
   contentType: string,
   angle?: 0 | 90 | 180 | 270
 ) => {
-  $q.dialog({
-    component: BaseDialogViewImage,
-    componentProps: {
-      imgURL,
-      contentType,
-      angle,
-    },
-  });
+  if (!props.company.options.imageOnly && $q.platform.is.mobile) {
+    $q.dialog({
+      component: DialogViewFile,
+      componentProps: {
+        angle,
+        imgURL,
+        contentType,
+      },
+    });
+  } else {
+    $q.dialog({
+      component: BaseDialogViewImage,
+      componentProps: {
+        angle,
+        imgURL,
+        contentType,
+      },
+    });
+  }
 };
 
 defineEmits([

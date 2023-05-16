@@ -10,7 +10,8 @@
   >
     <q-card
       style="max-width: 100% !important; max-height: 100vh"
-      class="bg-black transparent"
+      @click="dialogRef?.hide()"
+      class="bg-black transparent flex items-stretch justify-center"
     >
       <q-img
         ref="imageRef"
@@ -31,14 +32,15 @@
         fit="contain"
         :src="props.imgURL"
       />
-      <embed
+      <iframe
         v-else
-        class="image-width absolute-center"
         :src="props.imgURL"
+        style="min-width: 50vw"
+        class="q-my-lg"
         type="application/pdf"
         header="none"
       />
-      <q-card-section style="height: 100vh" @click="dialogRef?.hide()">
+      <!-- <q-card-section style="height: 100vh" @click="dialogRef?.hide()">
         <div class="flex full-width">
           <q-btn
             class="q-ml-auto lt-sm text-black"
@@ -58,7 +60,17 @@
             @click="dialogRef?.hide()"
           />
         </div>
-      </q-card-section>
+      </q-card-section> -->
+      <q-btn
+        class="q-ml-auto text-black"
+        icon="close"
+        size="lg"
+        style="position: absolute; right: 30px; top: 30px"
+        round
+        dense
+        color="white"
+        @click="dialogRef?.hide()"
+      />
     </q-card>
   </q-dialog>
 </template>
@@ -106,8 +118,8 @@ defineEmits([
     height: auto !important
 .image-width
   width: 100vw
+  height: 90vh
   @media only screen and (width > $breakpoint-xs)
     width: auto
-    height: 90vh
     aspect-ratio: 1/1
 </style>
