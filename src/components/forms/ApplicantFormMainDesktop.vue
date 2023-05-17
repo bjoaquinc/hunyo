@@ -138,7 +138,7 @@ const setPage = (doc: ApplicantDocument & { id: string }) => {
   if (doc.status === 'not-submitted') {
     if (doc.sample) {
       // Return Sample Page
-      return null;
+      return UploadFiles;
     } else {
       return UploadFiles;
     }

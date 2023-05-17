@@ -197,7 +197,7 @@
                   step === 2
                     ? dashboard.newApplicants.length === 0
                       ? 'Skip this Step'
-                      : 'Send Emails'
+                      : 'Send'
                     : 'Next'
                 "
                 color="primary"
