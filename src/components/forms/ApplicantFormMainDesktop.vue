@@ -111,17 +111,6 @@ const requiredDocs = computed(() => {
 });
 const selectedDocId = ref<string | null>(null);
 
-// type PageComponent =
-//   | typeof UploadFiles
-//   | typeof DocumentAccepted
-//   | typeof DocumentSubmitted;
-
-// const pages = {
-//   accepted: DocumentAccepted,
-//   upload: UploadFiles,
-//   submitted: DocumentSubmitted,
-// };
-
 const setPage = (doc: ApplicantDocument & { id: string }) => {
   if (doc.status === 'accepted') {
     return DocumentAccepted;

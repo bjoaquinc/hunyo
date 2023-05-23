@@ -12,7 +12,10 @@
             dense
             class="q-ml-sm"
           />
-          <div class="text-h5 q-ml-auto" style="cursor: pointer">
+          <div
+            class="text-h5 q-ml-auto ellipsis q-px-md"
+            style="cursor: pointer"
+          >
             {{ updatedName }}
             <q-popup-edit
               @hide="
