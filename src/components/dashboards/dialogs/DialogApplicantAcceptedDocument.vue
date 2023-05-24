@@ -12,12 +12,11 @@
             dense
             class="q-ml-sm"
           />
-          <div v-if="applicantDocument" class="text-h5 q-ml-auto">
-            {{
-              applicantDocument.updatedName
-                ? applicantDocument.updatedName
-                : applicantDocument.name
-            }}
+          <div
+            v-if="applicantDocument"
+            class="text-h5 q-ml-auto ellipsis q-px-md"
+          >
+            {{ applicantDocument.updatedName || applicantDocument.name }}
           </div>
 
           <q-btn
