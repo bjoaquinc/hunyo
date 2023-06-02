@@ -206,7 +206,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineAsyncComponent, computed } from 'vue';
+import { ref, defineAsyncComponent, computed, watch } from 'vue';
 import { QTableProps, useQuasar } from 'quasar';
 import Header from './headers/DashboardCollectorHeader.vue';
 import { Applicant, PublishedDashboard, User } from 'src/utils/types';
@@ -357,9 +357,10 @@ const openDialogAction = (applicantId: string) => {
 };
 
 const openDialogApplicantDocuments = (applicantId: string) => {
-  const applicant = applicants.value.find(
+  const applicantIndex = applicants.value.findIndex(
     (applicant) => applicant.id === applicantId
   );
+  const applicant = applicants.value[applicantIndex];
   if (!applicant) return;
   const NUM_OF_UNCHECKED_DOCS =
     applicant.adminAcceptedDocs - applicant.acceptedDocs;
@@ -376,7 +377,7 @@ const openDialogApplicantDocuments = (applicantId: string) => {
     ),
     componentProps: {
       companyId,
-      applicant,
+      applicantId: applicant.id,
     },
   });
 };
@@ -455,6 +456,14 @@ const resendLink = async (applicantId: string) => {
     resendControl.isLoading = false;
   }
 };
+
+watch(
+  applicants,
+  (newVal) => {
+    console.log(newVal);
+  },
+  { deep: true }
+);
 </script>
 
 <style scoped></style>

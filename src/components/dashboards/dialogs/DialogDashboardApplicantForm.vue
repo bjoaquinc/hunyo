@@ -5,15 +5,6 @@
         <div class="flex">
           <div class="text-h5">{{ applicant ? 'Edit' : 'Add' }} Applicant</div>
           <q-btn
-            v-if="applicant"
-            @click="removeApplicant"
-            :loading="removeIsLoading"
-            label="Remove"
-            color="negative"
-            class="q-ml-md"
-            unelevated
-          />
-          <q-btn
             class="q-ml-auto"
             v-close-popup
             icon="fas fa-times"
@@ -116,23 +107,21 @@
 </template>
 
 <script setup lang="ts">
-import { arrayRemove, arrayUnion, updateDoc } from 'firebase/firestore';
+import { arrayUnion, updateDoc } from 'firebase/firestore';
 import { QDialog, useDialogPluginComponent, useQuasar } from 'quasar';
 import { useUserStore } from 'src/stores/user-store';
 import { dbDocRefs } from 'src/utils/db';
 import { ref } from 'vue';
-import { ApplicantItem } from 'src/utils/types';
+import { Applicant } from 'src/utils/types';
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const { user } = useUserStore();
 const $q = useQuasar();
 const props = defineProps<{
-  dashboardId: string;
-  applicant?: ApplicantItem;
-  applicants?: ApplicantItem[];
+  dashboardId?: string;
+  applicant?: Applicant & { id: string };
 }>();
 const isLoading = ref(false);
-const removeIsLoading = ref(false);
 const name = ref({
   first: '',
   middle: '',
@@ -149,10 +138,10 @@ const onDialogShow = () => {
   if (props.applicant) {
     email.value = props.applicant.email;
     if (props.applicant.name) {
-      name.value = props.applicant.name;
+      name.value = { ...props.applicant.name };
     }
     if (props.applicant.phoneNumbers) {
-      phoneNumbers.value = props.applicant.phoneNumbers;
+      phoneNumbers.value = { ...props.applicant.phoneNumbers };
     }
     if (props.applicant.address) {
       address.value = props.applicant.address;
@@ -165,25 +154,22 @@ const updateApplicant = async () => {
   try {
     isLoading.value = true;
     const { company } = user;
-    const { applicants } = props;
-    if (applicants) {
-      const applicantIndex = applicants.findIndex(
-        (applicant) => applicant.email === props.applicant?.email
-      );
-      if (applicantIndex !== -1) {
-        applicants[applicantIndex] = {
-          name: name.value,
-          email: email.value,
-          phoneNumbers: phoneNumbers.value,
-          address: address.value,
-        };
-      }
-      const dashboardRef = dbDocRefs.getDraftDashboardRef(
+    const { applicant } = props;
+    if (applicant) {
+      const { id: applicantId, dashboard } = applicant;
+      const applicantRef = dbDocRefs.getApplicantRef(
         company.id,
-        props.dashboardId
+        dashboard.id,
+        applicantId
       );
-      await updateDoc(dashboardRef, {
-        newApplicants: applicants,
+      await updateDoc(applicantRef, {
+        name: name.value,
+        email: email.value,
+        phoneNumbers:
+          phoneNumbers.value.primary || phoneNumbers.value.secondary
+            ? phoneNumbers.value
+            : undefined,
+        address: address.value,
       });
       dialogRef.value?.hide();
       return;
@@ -200,8 +186,13 @@ const updateApplicant = async () => {
 };
 
 const addApplicant = async () => {
-  if (!user) return;
   try {
+    if (!user) {
+      throw new Error('User is required.');
+    }
+    if (!props.dashboardId) {
+      throw new Error('Dashboard ID is required.');
+    }
     isLoading.value = true;
     const { company } = user;
     const applicant = {
@@ -229,25 +220,6 @@ const addApplicant = async () => {
     });
   } finally {
     isLoading.value = false;
-  }
-};
-
-const removeApplicant = async () => {
-  if (!user) return;
-  try {
-    removeIsLoading.value = true;
-    const dashboardRef = dbDocRefs.getDraftDashboardRef(
-      user.company.id,
-      props.dashboardId
-    );
-    await updateDoc(dashboardRef, {
-      newApplicants: arrayRemove(props.applicant),
-    });
-    dialogRef.value?.hide();
-  } catch (error) {
-    console.error(error);
-  } finally {
-    removeIsLoading.value = false;
   }
 };
 

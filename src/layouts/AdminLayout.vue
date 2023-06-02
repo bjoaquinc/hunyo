@@ -367,6 +367,7 @@ import {
 } from 'src/utils/new-types';
 import AdminEditName from 'src/components/admin/AdminEditName.vue';
 import AdminEditImageProperties from 'src/components/admin/AdminEditImageProperties.vue';
+import { getUpdatedDocName } from 'src/utils/string_format';
 
 interface ImageProperties {
   sharpness: number;
@@ -630,31 +631,6 @@ const clearSortedPages = () => {
   sortedPages.value = [];
 };
 
-// const sendAmplitudeAssessPageEvent = (status: string) => {
-//   if (originalMetadata.value && fixedMetadata.value) {
-//     const originalImageProperties = {
-//       ...originalMetadata.value.customMetadata,
-//     } as unknown as ImageProperties;
-//     const fixedImageProperties = {
-//       ...fixedMetadata.value.customMetadata,
-//     } as unknown as ImageProperties;
-//     amplitude.track('Admin Assess Page', {
-//       decision: status,
-//       originalBrightness: originalImageProperties.brightness,
-//       originalSharpness: originalImageProperties.sharpness,
-//       originalContrast: originalImageProperties.contrast,
-//       fixedBrightness: fixedImageProperties.brightness,
-//       fixedSharpness: fixedImageProperties.sharpness,
-//       fixedContrast: fixedImageProperties.contrast,
-//       docName: selectedDoc.value?.name,
-//       docId: selectedDoc.value?.id,
-//       pageNumber: selectedPage.value?.pageNumber,
-//       pageId: selectedPage.value?.id,
-//       totalNumberOfPages: sortedPages.value.length,
-//     });
-//   }
-// };
-
 const originalMetadata = ref<FullMetadata | null>(null);
 const fixedMetadata = ref<FullMetadata | null>(null);
 const CONVERT_TO_KILO_BYTES = 0.001;
@@ -765,7 +741,18 @@ const acceptOrRejectDocument = async () => {
         selectedDoc.value.companyId,
         selectedDoc.value.id
       );
-      const updatedName = getUpdatedDocName();
+      let updatedName: string | undefined = undefined;
+      if (
+        selectedApplicant.value &&
+        selectedApplicant.value.applicant.name &&
+        selectedDoc.value
+      ) {
+        updatedName = getUpdatedDocName(
+          selectedDoc.value.name,
+          selectedApplicant.value.applicant.name
+        );
+      }
+
       const updatedStatus = selectedDoc.value.updatedStatus;
 
       if (updatedStatus === 'admin-checked') {
@@ -825,32 +812,5 @@ const validateDecision = () => {
     return true;
   }
   return false;
-};
-
-const getUpdatedDocName = () => {
-  if (
-    !selectedApplicant.value ||
-    !selectedApplicant.value.applicant.name ||
-    !selectedDoc.value
-  )
-    return;
-  const name = selectedApplicant.value.applicant.name;
-  Object.keys(name).forEach((key) => {
-    const typedKey = key as keyof typeof name;
-    name[typedKey] = fixName(name[typedKey]);
-  });
-  const { first, middle, last } = name;
-  const updatedName = `${first}_${middle}_${last}`;
-  const docName = selectedDoc.value.name.trim();
-  return docName + '_' + updatedName + '.pdf';
-};
-
-const fixName = (name: string) => {
-  const fixedName = name
-    .trim()
-    .split(' ')
-    .map((word) => word[0].toUpperCase() + word.slice(1).toLowerCase())
-    .join('_');
-  return fixedName;
 };
 </script>

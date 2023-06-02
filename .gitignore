@@ -49,3 +49,6 @@ storage.rules
 
 # Cors file
 cors.json
+
+# Exported emulator files
+/firebase-export-16856219829780dQkYF

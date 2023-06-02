@@ -1,20 +1,42 @@
 <template>
-  <q-dialog ref="dialogRef" @hide="onDialogHide" full-width>
+  <q-dialog
+    ref="dialogRef"
+    @hide="onDialogHide"
+    @show="onDialogShow"
+    full-width
+  >
     <q-card style="max-width: 900px !important">
       <q-card-section>
         <div class="full-width">
           <q-card-section>
-            <div class="flex justify-between">
-              <div class="flex column">
-                <div class="text-h5">
-                  {{
-                    applicant.name
-                      ? `${applicant.name?.first} ${applicant.name?.middle} ${applicant.name?.last}`
-                      : applicant.email
-                  }}
+            <div class="flex">
+              <div class="flex column full-width" v-if="applicant">
+                <div class="flex full-width">
+                  <div class="text-h5">
+                    {{
+                      applicant.name
+                        ? `${applicant.name?.first} ${applicant.name?.middle} ${applicant.name?.last}`
+                        : applicant.email
+                    }}
+                  </div>
+                  <q-btn
+                    @click="editApplicantData"
+                    icon="far fa-pen-to-square"
+                    color="grey-8"
+                    class="q-ml-md"
+                    flat
+                  />
+                  <q-btn
+                    icon="fas fa-times"
+                    color="grey-8"
+                    class="q-ml-auto"
+                    flat
+                    v-close-popup
+                  />
                 </div>
+
                 <div class="text-subtitle1 text-grey-8" v-if="applicant.name">
-                  {{ applicant.email }}
+                  {{ `${applicant.email}` }}
                 </div>
                 <div class="flex column" v-if="applicant.phoneNumbers">
                   <div
@@ -35,7 +57,6 @@
                   {{ applicant.address }}
                 </div>
               </div>
-              <q-btn icon="fas fa-times" color="grey-8" flat v-close-popup />
             </div>
           </q-card-section>
           <q-card-section class="q-pt-none">
@@ -95,7 +116,7 @@
 <script setup lang="ts">
 import { QDialog, useDialogPluginComponent, useQuasar } from 'quasar';
 import { dbColRefs } from 'src/utils/db';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onUnmounted, computed } from 'vue';
 import {
   query,
   where,
@@ -103,11 +124,14 @@ import {
   Unsubscribe,
   onSnapshot,
 } from '@firebase/firestore';
-import { Applicant } from 'src/utils/types';
+// import { Applicant } from 'src/utils/types';
 import { ApplicantDocument } from 'src/utils/new-types';
 import DialogActionVerifyDocument from './DialogActionVerifyDocument.vue';
 import DialogApplicantPages from './DialogApplicantAcceptedDocument.vue';
 import { DateTime } from 'luxon';
+import DialogDashboardApplicantForm from './DialogDashboardApplicantForm.vue';
+import { useDashboardStore } from 'src/stores/dashboard-store';
+import { storeToRefs } from 'pinia';
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent();
 const applicantDocuments = ref<(ApplicantDocument & { id: string })[]>([]);
@@ -175,37 +199,55 @@ const documentItemStyles = {
 
 const props = defineProps<{
   companyId: string;
-  applicant: Applicant & { id: string };
+  applicantId: string;
 }>();
-onMounted(async () => {
-  const applicantDocumentsRef = dbColRefs.getDocumentsRef(props.companyId);
-  const q = query(
-    applicantDocumentsRef,
-    where('applicantId', '==', props.applicant.id),
-    orderBy('docNumber')
-  );
-  await new Promise<void>((resolve, reject) => {
-    let runOnce = () => {
-      runOnce = () => {
-        return;
-      };
-      resolve();
-    };
-    unsubApplicantDocuments.value = onSnapshot(
-      q,
-      (snapshot) => {
-        applicantDocuments.value = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        runOnce();
-      },
-      (error) => {
-        reject(error);
-      }
-    );
-  });
+
+const dashboardStore = useDashboardStore();
+const { applicants } = storeToRefs(dashboardStore);
+const applicant = computed(() => {
+  return applicants.value.find((a) => a.id === props.applicantId);
 });
+
+const onDialogShow = async () => {
+  try {
+    if (!applicant.value) {
+      throw new Error('Applicant not found');
+    }
+    const applicantDocumentsRef = dbColRefs.getDocumentsRef(props.companyId);
+    const q = query(
+      applicantDocumentsRef,
+      where('applicantId', '==', applicant.value.id),
+      orderBy('docNumber')
+    );
+    await new Promise<void>((resolve, reject) => {
+      let runOnce = () => {
+        runOnce = () => {
+          return;
+        };
+        resolve();
+      };
+      unsubApplicantDocuments.value = onSnapshot(
+        q,
+        (snapshot) => {
+          applicantDocuments.value = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          runOnce();
+        },
+        (error) => {
+          reject(error);
+        }
+      );
+    });
+  } catch (error) {
+    console.error(error);
+    $q.notify({
+      message: 'Error loading documents',
+      type: 'negative',
+    });
+  }
+};
 
 const onDocumentClick = (docId: string) => {
   const docIndex = applicantDocuments.value.findIndex(
@@ -233,7 +275,6 @@ const onDocumentClick = (docId: string) => {
     });
     $q.dialog({
       title: `${doc.name} is delayed until ${FORMATTED_DELAYED_UNTIL}`,
-      // message: `${doc.name} is delayed until ${FORMATTED_DELAYED_UNTIL}`,
       ok: true,
     });
   }
@@ -262,6 +303,23 @@ const openDialogActionVerifyDocument = (
     // TODO: Show updating document
   });
 };
+
+const editApplicantData = () => {
+  $q.dialog({
+    component: DialogDashboardApplicantForm,
+    componentProps: {
+      applicant: applicant.value,
+    },
+  });
+};
+
+// watch(
+//   props,
+//   (newVal) => {
+//     console.log('applicant: ', newVal.applicant);
+//   },
+//   { deep: true }
+// );
 
 onUnmounted(() => {
   unsubApplicantDocuments.value?.();
